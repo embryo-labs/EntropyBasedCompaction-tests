@@ -11,11 +11,11 @@ mkdir -p "$output_dir"
 
 $(dirname $0)/dbbench.sh "$output_dir" \
 	"--use_existing_db=true \
---benchmarks=overwrite \
+--benchmarks=overwrite,stats \
 --benchmark_write_rate_limit=$benchmark_write_rate_limit \
 --rate_limiter_bytes_per_sec=$rate_limiter_bytes_per_sec \
 --writes=10000000 \
 --statistics=true \
 --report_file=$output_dir/report.csv \
 --report_interval_seconds=1 \
---histogram=true"
+--histogram=true" > "$output_dir"/stdout.txt
