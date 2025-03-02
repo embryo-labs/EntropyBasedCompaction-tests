@@ -4,7 +4,7 @@ if [ $# -lt 1 -o $# -gt 2 ]; then
 	exit 1
 fi
 memtable_size=$(humanfriendly --parse-size=80MB)
-workspace=$(realpath "$(dirname $0)"/..)
+workspace=$(realpath "$(dirname $0)"/../..)
 ulimit -n 100000
 # Dump core when crash
 ulimit -c unlimited

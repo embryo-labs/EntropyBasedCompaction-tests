@@ -1,5 +1,5 @@
 #!/usr/bin/env sh
-workspace=$(realpath "$(dirname $0)"/..)
+workspace=$(realpath "$(dirname $0)"/../..)
 output_dir="$workspace/data/rocksdb"
 mkdir -p "$output_dir"
 if [ "$(ls -A "$output_dir")" ]; then

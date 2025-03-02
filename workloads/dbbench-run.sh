@@ -5,7 +5,7 @@ if [ $# -ne 2 ]; then
 fi
 benchmark_write_rate_limit=$(humanfriendly --parse-size="$1")
 rate_limiter_bytes_per_sec=$(humanfriendly --parse-size="$2")
-workspace=$(realpath "$(dirname $0)"/..)
+workspace=$(realpath "$(dirname $0)"/../..)
 output_dir="$workspace/data/rocksdb"
 mkdir -p "$output_dir"
 
