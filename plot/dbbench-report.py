@@ -29,6 +29,8 @@ plt.rcParams['axes.unicode_minus'] = False
 fig = plt.figure(dpi = 300, figsize = (cm_to_inch(SINGLE_COL_WIDTH), cm_to_inch(5)), constrained_layout=True)
 
 report = pd.read_table(os.path.join(data_dir, 'report.csv'), sep=',')
+# It seems that the ops of the first several seconds is not limited.
+report = report.iloc[20:]
 
 ax = plt.gca()
 formatter = ScalarFormatter(useMathText=True)
