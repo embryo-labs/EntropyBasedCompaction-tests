@@ -8,6 +8,6 @@ if [ "$(ls -A "$output_dir")" ]; then
 fi
 rm "$workspace/testdb"/*
 $(dirname $0)/dbbench.sh "$output_dir" \
-	"--benchmarks=filluniquerandomdeterministic \
---disable_auto_compactions=true"
+	--benchmarks=filluniquerandomdeterministic \
+	--disable_auto_compactions=true
 $(dirname $0)/dbbench-levelstats.sh

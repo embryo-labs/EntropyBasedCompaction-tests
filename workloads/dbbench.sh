@@ -1,14 +1,16 @@
 #!/usr/bin/env sh
-if [ $# -lt 1 -o $# -gt 2 ]; then
-	echo Usage: $0 output-dir \[args\]
+if [ ! "$1" ]; then
+	echo Usage: $0 output-dir args...
 	exit 1
 fi
+output_dir="$1"
+shift
 memtable_size=$(humanfriendly --parse-size=80MB)
 workspace=$(realpath "$(dirname $0)"/../..)
 ulimit -n 100000
 # Dump core when crash
 ulimit -c unlimited
-cd "$1"
+cd "$output_dir"
 $workspace/rocksdb/build/db_bench \
 	--ttl_seconds=0 \
 	--use_direct_io_for_flush_and_compaction=true \
@@ -29,4 +31,4 @@ $workspace/rocksdb/build/db_bench \
 	--num_levels=4 \
 	--db="$workspace/testdb" \
 	--num=100000000 \
-	$2
+	"$@"
