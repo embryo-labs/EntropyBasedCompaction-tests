@@ -5,7 +5,9 @@ if [ ! "$1" ]; then
 fi
 output_dir="$1"
 shift
-memtable_size=$(humanfriendly --parse-size=80MB)
+memtable_size=$(humanfriendly --parse-size=200MB)
+s=4
+T=5
 workspace=$(realpath "$(dirname $0)"/../..)
 ulimit -n 100000
 # Dump core when crash
@@ -25,10 +27,10 @@ $workspace/rocksdb/build/db_bench \
 	--threads=16 \
 	--write_buffer_size=$memtable_size \
 	--target_file_size_base=$memtable_size \
-	--level0_file_num_compaction_trigger=10 \
-	--max_bytes_for_level_base=$(($memtable_size * 10)) \
-	--max_bytes_for_level_multiplier=5 \
-	--num_levels=4 \
+	--level0_file_num_compaction_trigger=$s \
+	--max_bytes_for_level_base=$(($memtable_size * $s)) \
+	--max_bytes_for_level_multiplier=$T \
+	--num_levels=5 \
 	--db="$workspace/testdb" \
 	--num=100000000 \
 	"$@"
