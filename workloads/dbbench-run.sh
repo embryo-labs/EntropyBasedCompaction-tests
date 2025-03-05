@@ -6,7 +6,7 @@ fi
 benchmark_write_rate_limit=$(humanfriendly --parse-size="$1")
 rate_limiter_bytes_per_sec=$(humanfriendly --parse-size="$2")
 threads=16
-writes=10000000
+writes=100000000
 mydir=$(realpath $(dirname $0))
 workspace=$(realpath "$(dirname $0)"/../..)
 output_dir="$workspace/data/rocksdb"
@@ -15,6 +15,7 @@ cd "$output_dir"
 "$workspace"/tests/helper/exe-while.sh . sh -c "\"$mydir\"/dbbench.sh . \
 	--use_existing_db=true \
 	--benchmarks=overwrite,stats \
+	--soft_pending_compaction_bytes_limit=$((10 * 1000 * 1000 * 1000)) \
 	--benchmark_write_rate_limit=$benchmark_write_rate_limit \
 	--rate_limiter_bytes_per_sec=$rate_limiter_bytes_per_sec \
 	--threads=$threads \
