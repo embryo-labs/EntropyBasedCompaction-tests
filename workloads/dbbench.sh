@@ -24,7 +24,6 @@ $workspace/rocksdb/build/db_bench \
 	--value_size=1000 \
 	--max_background_jobs=6 \
 	--block_size=16384 \
-	--threads=16 \
 	--write_buffer_size=$memtable_size \
 	--target_file_size_base=$memtable_size \
 	--level0_file_num_compaction_trigger=$s \
