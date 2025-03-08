@@ -10,6 +10,7 @@ workspace=$(realpath "$(dirname $0)"/../..)
 ulimit -n 100000
 # Dump core when crash
 ulimit -c unlimited
+export ASAN_OPTIONS="abort_on_error=1:disable_coredump=0"
 cd "$output_dir"
 $workspace/rocksdb/build/db_bench \
 	--ttl_seconds=0 \
