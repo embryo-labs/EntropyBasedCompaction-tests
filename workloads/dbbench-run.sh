@@ -21,7 +21,7 @@ cd "$output_dir"
 	--threads=$threads \
 	--writes=$(($writes / $threads)) \
 	--statistics=true \
-	--report_file=\"$output_dir\"/report.csv \
+	--report_file=report.csv \
 	--report_interval_seconds=1 \
 	--histogram=true \
-	> \"$output_dir\"/stdout.txt"
+	> stdout.txt"

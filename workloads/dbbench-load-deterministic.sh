@@ -5,6 +5,6 @@ if [ ! "$2" ]; then
 fi
 output_dir=$1
 command=$2
-$(dirname "$0")/dbbench-load.sh "$output_dir" $command \
+$(dirname "$0")/dbbench-load-generic.sh "$output_dir" $command \
 	--benchmarks=filluniquerandomdeterministic,stats \
 	--disable_auto_compactions=true

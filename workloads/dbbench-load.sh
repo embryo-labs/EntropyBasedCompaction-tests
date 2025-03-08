@@ -1,14 +1,9 @@
 #!/usr/bin/env sh
-workspace=$(realpath "$(dirname $0)"/../..)
-output_dir="$workspace/data/rocksdb"
-mkdir -p "$output_dir"
-if [ "$(ls -A "$output_dir")" ]; then
-	echo "$output_dir" is not empty!
+if [ ! "$2" ]; then
+	echo Usage: "$0" output-dir command
 	exit 1
 fi
-rm "$workspace/testdb"/*
-$(dirname $0)/dbbench.sh "$output_dir" \
-	--benchmarks=filluniquerandomdeterministic,stats \
-	--disable_auto_compactions=true \
-	> "$output_dir"/load-stdout.txt
-$(dirname $0)/dbbench-levelstats.sh
+output_dir=$1
+command=$2
+$(dirname "$0")/dbbench-load-generic.sh "$output_dir" $command \
+	--benchmarks=filluniquerandom,stats

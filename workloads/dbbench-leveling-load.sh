@@ -1,4 +1,6 @@
 #!/usr/bin/env sh
-workspace=$(realpath "$(dirname $0)"/../..)
-output_dir="$workspace/data/rocksdb"
-$(dirname "$0")/dbbench-load-deterministic.sh "$output_dir" "$(dirname $0)/dbbench-leveling.sh"
+if [ ! "$1" ]; then
+	echo Usage: "$0" output-dir
+	exit 1
+fi
+$(dirname "$0")/dbbench-load-deterministic.sh "$1" "$(dirname $0)/dbbench-leveling.sh"
