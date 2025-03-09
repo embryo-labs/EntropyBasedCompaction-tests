@@ -15,4 +15,3 @@ if [ "$(ls -A "$output_dir")" ]; then
 fi
 rm "$workspace/testdb"/*
 $command "$output_dir" "$@" > "$output_dir"/load-stdout.txt
-$(dirname $0)/dbbench-levelstats.sh "$output_dir"
