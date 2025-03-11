@@ -14,5 +14,7 @@ if [ "$(ls -A "$output_dir")" ]; then
 	exit 1
 fi
 rm "$workspace/testdb"/*
-$command "$output_dir" "$@" > "$output_dir"/load-stdout.txt || exit $?
+$command "$output_dir" "$@" > "$output_dir"/load-stdout.txt
+ret=$?
 mv "$workspace"/testdb/LOG "$output_dir"/load-LOG
+return $ret

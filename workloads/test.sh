@@ -8,3 +8,4 @@ test_policy() {
 }
 test_policy leveling 40 400
 test_policy universal 40 400
+test_policy lazy-leveling 40 400
