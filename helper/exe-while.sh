@@ -1,6 +1,6 @@
 #!/usr/bin/env sh
 if [ ! "$2" ]; then
-	echo Usage: $0 output-dir command [[args]] 2>&1
+	echo Usage: $0 output-dir command args... 1>&2
 	exit 1
 fi
 

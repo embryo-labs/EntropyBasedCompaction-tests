@@ -1,6 +1,6 @@
 #!/usr/bin/env sh
 if [ $# -lt 4 ]; then
-	echo Usage: $0 output-dir command benchmark_write_rate_limit rate_limiter_bytes_per_sec [args...]
+	echo Usage: $0 output-dir command benchmark_write_rate_limit rate_limiter_bytes_per_sec args...
 	exit 1
 fi
 output_dir=$1
