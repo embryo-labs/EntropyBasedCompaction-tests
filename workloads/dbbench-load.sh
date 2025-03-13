@@ -1,9 +1,23 @@
 #!/usr/bin/env sh
 if [ ! "$2" ]; then
-	echo Usage: "$0" output-dir command
+	echo Usage: "$0" output-dir command args...
 	exit 1
 fi
 output_dir=$1
-command=$2
-$(dirname "$0")/dbbench-load-generic.sh "$output_dir" $command \
-	--benchmarks=filluniquerandom,stats
+shift
+command=$1
+shift
+workspace=$(realpath "$(dirname $0)"/../..)
+mkdir -p "$output_dir"
+if [ "$(ls -A "$output_dir")" ]; then
+	echo "$output_dir" is not empty!
+	exit 1
+fi
+rm "$workspace/testdb"/*
+$command "$output_dir" \
+	--benchmarks=filluniquerandomdeterministic,compactall,stats \
+	--disable_auto_compactions=true \
+	"$@" > "$output_dir"/load-stdout.txt
+ret=$?
+mv "$workspace"/testdb/LOG "$output_dir"/load-LOG
+return $ret
