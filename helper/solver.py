@@ -1,58 +1,52 @@
 #!/usr/bin/env python3
+import argparse
+parser = argparse.ArgumentParser()
+parser.add_argument('-s', type=int)
+parser.add_argument('-k', type=float, required=True)
+parser.add_argument('-R', type=int, required=True)
+parser.add_argument('-C', type=int, required=True)
+parser.add_argument('--no-global-compaction', action='store_true')
+parser.add_argument('--print-a', action='store_true')
+parser.add_argument('--print-path', action='store_true')
+parser.add_argument('--export-policy', nargs='?', default=False)
+args = parser.parse_args()
+
+s = args.s
+k = args.k
+R = args.R
+C = args.C
+no_global_compaction = args.no_global_compaction
+print_a = args.print_a
+print_path = args.print_path
+export_policy = args.export_policy
+
 import sys
-import getopt
-def print_help():
-    print(sys.argv[0] + ' --k= --R= --C= --print-a --print-path --export-policy=')
-
-try:
-    opts, args = getopt.getopt(sys.argv[1:], 'h', ['k=', 'R=', 'C=', 'no-global-compaction', 'print-a', 'print-path', 'export-policy='])
-except getopt.GetoptError:
-    print_help()
-    exit(1)
-
-no_global_compaction = False
-print_a = False
-print_path = False
-export_policy = None
-for opt, arg in opts:
-    if opt == '-h':
-        print_help()
-        exit()
-    elif opt == '--k':
-        k = float(arg)
-    elif opt == '--R':
-        R = int(arg)
-    elif opt == '--C':
-        C = float(arg)
-    elif opt == '--no-global-compaction':
-        no_global_compaction = True
-    elif opt == '--print-a':
-        print_a = True
-    elif opt == '--print-path':
-        print_path = True
-    elif opt == '--export-policy':
-        export_policy = arg
-    else:
-        print('Unrecognized option: ' + opt)
-        exit(1)
-
-if export_policy is not None:
-    if export_policy != "":
-        export_policy = open(export_policy, mode='w')
-    else:
+if export_policy is False:
+    export_policy = None
+else:
+    if export_policy is None:
         export_policy = sys.stdout
+    else:
+        export_policy = open(export_policy, mode='w')
+
+def export_policy_begin():
+    print('{', file=export_policy)
+    if s is not None:
+        print('''\
+    "s": %d,''' %s, file=export_policy)
+    print('''\
+    "R": %d,
+    "rounds": [
+        {
+            "n": 0,
+            "steps": [''' %R, file=export_policy)
 
 def no_answer():
     print('No answer')
     if export_policy:
+        export_policy_begin()
         # Don't do any compaction except global compaction
         print(f'''\
-{{
-    "R": {R},
-    "rounds": [
-        {{
-            "n": 0,
-            "steps": [
                 {{"total": {R}, "compact": {R}}}
             ]
         }},
@@ -287,6 +281,12 @@ else:
 if print_a:
     print(a)
 
+def print_status(lst):
+    if s is None:
+        print(lst)
+    else:
+        print([s * x for x in lst])
+
 # e: the number of sorted runs before the first phase
 def print_first_phase_merge(lst, e, x):
     assert sum(lst[e:]) == x
@@ -297,19 +297,19 @@ def print_first_phase_merge(lst, e, x):
         del lst[e:]
         lst.append(x)
         if print_path:
-            print(lst)
+            print_status(lst)
 
 def print_f_path(lst, a, b, c):
     if c == 0:
         for i in range(0, b):
             lst.append(1)
             if print_path:
-                print(lst)
+                print_status(lst)
         return
     if b == 0 and c == 1:
         lst.append(1)
         if print_path:
-            print(lst)
+            print_status(lst)
         return
     x = mem_f[(a, b, c)].x
     if x == 1:
@@ -321,7 +321,7 @@ def print_f_path(lst, a, b, c):
         for i in range(0, x):
             lst.append(1)
             if print_path:
-                print(lst)
+                print_status(lst)
         new_b = b - x + delta_b
         new_c = c - delta_b
     else:
@@ -373,12 +373,12 @@ def print_h_path(lst, a, a_n, b, c):
         for i in range(0, b):
             lst.append(1)
             if print_path:
-                print(lst)
+                print_status(lst)
         return
     if b == 0 and c == 1:
         lst.append(1)
         if print_path:
-            print(lst)
+            print_status(lst)
         return
     mem = mem_h[(a, a_n, b, c)]
     x = mem.x
@@ -392,7 +392,7 @@ def print_h_path(lst, a, a_n, b, c):
         for i in range(0, x):
             lst.append(1)
             if print_path:
-                print(lst)
+                print_status(lst)
         new_b = b - x + delta_b
         new_c = c - delta_b
     else:
@@ -404,13 +404,7 @@ def print_h_path(lst, a, a_n, b, c):
 
 if print_path or export_policy is not None:
     if export_policy is not None:
-        print('''\
-{
-    "R": %d,
-    "rounds": [
-        {
-            "n": 0,
-            "steps": [''' %R, file=export_policy)
+        export_policy_begin()
     print_f_path([], a, 0, R)
     result = mem_f[(a, 0, R)]
     n = result.n
@@ -420,9 +414,11 @@ if print_path or export_policy is not None:
             ]
         }''' %(n, n), end='', file=export_policy)
     if no_global_compaction:
-        print(file=export_policy)
+        if export_policy is not None:
+            print(file=export_policy)
     else:
-        print(',', file=export_policy)
+        if export_policy is not None:
+            print(',', file=export_policy)
         print_g_path(a, n)
     if export_policy is not None:
         print('''\

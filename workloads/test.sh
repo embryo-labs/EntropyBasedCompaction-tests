@@ -1,5 +1,6 @@
 #!/usr/bin/env sh
 test_rocksdb() {
+	../helper/build.sh
 	output_dir=../../data/bench-${2}MB-s-compaction-${3}MB-s/$1
 	"$(dirname $0)"/dbbench-$1-load.sh "$output_dir" || exit $?
 	"$(dirname $0)"/dbbench-$1-run.sh "$output_dir" ${2}MB ${3}MB
@@ -7,6 +8,7 @@ test_rocksdb() {
 	"$(dirname $0)"/../plot/dbbench-report.py "$output_dir"
 }
 test_custom() {
+	../helper/build.sh
 	output_dir=../../data/bench-${2}MB-s-compaction-${3}MB-s/$1
 	"$(dirname $0)"/dbbench-load-L1.sh "$output_dir" || exit $?
 	"$(dirname $0)"/dbbench-$1-run.sh "$output_dir" ${2}MB ${3}MB

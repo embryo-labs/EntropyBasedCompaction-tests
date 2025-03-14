@@ -13,7 +13,7 @@ k=$(echo "1 / ($rate_limiter_bytes_per_sec / $benchmark_write_rate_limit - 2)" |
 policy_file=$(mktemp)
 trap "exit 1" INT TERM
 trap "rm $policy_file" EXIT
-$(dirname $0)/../helper/solver.py --k=$k --R=25 --C=5 --export-policy="$policy_file"
+$(dirname $0)/../helper/solver.py -s=4 -k=$k -R=25 -C=5 --export-policy="$policy_file"
 $(dirname $0)/dbbench-run.sh "$output_dir" "$(dirname $0)"/dbbench.sh "$benchmark_write_rate_limit" "$rate_limiter_bytes_per_sec" \
 	--compaction_style=1 \
 	--universal_compaction_policy="steady" \
