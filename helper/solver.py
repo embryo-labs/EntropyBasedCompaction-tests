@@ -29,22 +29,26 @@ else:
     else:
         export_policy = open(export_policy, mode='w')
 
-def export_policy_begin():
+def export_policy_begin(a):
     print('{', file=export_policy)
     if s is not None:
         print('''\
     "s": %d,''' %s, file=export_policy)
     print('''\
     "R": %d,
+    "a": %d,
     "rounds": [
         {
             "n": 0,
-            "steps": [''' %R, file=export_policy)
+            "steps": [''' %(R, a), file=export_policy)
 
 def no_answer():
     print('No answer')
     if export_policy:
-        export_policy_begin()
+        a = 2 * R
+        if s is not None:
+            a += s
+        export_policy_begin(a)
         # Don't do any compaction except global compaction
         print(f'''\
                 {{"total": {R}, "compact": {R}}}
@@ -278,8 +282,13 @@ while a <= max_a:
     a += 1
 else:
     no_answer()
+
+if s is None:
+    a_ans = a
+else:
+    a_ans = s + a
 if print_a:
-    print(a)
+    print(a_ans)
 
 def print_status(lst):
     if s is None:
@@ -404,7 +413,7 @@ def print_h_path(lst, a, a_n, b, c):
 
 if print_path or export_policy is not None:
     if export_policy is not None:
-        export_policy_begin()
+        export_policy_begin(a_ans)
     print_f_path([], a, 0, R)
     result = mem_f[(a, 0, R)]
     n = result.n

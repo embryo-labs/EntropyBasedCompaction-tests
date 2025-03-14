@@ -14,9 +14,11 @@ policy_file=$(mktemp)
 trap "exit 1" INT TERM
 trap "rm $policy_file" EXIT
 $(dirname $0)/../helper/solver.py -s=4 -k=$k -R=25 -C=5 --export-policy="$policy_file"
+a=$(jq -r ".a" < "$policy_file")
 $(dirname $0)/dbbench-run.sh "$output_dir" "$(dirname $0)"/dbbench.sh "$benchmark_write_rate_limit" "$rate_limiter_bytes_per_sec" \
 	--compaction_style=1 \
 	--universal_compaction_policy="steady" \
 	--steady_policy_file="$policy_file" \
 	--num_levels=2 \
+	--level0_slowdown_writes_trigger="$a" \
 	"$@"
