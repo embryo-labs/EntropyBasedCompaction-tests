@@ -5,8 +5,7 @@ if [ ! "$1" ]; then
 fi
 output_dir=$1
 shift
-memtable_size=$(humanfriendly --parse-size=200MB)
-s=4
+. $(dirname $0)/args.sh
 $(dirname $0)/dbbench.sh "$output_dir" \
 	--num_levels=5 \
 	--level0_file_num_compaction_trigger=$s \

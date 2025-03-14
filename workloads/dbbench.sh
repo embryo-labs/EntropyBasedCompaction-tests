@@ -5,7 +5,7 @@ if [ ! "$1" ]; then
 fi
 output_dir="$1"
 shift
-memtable_size=$(humanfriendly --parse-size=200MB)
+. $(dirname $0)/args.sh
 workspace=$(realpath "$(dirname $0)"/../..)
 ulimit -n 100000
 # Dump core when crash
