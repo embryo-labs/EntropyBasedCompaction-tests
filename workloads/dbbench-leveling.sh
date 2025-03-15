@@ -7,8 +7,8 @@ output_dir=$1
 shift
 . $(dirname $0)/args.sh
 $(dirname $0)/dbbench.sh "$output_dir" \
-	--num_levels=5 \
+	--num_levels=$leveling_num_levels \
 	--level0_file_num_compaction_trigger=$s \
 	--max_bytes_for_level_base=$(($memtable_size * $s)) \
-	--max_bytes_for_level_multiplier=5 \
+	--max_bytes_for_level_multiplier=$C \
 	"$@"
