@@ -12,18 +12,18 @@ shift
 rate_limiter_bytes_per_sec=$(humanfriendly --parse-size="$1")
 shift
 threads=16
-writes=100000000
+writes=200000000
 workspace=$(realpath "$(dirname $0)"/../..)
 mkdir -p "$output_dir"
 cd "$output_dir"
 "$workspace"/tests/helper/exe-while.sh . "$command" . \
 	--use_existing_db=true \
-	--benchmarks=overwrite,overwrite,resetstats,overwrite,overwrite,overwrite,stats \
+	--benchmarks=overwrite,resetstats,overwrite,stats \
 	--soft_pending_compaction_bytes_limit=$((20 * 1000 * 1000 * 1000)) \
 	--benchmark_write_rate_limit=$benchmark_write_rate_limit \
 	--rate_limiter_bytes_per_sec=$rate_limiter_bytes_per_sec \
 	--threads=$threads \
-	--writes=$(($writes / $threads / 5)) \
+	--writes=$(($writes / $threads / 2)) \
 	--statistics=true \
 	--report_file=report.csv \
 	--report_interval_seconds=1 \
