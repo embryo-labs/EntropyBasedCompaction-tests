@@ -26,5 +26,5 @@ $workspace/rocksdb/build/db_bench \
 	--write_buffer_size=$memtable_size \
 	--target_file_size_base=$memtable_size \
 	--db="$workspace/testdb" \
-	--num=100000000 \
+	--num=$num_unique_keys \
 	"$@"

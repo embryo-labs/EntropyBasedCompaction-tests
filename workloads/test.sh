@@ -16,10 +16,11 @@ test_custom() {
 	"$(dirname $0)"/../plot/dbbench-report.py "$output_dir"
 }
 test_rocksdb leveling 40 400
-test_rocksdb leveling 100 400
 test_rocksdb universal 40 400
-test_rocksdb universal 100 400
 test_custom lazy-leveling 40 400
-test_custom lazy-leveling 100 400
 test_custom steady 40 400
-test_custom steady 100 400
+
+test_rocksdb leveling 50 200
+test_rocksdb universal 50 200
+test_custom lazy-leveling 50 200
+test_custom steady 50 200
