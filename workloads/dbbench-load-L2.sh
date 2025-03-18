@@ -4,5 +4,5 @@ if [ ! "$1" ]; then
 	exit 1
 fi
 $(dirname $0)/dbbench-load.sh "$1" "$(dirname $0)"/dbbench.sh \
-	--num_levels=2 \
+	--num_levels=3 \
 	"$@"

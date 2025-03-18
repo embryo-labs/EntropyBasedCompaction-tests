@@ -20,6 +20,6 @@ $(dirname $0)/dbbench-run.sh "$output_dir" "$(dirname $0)"/dbbench.sh "$benchmar
 	--compaction_style=1 \
 	--universal_compaction_policy="steady" \
 	--steady_policy_file="$policy_file" \
-	--num_levels=2 \
+	--num_levels=3 \
 	--level0_slowdown_writes_trigger="$a" \
 	"$@"

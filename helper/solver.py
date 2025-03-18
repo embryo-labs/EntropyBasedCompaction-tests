@@ -148,48 +148,57 @@ class MemG:
     x: int
     a_n: int
 mem_g = {}
-def g(a, n):
-    m = R * C
+def g(a, n, ns=set()):
     if a < n:
         return None
-    assert n > 1
-    if math.floor(k * m) + n <= a:
-        b = math.ceil(k * m)
-        result = f(a-1, b, R-b)
-        if result is None:
-            return None
-        else:
-            return result.n
     if (a, n) in mem_g:
         mem = mem_g[(a, n)]
     else:
-        mem = g_calc(a, n)
+        mem = g_calc(a, n, ns)
         mem_g[(a, n)] = mem
     if mem is None:
         return None
     else:
         return mem.n
-def g_calc(a, n):
+def g_calc(a, n, ns):
+    assert n > 1
     m = R * C
-    for x in range(math.ceil(k * m), R + 1):
-        for a_n in range(1, a - n + 1):
-            first_phase = h(a - n, a_n, 0, x)
+    if n + math.floor(R * k) > a:
+        return None
+    best = None
+    b = math.ceil(R * k)
+    for x in range(b + math.floor(k * m), R + 1):
+        for a_n in range(1, a):
+            first_phase = h(a - 1, a_n, b, x-b)
             if first_phase is None:
                 continue
-            if math.floor((first_phase.m + m) * k) > x:
+            if b + math.floor((first_phase.m + m) * k) > x:
                 continue
             if x < R:
-                b = math.ceil(k * x)
-                second_phase = f(a-1, b, R-x-b)
+                new_b = math.ceil(k * x)
+                second_phase = f(a-1, new_b, R-x-new_b)
                 if second_phase is None:
                     continue
                 new_n = 1 + second_phase.n
             else:
                 new_n = first_phase.n
-            if new_n != n and g(a, new_n) is None:
-                continue
-            return MemG(n=new_n, x=x, a_n=a_n)
-    return None
+            if best is not None:
+                if best.n <= new_n:
+                    continue
+                if best.n == n:
+                    assert best.x <= x
+                    if best.a_n <= a_n:
+                        continue
+            best = MemG(n=new_n, x=x, a_n=a_n)
+    if best is None:
+        return None
+    if best.n != n and best.n not in ns:
+        ns.add(best.n)
+        result = g(a, best.n, ns)
+        ns.remove(best.n)
+        if result is None:
+            return None
+    return best
 
 @dataclass
 class MemH:
@@ -223,7 +232,7 @@ def h(a, a_n, b, c):
         return mem.as_result()
 def h_calc(a, a_n, b, c):
     best = None
-    for x in range(1, c):
+    for x in range(1, b + c):
         for a_n1 in range(1, a + 1):
             if x == 1:
                 delta_b = 0
@@ -341,7 +350,6 @@ def print_f_path(lst, a, b, c):
     print_f_path(lst, a - 1, new_b, new_c)
 
 def print_g_path(a, n):
-    m = R * C
     lst = []
     assert a >= n
     assert n > 1
@@ -350,18 +358,15 @@ def print_g_path(a, n):
         {
             "n": %d,
             "steps": [''' %n, file=export_policy)
-    if math.floor(k * m) + n <= a:
-        b = math.ceil(k * m)
-        print_f_path(lst, a-1, b, R-b)
-    else:
-        mem = mem_g[(a, n)]
-        x = mem.x
-        a_n = mem.a_n
-        print_h_path(lst, a - n, a_n, 0, x)
-        if x < R:
-            print_first_phase_merge(lst, 0, x)
-            b = math.ceil(k * x)
-            print_f_path(lst, a-1, b, R-x-b)
+    b = math.ceil(R * k)
+    mem = mem_g[(a, n)]
+    x = mem.x
+    a_n = mem.a_n
+    print_h_path(lst, a - 1, a_n, b, x-b)
+    if x < R:
+        print_first_phase_merge(lst, 0, x)
+        b = math.ceil(k * x)
+        print_f_path(lst, a-1, b, R-x-b)
     if export_policy is not None:
         print('''\
                 {"total": %d, "compact": %d}
