@@ -25,12 +25,11 @@ mpl.rcParams.update({
 })
 plt.rcParams['axes.unicode_minus'] = False
 
-fig = plt.figure(dpi = 300, figsize = (cm_to_inch(SINGLE_COL_WIDTH), cm_to_inch(5)), constrained_layout=True)
-
 report = pd.read_table(os.path.join(data_dir, 'report.csv'), sep=',')
 # It seems that the ops of the first several seconds is not limited.
 report = report.iloc[20:]
 
+fig = plt.figure(dpi = 300, figsize = (cm_to_inch(SINGLE_COL_WIDTH), cm_to_inch(5)), constrained_layout=True)
 ax = plt.gca()
 formatter = ScalarFormatter(useMathText=True)
 formatter.set_powerlimits((-3, 4))
@@ -47,6 +46,21 @@ plot_dir = data_dir + '/plot'
 if not os.path.exists(plot_dir):
 	os.system('mkdir -p ' + plot_dir)
 pdf_path = plot_dir + '/ops.pdf'
+plt.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01)
+print('Plot saved to ' + pdf_path)
+if 'DISPLAY' in os.environ:
+	plt.show(block=False)
+
+fig = plt.figure(dpi = 300, figsize = (cm_to_inch(SINGLE_COL_WIDTH), cm_to_inch(5)), constrained_layout=True)
+plt.plot(report['secs_elapsed'], report['num-visible-sorted-runs'])
+plt.plot(report['secs_elapsed'], report['rocksdb.num-merging-sorted-runs'])
+plt.xticks(fontsize=8)
+plt.yticks(fontsize=8)
+ax.set_ylim(bottom=0)
+plt.xlabel('Time (Seconds)', fontsize=8)
+plt.ylabel('# of sorted runs', fontsize=8)
+plt.legend(['Total', 'Merging'], fontsize=8)
+pdf_path = os.path.join(plot_dir, 'num-sorted-runs.pdf')
 plt.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01)
 print('Plot saved to ' + pdf_path)
 if 'DISPLAY' in os.environ:
