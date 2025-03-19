@@ -6,5 +6,5 @@ fi
 $(dirname $0)/dbbench-run.sh "$1" "$(dirname $0)"/dbbench.sh "$2" "$3" \
 	--compaction_style=1 \
 	--universal_compaction_policy="lazy-leveling" \
-	--num_levels=2 \
+	--num_levels=3 \
 	"$@"
