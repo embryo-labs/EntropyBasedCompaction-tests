@@ -16,7 +16,7 @@ test_rocksdb() {
 		--benchmarks=$benchmark,resetstats,$benchmark,stats \
 		"$@"
 	"$(dirname $0)"/../helper/data-rocksdb.sh "$output_dir"
-	"$(dirname $0)"/../plot/dbbench-report.py "$output_dir"
+	"$(dirname $0)"/../helper/plot-rocksdb.sh "$output_dir"
 }
 test_custom() {
 	version=$1
@@ -35,7 +35,7 @@ test_custom() {
 		--benchmarks=$benchmark,resetstats,$benchmark,stats \
 		"$@"
 	"$(dirname $0)"/../helper/data-rocksdb.sh "$output_dir"
-	"$(dirname $0)"/../plot/dbbench-report.py "$output_dir"
+	"$(dirname $0)"/../helper/plot-rocksdb.sh "$output_dir"
 }
 
 test_rocksdb leveling seekrandomwhilewriting 20 200
