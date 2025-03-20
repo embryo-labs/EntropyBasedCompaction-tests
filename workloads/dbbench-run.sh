@@ -18,7 +18,6 @@ mkdir -p "$output_dir"
 cd "$output_dir"
 "$workspace"/tests/helper/exe-while.sh . "$command" . \
 	--use_existing_db=true \
-	--benchmarks=overwrite,resetstats,overwrite,stats \
 	--soft_pending_compaction_bytes_limit=$(( \
 		unique_bytes / (C * R) * ( \
 			2 + (leveling_num_levels - 2) * (C + 1) \
@@ -27,7 +26,8 @@ cd "$output_dir"
 	--benchmark_write_rate_limit=$benchmark_write_rate_limit \
 	--rate_limiter_bytes_per_sec=$rate_limiter_bytes_per_sec \
 	--threads=$threads \
-	--writes=$((num_unique_keys / threads)) \
+	--writes=$num_unique_keys \
+	--finish_after_writes=1 \
 	--statistics=true \
 	--report_file=report.csv \
 	--report_interval_seconds=1 \
