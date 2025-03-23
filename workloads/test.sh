@@ -38,7 +38,17 @@ test_custom() {
 	"$(dirname $0)"/../helper/plot-rocksdb.sh "$output_dir"
 }
 
-test_rocksdb leveling seekrandomwhilewriting 20 200
-test_rocksdb universal seekrandomwhilewriting 20 200
-test_custom lazy-leveling seekrandomwhilewriting 20 200
-test_custom steady seekrandomwhilewriting 20 200
+test_rocksdb leveling seekrandomwhilewriting 1 10
+test_rocksdb universal seekrandomwhilewriting 1 10
+test_custom lazy-leveling seekrandomwhilewriting 1 10
+test_custom steady seekrandomwhilewriting 1 10
+
+test_rocksdb leveling readwhilewriting 1 10
+test_rocksdb universal readwhilewriting 1 10
+test_custom lazy-leveling readwhilewriting 1 10
+test_custom steady readwhilewriting 1 10
+
+test_rocksdb leveling seekrandomwhilewriting 10 100
+test_rocksdb universal seekrandomwhilewriting 10 100
+test_custom lazy-leveling seekrandomwhilewriting 10 100
+test_custom steady seekrandomwhilewriting 10 100

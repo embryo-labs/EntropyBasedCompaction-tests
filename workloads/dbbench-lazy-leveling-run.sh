@@ -9,9 +9,27 @@ benchmark_write_rate_limit=$(humanfriendly --parse-size="$1")
 shift
 rate_limiter_bytes_per_sec=$(humanfriendly --parse-size="$1")
 shift
+
+. $(dirname $0)/args.sh
+if [ "$s" -eq 1 ]; then
+	lazy_leveling_num_sorted_runs=""
+else
+	lazy_leveling_num_sorted_runs="$s"
+fi
+size=1
+while [ "$size" -lt "$R" ]; do
+	size=$((size * C))
+	if [ "$lazy_leveling_num_sorted_runs" ]; then
+		lazy_leveling_num_sorted_runs="$lazy_leveling_num_sorted_runs,$C"
+	else
+		lazy_leveling_num_sorted_runs="$C"
+	fi
+done
+
 $(dirname $0)/dbbench-run.sh "$output_dir" "$(dirname $0)"/dbbench.sh \
 	"$benchmark_write_rate_limit" "$rate_limiter_bytes_per_sec" \
 	--compaction_style=1 \
 	--universal_compaction_policy="lazy-leveling" \
+	--lazy_leveling_num_sorted_runs="$lazy_leveling_num_sorted_runs" \
 	--num_levels=3 \
 	"$@"

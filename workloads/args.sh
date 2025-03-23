@@ -1,6 +1,6 @@
 unique_bytes=$(humanfriendly --parse-size=10GB)
 
-s=5
+s=1
 R=27
 C=3
 
