@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-
 import sys
 if len(sys.argv) != 2:
 	print('Usage: ' + sys.argv[0] + ' data-dir')
@@ -28,39 +27,6 @@ plt.rcParams['axes.unicode_minus'] = False
 plot_dir = data_dir + '/plot'
 if not os.path.exists(plot_dir):
 	os.system('mkdir -p ' + plot_dir)
-
-operations = [
-	{
-		'path': 'write',
-		'name': 'Writes',
-	},
-	{
-		'path': 'seek',
-		'name': 'Seeks',
-	},
-	{
-		'path': 'read',
-		'name': 'Reads',
-	}
-]
-for op in operations:
-	count = os.path.join(data_dir, op['path'] + '-count')
-	if not os.path.exists(count):
-		continue
-	count = pd.read_table(count, sep=' ')
-	fig = plt.figure(dpi = 300, figsize = (cm_to_inch(SINGLE_COL_WIDTH), cm_to_inch(5)), constrained_layout=True)
-	ax = plt.gca()
-	plt.plot(count['secs_elapsed'], count['count'], linewidth=0.5)
-	plt.xticks(fontsize=8)
-	plt.yticks(fontsize=8)
-	ax.set_ylim(bottom=0)
-	plt.xlabel('Time (Seconds)', fontsize=8)
-	plt.ylabel(op['name'] + ' per second')
-	pdf_path = os.path.join(plot_dir, op['path'] + '.pdf')
-	plt.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01)
-	print('Plot saved to ' + pdf_path)
-	if 'DISPLAY' in os.environ:
-		plt.show(block=False)
 
 report = pd.read_table(os.path.join(data_dir, 'report.csv'), sep=',')
 # It seems that the ops of the first several seconds is not limited.

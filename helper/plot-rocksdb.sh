@@ -5,3 +5,4 @@ if [ ! "$1" ]; then
 fi
 $(dirname $0)/../plot/iostat.py "$1" 1
 $(dirname $0)/../plot/dbbench-report.py "$1"
+$(dirname $0)/../plot/op-count-time.py "$1"
