@@ -43,10 +43,10 @@ operations = [
 	}
 ]
 for op in operations:
-	stat = os.path.join(data_dir, op['path'] + '-count-time')
+	stat = os.path.join(data_dir, op['path'] + '-count-time.csv')
 	if not os.path.exists(stat):
 		continue
-	stat = pd.read_table(stat, sep=' ')
+	stat = pd.read_csv(stat)
 
 	fig = plt.figure(dpi = 300, figsize = (cm_to_inch(SINGLE_COL_WIDTH), cm_to_inch(5)), constrained_layout=True)
 	ax = plt.gca()
