@@ -42,19 +42,22 @@ test_custom() {
 	"$(dirname $0)"/../helper/plot-rocksdb.sh "$output_dir"
 }
 
-test_rocksdb leveling seekrandomwhilewriting 1 10
-test_rocksdb universal seekrandomwhilewriting 1 10
-test_custom lazy-leveling seekrandomwhilewriting 1 10
-test_custom steady seekrandomwhilewriting 1 10
-
 test_rocksdb leveling readwhilewriting 1 10
 test_rocksdb universal readwhilewriting 1 10
 test_custom lazy-leveling readwhilewriting 1 10
 test_custom steady readwhilewriting 1 10
 
-test_custom steady readwhilewriting 10 100 "-read-1e4" --benchmark_read_rate_limit=10000
+test_custom lazy-leveling seekrandomwhilewriting 1 10 "-threads-16" --threads=16
+test_custom lazy-leveling seekrandomwhilewriting 1 10 "-seek-5e2" --benchmark_read_rate_limit=500
 
-test_rocksdb leveling seekrandomwhilewriting 10 100
-test_rocksdb universal seekrandomwhilewriting 10 100
-test_custom lazy-leveling seekrandomwhilewriting 10 100
-test_custom steady seekrandomwhilewriting 10 100
+suffix="-threads-16"
+args="--threads=16"
+
+write=1
+while [ "$write" -le 20 ]; do
+	test_rocksdb leveling seekrandomwhilewriting $write 100 "$suffix" $args
+	test_rocksdb universal seekrandomwhilewriting $write 100 "$suffix" $args
+	test_custom lazy-leveling seekrandomwhilewriting $write 100 "$suffix" $args
+	test_custom steady seekrandomwhilewriting $write 100 "$suffix" $args
+	write=$((write + 1))
+done

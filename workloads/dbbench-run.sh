@@ -12,7 +12,6 @@ shift
 rate_limiter_bytes_per_sec=$(humanfriendly --parse-size="$1")
 shift
 . $(dirname $0)/args.sh
-threads=16
 workspace=$(realpath "$(dirname $0)"/../..)
 mkdir -p "$output_dir"
 cd "$output_dir"
@@ -25,7 +24,6 @@ cd "$output_dir"
 	)) \
 	--benchmark_write_rate_limit=$benchmark_write_rate_limit \
 	--rate_limiter_bytes_per_sec=$rate_limiter_bytes_per_sec \
-	--threads=$threads \
 	--writes=$num_unique_keys \
 	--finish_after_writes=1 \
 	--statistics=true \
