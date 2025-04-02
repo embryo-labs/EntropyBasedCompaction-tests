@@ -1,6 +1,6 @@
 #!/usr/bin/env sh
-if [ $# -lt 4 ]; then
-	echo Usage: $0 output-dir command benchmark_write_rate_limit rate_limiter_bytes_per_sec args...
+if [ $# -lt 3 ]; then
+	echo Usage: $0 output-dir command benchmark_write_rate_limit args...
 	exit 1
 fi
 output_dir=$1
@@ -8,8 +8,6 @@ shift
 command=$(realpath "$1")
 shift
 benchmark_write_rate_limit=$(humanfriendly --parse-size="$1")
-shift
-rate_limiter_bytes_per_sec=$(humanfriendly --parse-size="$1")
 shift
 . $(dirname $0)/args.sh
 workspace=$(realpath "$(dirname $0)"/../..)
@@ -23,7 +21,6 @@ cd "$output_dir"
 		) * 3/2 \
 	)) \
 	--benchmark_write_rate_limit=$benchmark_write_rate_limit \
-	--rate_limiter_bytes_per_sec=$rate_limiter_bytes_per_sec \
 	--writes=$num_unique_keys \
 	--finish_after_writes=1 \
 	--statistics=true \
