@@ -72,6 +72,13 @@ with_compaction_limit_MB_s() (
 test_rocksdb "-threads-16" leveling seekrandomwhilewriting 10 --threads=16
 with_compaction_limit_MB_s 100 test_rocksdb "-threads-16" leveling seekrandomwhilewriting 10 --threads=16
 
+seek=1000
+while [ "$seek" -le 20000 ]; do
+	test_rocksdb "-threads-16-seek-$seek" leveling queuedseekrandomwhilewriting 10 --threads=16 --benchmark_read_rate_limit=$seek
+	with_compaction_limit_MB_s 100 test_rocksdb "-threads-16-seek-$seek" leveling queuedseekrandomwhilewriting 10 --threads=16 --benchmark_read_rate_limit=$seek
+	seek=$((seek + 1000))
+done
+
 bench=seekrandomwhilewriting
 suffix="-threads-16"
 args="--threads=16"
