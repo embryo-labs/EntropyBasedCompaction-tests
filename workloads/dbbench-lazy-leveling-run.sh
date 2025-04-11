@@ -26,8 +26,8 @@ done
 
 $(dirname $0)/dbbench-run.sh "$output_dir" "$(dirname $0)"/dbbench.sh \
 	"$benchmark_write_rate_limit" \
-	--compaction_style=1 \
-	--universal_compaction_policy="lazy-leveling" \
+	--compaction_style=3 \
+	--compaction_policy="lazy-leveling" \
 	--lazy_leveling_num_sorted_runs="$lazy_leveling_num_sorted_runs" \
 	--num_levels=3 \
 	"$@"
