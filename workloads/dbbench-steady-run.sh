@@ -21,7 +21,7 @@ echo ./solver.py -s=$s -k=$k -R=$R -C=$C --print-path > /tmp/solve.sh
 $(dirname $0)/../helper/solver.py -s=$s -k=$k -R=$R -C=$C --print-path > /tmp/policy-path
 $(dirname $0)/dbbench-run.sh "$output_dir" "$(dirname $0)"/dbbench.sh "$benchmark_write_rate_limit" \
 	--rate_limiter_bytes_per_sec="$rate_limiter_bytes_per_sec" \
-	--compaction_style=3 \
+	--compaction_style=4 \
 	--compaction_policy="steady" \
 	--steady_policy_file="$policy_file" \
 	--num_levels=3 \
