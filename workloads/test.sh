@@ -19,17 +19,19 @@ test_rocksdb() (
 	"$(dirname $0)"/../helper/plot-rocksdb.sh "$output_dir"
 )
 
-test_lazy_leveling() (
+test_three_levels() (
 	suffix=$1
+	shift
+	version=$1
 	shift
 	benchmark=$1
 	shift
 	write_MB_s=$1
 	shift
 	../helper/build.sh
-	output_dir=../../data/$benchmark-${write_MB_s}MB-s$suffix/lazy-leveling
+	output_dir=../../data/$benchmark-${write_MB_s}MB-s$suffix/$version
 	"$(dirname $0)"/dbbench-load-L2.sh "$output_dir" || exit $?
-	"$(dirname $0)"/dbbench-lazy-leveling-run.sh "$output_dir" \
+	"$(dirname $0)"/dbbench-$version-run.sh "$output_dir" \
 		${write_MB_s}MB \
 		--benchmarks=$benchmark,resetstats,$benchmark,stats \
 		"$@"
@@ -87,7 +89,8 @@ write=1
 while [ "$write" -le 20 ]; do
 	with_compaction_limit_MB_s 100 test_rocksdb "$suffix" leveling "$bench" $write $args
 	with_compaction_limit_MB_s 100 test_rocksdb "$suffix" universal "$bench" $write $args
-	with_compaction_limit_MB_s 100 test_lazy_leveling "$suffix" "$bench" $write $args
+	with_compaction_limit_MB_s 100 test_three_levels "$suffix" lazy-leveling "$bench" $write $args
+	with_compaction_limit_MB_s 100 test_three_levels "$suffix" dynamic-tiering "$bench" $write $args
 	test_steady "$suffix" "$bench" $write 100 $args
 	write=$((write + 1))
 done
