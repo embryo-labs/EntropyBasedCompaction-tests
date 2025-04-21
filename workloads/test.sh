@@ -117,7 +117,7 @@ test_three_levels() (
 	num_unique_keys=$((unique_bytes / (key_size + load_value_size)))
 	"$(dirname $0)"/dbbench-load-L2.sh "$output_dir" "$num_unique_keys" "$key_size" "$load_value_size" || exit $?
 	"$(dirname $0)"/dbbench-$version-run.sh "$output_dir" "$num_unique_keys" "$key_size" \
-		--benchmarks=$benchmark,resetstats,$benchmark,stats \
+		--benchmarks=$benchmark,stats \
 		"$@"
 	"$(dirname $0)"/../helper/data-rocksdb.sh "$output_dir"
 	"$(dirname $0)"/../helper/plot-rocksdb.sh "$output_dir"
