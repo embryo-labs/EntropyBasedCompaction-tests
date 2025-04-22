@@ -98,6 +98,7 @@ test_rocksdb() (
 	"$(dirname $0)"/dbbench-$version-load.sh "$output_dir" "$num_unique_keys" "$key_size" "$load_value_size" || exit $?
 	"$(dirname $0)"/dbbench-$version-run.sh "$output_dir" "$num_unique_keys" "$key_size" \
 		--benchmarks=$benchmark,resetstats,$benchmark,stats \
+		--value_size="$load_value_size" \
 		"$@"
 	"$(dirname $0)"/../helper/data-rocksdb.sh "$output_dir"
 	"$(dirname $0)"/../helper/plot-rocksdb.sh "$output_dir"
@@ -118,6 +119,7 @@ test_three_levels() (
 	"$(dirname $0)"/dbbench-load-L2.sh "$output_dir" "$num_unique_keys" "$key_size" "$load_value_size" || exit $?
 	"$(dirname $0)"/dbbench-$version-run.sh "$output_dir" "$num_unique_keys" "$key_size" \
 		--benchmarks=$benchmark,stats \
+		--value_size="$load_value_size" \
 		"$@"
 	"$(dirname $0)"/../helper/data-rocksdb.sh "$output_dir"
 	"$(dirname $0)"/../helper/plot-rocksdb.sh "$output_dir"
@@ -136,6 +138,7 @@ test_steady() (
 	"$(dirname $0)"/dbbench-steady-run.sh "$output_dir" \
 		24 ${write_MB_s}MB ${compaction_MB_s}MB \
 		--benchmarks=$benchmark,resetstats,$benchmark,stats \
+		--value_size="$load_value_size" \
 		"$@"
 	"$(dirname $0)"/../helper/data-rocksdb.sh "$output_dir"
 	"$(dirname $0)"/../helper/plot-rocksdb.sh "$output_dir"
