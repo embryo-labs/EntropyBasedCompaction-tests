@@ -1,10 +1,10 @@
 unique_bytes=$(humanfriendly --parse-size=10GB)
 
 s=1
-R=27
+R=32
 C=3
 
-memtable_size=$(($unique_bytes / 3 / 27 / $s))
+memtable_size=$((unique_bytes / C / R / s))
 
 leveling_num_levels=3
 size=1
