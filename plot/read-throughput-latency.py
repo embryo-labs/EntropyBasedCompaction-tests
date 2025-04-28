@@ -29,15 +29,15 @@ avg = []
 P99 = []
 P999 = []
 import os
-for seek in range(1000, 20000 + 1, 1000):
-    data_dir = os.path.join(dir, prefix + str(seek), 'leveling')
-    data_dir = os.path.join(dir, prefix + str(seek), 'leveling')
+for read in range(10000, 70000 + 1, 10000):
+    data_dir = os.path.join(dir, prefix + str(read), 'leveling')
+    data_dir = os.path.join(dir, prefix + str(read), 'leveling')
     stdout = open(os.path.join(data_dir, 'stdout.txt'))
-    while stdout.readline() != 'Microseconds per seek:\n':
+    while stdout.readline() != 'Microseconds per read:\n':
         pass
-    while stdout.readline() != 'Microseconds per seek:\n':
+    while stdout.readline() != 'Microseconds per read:\n':
         pass
-    x.append(seek)
+    x.append(read)
 
     a = stdout.readline().split(' ')
     assert a[2] == 'Average:'
@@ -56,7 +56,7 @@ plt.plot(x, avg, linewidth=0.5)
 plt.plot(x, P99, linewidth=0.5)
 plt.plot(x, P999, linewidth=0.5)
 plt.legend(['Avg', '99%', '99.9%'], fontsize=9)
-plt.xlabel('Seek per second', fontsize=9)
+plt.xlabel('Read per second', fontsize=9)
 plt.ylabel('Latency (us)', fontsize=9)
 plt.yscale('log')
 plt.savefig(pdf_path)

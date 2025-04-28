@@ -17,11 +17,6 @@ mkdir -p "$output_dir"
 cd "$output_dir"
 "$workspace"/tests/helper/exe-while.sh . "$command" . "$num_unique_keys" "$key_size" \
 	--use_existing_db=true \
-	--soft_pending_compaction_bytes_limit=$(( \
-		unique_bytes / (C * R) * ( \
-			2 + (leveling_num_levels - 2) * (C + 1) \
-		) * 3/2 \
-	)) \
 	--writes=$num_unique_keys \
 	--finish_after_writes=1 \
 	--statistics=true \

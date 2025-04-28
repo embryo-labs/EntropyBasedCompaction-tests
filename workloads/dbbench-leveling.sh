@@ -11,8 +11,7 @@ key_size=$1
 shift
 . $(dirname $0)/args.sh
 $(dirname $0)/dbbench.sh "$output_dir" "$num_unique_keys" "$key_size" \
-	--num_levels=$leveling_num_levels \
+	--level_compaction_dynamic_level_bytes=true \
 	--level0_file_num_compaction_trigger=$s \
-	--max_bytes_for_level_base=$(($memtable_size * $s)) \
 	--max_bytes_for_level_multiplier=$C \
 	"$@"
