@@ -16,15 +16,17 @@ if [ "$s" -eq 1 ]; then
 else
 	lazy_leveling_num_sorted_runs="$s"
 fi
+T=2
 size=1
 while [ "$size" -lt "$R" ]; do
-	size=$((size * C))
+	size=$((size * T))
 	if [ "$lazy_leveling_num_sorted_runs" ]; then
-		lazy_leveling_num_sorted_runs="$lazy_leveling_num_sorted_runs,$C"
+		lazy_leveling_num_sorted_runs="$lazy_leveling_num_sorted_runs,$T"
 	else
-		lazy_leveling_num_sorted_runs="$C"
+		lazy_leveling_num_sorted_runs="$T"
 	fi
 done
+echo "lazy_leveling_num_sorted_runs $lazy_leveling_num_sorted_runs"
 
 $(dirname $0)/dbbench-run.sh "$output_dir" "$(dirname $0)"/dbbench.sh \
 	"$num_unique_keys" "$key_size" \
