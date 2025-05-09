@@ -37,5 +37,7 @@ $workspace/rocksdb/build/db_bench \
 	--target_file_size_base=$memtable_size \
 	--db="$workspace/testdb" \
 	--num=$num_unique_keys \
+	--level0_slowdown_writes_trigger=100000 \
+	--level0_stop_writes_trigger=100000 \
 	--main_level_size_threshold="$main_level_size_threshold" \
 	"$@"
