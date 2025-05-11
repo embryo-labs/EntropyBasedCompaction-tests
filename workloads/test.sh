@@ -158,31 +158,42 @@ with_compaction_limit_MB_s() (
 )
 
 mixgraph_wo() (
+	version=$1
+	shift
+	threads=$1
+	shift
 	sine_a=100000
-	sine_b=0.005
+	sine_b=0.02
 	sine_d=150000
-	suffix="-cache-1GB-sine_a-$sine_a-sine_b-$sine_b-sine_d-$sine_d-wo" "$@" \
-		--cache_size=1000000000 \
-		--sine_a=$sine_a \
-		--sine_b=$sine_b \
-		--sine_d=$sine_d \
-		--mix_get_ratio=0 \
-		--mix_put_ratio=1 \
-		--mix_seek_ratio=0 \
-		--keyrange_dist_a=14.18 \
-		--keyrange_dist_b=-2.917 \
-		--keyrange_dist_c=0.0164 \
-		--keyrange_dist_d=-0.08082 \
-		--keyrange_num=30 \
-		--value_k=0.2615 \
-		--value_sigma=25.45 \
-		--iter_k=2.517 \
-		--iter_sigma=14.236 \
-		--sine_mix_rate_interval_milliseconds=5000 \
-		--sine_mix_rate=true
+	key_size=48
+	value_size=43
+	num_unique_keys=$((unique_bytes / (key_size + load_value_size)))
+	# --reads is actually the number of all operations for mixgraph
+	suffix="-cache-1GB-sine_a-$sine_a-sine_b-$sine_b-sine_d-$sine_d-wo-threads-$threads$suffix" \
+		test_three_levels "$version" mixgraph "$key_size" "$value_size" "$@" \
+			--reads=$((num_unique_keys / threads)) \
+			--threads="$threads" \
+			--cache_size=1000000000 \
+			--sine_a=$sine_a \
+			--sine_b=$sine_b \
+			--sine_d=$sine_d \
+			--mix_get_ratio=0 \
+			--mix_put_ratio=1 \
+			--mix_seek_ratio=0 \
+			--keyrange_dist_a=14.18 \
+			--keyrange_dist_b=-2.917 \
+			--keyrange_dist_c=0.0164 \
+			--keyrange_dist_d=-0.08082 \
+			--keyrange_num=30 \
+			--value_k=0.2615 \
+			--value_sigma=25.45 \
+			--iter_k=2.517 \
+			--iter_sigma=14.236 \
+			--sine_mix_rate_interval_milliseconds=5000 \
+			--sine_mix_rate=true
 )
-suffix="-threads-16" mixgraph_wo with_compaction_limit_MB_s 100 test_three_levels dynamic-tiering mixgraph 48 43 --threads=16
-suffix="-threads-16" mixgraph_wo with_compaction_limit_MB_s 100 test_three_levels dynamic-size-ratio mixgraph 48 43 --threads=16
+with_compaction_limit_MB_s 100 mixgraph_wo dynamic-tiering 16
+with_compaction_limit_MB_s 100 mixgraph_wo dynamic-size-ratio 16
 
 read=10000
 while [ "$read" -le 70000 ]; do
