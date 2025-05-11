@@ -1,11 +1,9 @@
 #!/usr/bin/env sh
-if [ ! "$5" ]; then
-	echo Usage: "$0" output-dir command num-unique-keys key-size value-size args...
+if [ ! "$4" ]; then
+	echo Usage: "$0" output-dir num-unique-keys key-size value-size args...
 	exit 1
 fi
 output_dir=$1
-shift
-command=$1
 shift
 num_unique_keys=$1
 shift
@@ -20,7 +18,7 @@ if [ "$(ls -A "$output_dir")" ]; then
 	exit 1
 fi
 rm "$workspace/testdb"/*
-$command "$output_dir" "$num_unique_keys" "$key_size" \
+"$(dirname $0)"/dbbench.sh "$output_dir" "$num_unique_keys" "$key_size" \
 	--value_size="$value_size" \
 	--benchmarks=filluniquerandomdeterministic,compactall,stats \
 	--disable_auto_compactions=true \

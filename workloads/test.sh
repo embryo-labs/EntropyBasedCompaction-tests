@@ -1,5 +1,5 @@
 #!/usr/bin/env sh
-. $(dirname $0)/args.sh
+. $(dirname $0)/common.sh
 
 bench_num_sorted_runs() (
 	benchmark=$1
@@ -157,8 +157,32 @@ with_compaction_limit_MB_s() (
 		--rate_limiter_bytes_per_sec=$(($compaction_MB_s * 1000000))
 )
 
-suffix="-threads-16" with_bgwrite_MB_s 10 test_rocksdb leveling seekrandomwhilewriting 24 1000 --threads=16
-suffix="-threads-16" with_bgwrite_MB_s 10 with_compaction_limit_MB_s 100 test_rocksdb leveling seekrandomwhilewriting 24 1000 --threads=16
+mixgraph_wo() (
+	sine_a=100000
+	sine_b=0.005
+	sine_d=150000
+	suffix="-cache-1GB-sine_a-$sine_a-sine_b-$sine_b-sine_d-$sine_d-wo" "$@" \
+		--cache_size=1000000000 \
+		--sine_a=$sine_a \
+		--sine_b=$sine_b \
+		--sine_d=$sine_d \
+		--mix_get_ratio=0 \
+		--mix_put_ratio=1 \
+		--mix_seek_ratio=0 \
+		--keyrange_dist_a=14.18 \
+		--keyrange_dist_b=-2.917 \
+		--keyrange_dist_c=0.0164 \
+		--keyrange_dist_d=-0.08082 \
+		--keyrange_num=30 \
+		--value_k=0.2615 \
+		--value_sigma=25.45 \
+		--iter_k=2.517 \
+		--iter_sigma=14.236 \
+		--sine_mix_rate_interval_milliseconds=5000 \
+		--sine_mix_rate=true
+)
+suffix="-threads-16" mixgraph_wo with_compaction_limit_MB_s 100 test_three_levels dynamic-tiering mixgraph 48 43 --threads=16
+suffix="-threads-16" mixgraph_wo with_compaction_limit_MB_s 100 test_three_levels dynamic-size-ratio mixgraph 48 43 --threads=16
 
 read=10000
 while [ "$read" -le 70000 ]; do

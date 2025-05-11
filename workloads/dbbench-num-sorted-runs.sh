@@ -11,7 +11,7 @@ key_size=$1
 shift
 num_sorted_runs=$1
 shift
-. $(dirname $0)/args.sh
+. $(dirname $0)/common.sh
 
 max_bytes_for_level_multiplier_additional=",1"
 level=$((num_sorted_runs - 1))

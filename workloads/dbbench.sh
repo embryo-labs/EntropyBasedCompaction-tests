@@ -9,7 +9,7 @@ num_unique_keys=$1
 shift
 key_size=$1
 shift
-. $(dirname $0)/args.sh
+. $(dirname $0)/common.sh
 workspace=$(realpath "$(dirname $0)"/../..)
 
 if [ "$s" -gt 1 ]; then
@@ -33,6 +33,8 @@ $workspace/rocksdb/build/db_bench \
 	--key_size="$key_size" \
 	--max_background_jobs=6 \
 	--block_size=16384 \
+	--enable_pipelined_write=false \
+	--unordered_write=true \
 	--write_buffer_size=$memtable_size \
 	--target_file_size_base=$memtable_size \
 	--db="$workspace/testdb" \
