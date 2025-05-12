@@ -166,12 +166,13 @@ mixgraph_wo() (
 	sine_b=0.02
 	sine_d=150000
 	key_size=48
-	value_size=43
+	load_value_size=43
 	num_unique_keys=$((unique_bytes / (key_size + load_value_size)))
+	num_overwrites=4
 	# --reads is actually the number of all operations for mixgraph
-	suffix="-cache-1GB-sine_a-$sine_a-sine_b-$sine_b-sine_d-$sine_d-wo-threads-$threads$suffix" \
-		test_three_levels "$version" mixgraph "$key_size" "$value_size" "$@" \
-			--reads=$((num_unique_keys / threads)) \
+	suffix="-num-overwrites-$num_overwrites-cache-1GB-sine_a-$sine_a-sine_b-$sine_b-sine_d-$sine_d-wo-threads-$threads$suffix" \
+		test_three_levels "$version" mixgraph "$key_size" "$load_value_size" "$@" \
+			--reads=$(($num_overwrites * num_unique_keys / threads)) \
 			--threads="$threads" \
 			--cache_size=1000000000 \
 			--sine_a=$sine_a \
