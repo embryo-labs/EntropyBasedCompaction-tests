@@ -105,6 +105,8 @@ test_rocksdb() (
 )
 
 test_three_levels() (
+	workload_name=$1
+	shift
 	version=$1
 	shift
 	benchmark=$1
@@ -114,7 +116,7 @@ test_three_levels() (
 	load_value_size=$1
 	shift
 	../helper/build.sh
-	output_dir=../../data/$benchmark$suffix/$version
+	output_dir=../../data/$workload_name/$version
 	num_unique_keys=$((unique_bytes / (key_size + load_value_size)))
 	"$(dirname $0)"/dbbench-load-L2.sh "$output_dir" "$num_unique_keys" "$key_size" "$load_value_size" || exit $?
 	"$(dirname $0)"/dbbench-$version-run.sh "$output_dir" "$num_unique_keys" "$key_size" \
@@ -170,8 +172,8 @@ mixgraph_wo() (
 	num_unique_keys=$((unique_bytes / (key_size + load_value_size)))
 	num_overwrites=4
 	# --reads is actually the number of all operations for mixgraph
-	suffix="-num-overwrites-$num_overwrites-cache-1GB-sine_a-$sine_a-sine_b-$sine_b-sine_d-$sine_d-wo-threads-$threads$suffix" \
-		test_three_levels "$version" mixgraph "$key_size" "$load_value_size" "$@" \
+	test_three_levels "mixgraph-wo-num-overwrites-$num_overwrites-cache-1GB-sine_a-$sine_a-sine_b-$sine_b-sine_d-$sine_d-threads-$threads$suffix" \
+		"$version" mixgraph "$key_size" "$load_value_size" "$@" \
 			--reads=$(($num_overwrites * num_unique_keys / threads)) \
 			--threads="$threads" \
 			--cache_size=1000000000 \
@@ -195,6 +197,29 @@ mixgraph_wo() (
 )
 with_compaction_limit_MB_s 100 mixgraph_wo dynamic-tiering 16
 with_compaction_limit_MB_s 100 mixgraph_wo dynamic-size-ratio 16
+
+meituan() (
+	workspace=$(realpath "$(dirname $0)"/../..)
+	version=$1
+	shift
+	threads=$1
+	shift
+	key_size=16
+	value_size=200
+	speedup=10
+	period_secs=200
+	repeat=5
+	writes_per_second_file=$(mktemp)
+	trap "echo rm $writes_per_second_file; rm $writes_per_second_file" EXIT
+	awk "{print \$0 * $speedup}" "$workspace"/meituan/write.txt > $writes_per_second_file
+	test_three_levels "meituan-speedup-$speedup-period-secs-$period_secs-repeat-$repeat-value-size-$value_size-threads-$threads$suffix" \
+		"$version" "customperiodic" "$key_size" "$value_size" "$@" \
+			--threads="$threads" \
+			--writes_per_second_file="$writes_per_second_file" \
+			--writes_per_second_period_secs="$period_secs" \
+			--duration=$((period_secs * repeat))
+)
+with_compaction_limit_MB_s 100 meituan dynamic-size-ratio 16
 
 read=10000
 while [ "$read" -le 70000 ]; do

@@ -52,6 +52,20 @@ if 'DISPLAY' in os.environ:
 
 fig = plt.figure(dpi = 300, figsize = (cm_to_inch(SINGLE_COL_WIDTH), cm_to_inch(5)), constrained_layout=True)
 ax = plt.gca()
+plt.plot(report['secs_elapsed'], report['wait-for-last-level-compaction'])
+plt.xticks(fontsize=8)
+plt.yticks(fontsize=8)
+ax.set_ylim(bottom=0)
+plt.xlabel('Time (Seconds)', fontsize=8)
+plt.ylabel('Number of wait for LLC', fontsize=8)
+pdf_path = os.path.join(plot_dir, 'wait-for-last-level-compaction.pdf')
+plt.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01)
+print('Plot saved to ' + pdf_path)
+if 'DISPLAY' in os.environ:
+    plt.show(block=False)
+
+fig = plt.figure(dpi = 300, figsize = (cm_to_inch(SINGLE_COL_WIDTH), cm_to_inch(5)), constrained_layout=True)
+ax = plt.gca()
 plt.plot(report['secs_elapsed'], report['num-sorted-runs'] - report['rocksdb.num-top-level-sorted-runs'])
 plt.plot(report['secs_elapsed'], report['rocksdb.num-merging-main-level-sorted-runs'])
 plt.xticks(fontsize=8)
