@@ -206,17 +206,21 @@ meituan() (
 	shift
 	key_size=16
 	value_size=200
-	speedup=10
-	period_secs=200
-	repeat=5
+	speedup=100
+	period_secs=144
+	repeat=10
 	writes_per_second_file=$(mktemp)
-	trap "echo rm $writes_per_second_file; rm $writes_per_second_file" EXIT
+	reads_per_second_file=$(mktemp)
+	command="rm $writes_per_second_file $reads_per_second_file"
+	trap "echo $command; $command" EXIT
 	awk "{print \$0 * $speedup}" "$workspace"/meituan/write.txt > $writes_per_second_file
+	awk "{print \$0 * $speedup}" "$workspace"/meituan/read.txt > $reads_per_second_file
 	test_three_levels "meituan-speedup-$speedup-period-secs-$period_secs-repeat-$repeat-value-size-$value_size-threads-$threads$suffix" \
 		"$version" "customperiodic" "$key_size" "$value_size" "$@" \
 			--threads="$threads" \
+			--period_secs="$period_secs" \
 			--writes_per_second_file="$writes_per_second_file" \
-			--writes_per_second_period_secs="$period_secs" \
+			--reads_per_second_file="$reads_per_second_file" \
 			--duration=$((period_secs * repeat))
 )
 with_compaction_limit_MB_s 100 meituan dynamic-size-ratio 16
