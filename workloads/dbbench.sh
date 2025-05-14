@@ -32,7 +32,7 @@ $workspace/rocksdb/build/db_bench \
 	--bloom_bits=10 \
 	--key_size="$key_size" \
 	--max_background_jobs=6 \
-	--block_size=16384 \
+	--block_size=4096 \
 	--enable_pipelined_write=false \
 	--unordered_write=true \
 	--write_buffer_size=$memtable_size \
