@@ -94,6 +94,23 @@ print('Plot saved to ' + pdf_path)
 if 'DISPLAY' in os.environ:
     plt.show()
 
+if 'rate-limit' in report:
+    fig = plt.figure(dpi = 300, figsize = (cm_to_inch(SINGLE_COL_WIDTH), cm_to_inch(5)), constrained_layout=True)
+    ax = plt.gca()
+    formatter = ScalarFormatter(useMathText=True)
+    formatter.set_powerlimits((-3, 4))
+    ax.yaxis.set_major_formatter(formatter)
+    ax.yaxis.get_offset_text().set_fontsize(8)
+    plt.plot(report['secs_elapsed'], report['rate-limit'])
+    plt.xticks(fontsize=8)
+    plt.yticks(fontsize=8)
+    ax.set_ylim(bottom=0)
+    plt.xlabel('Time (Seconds)', fontsize=8)
+    plt.ylabel('Rate limit', fontsize=8)
+    pdf_path = os.path.join(plot_dir, 'rate-limit.pdf')
+    plt.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01)
+    print('Plot saved to ' + pdf_path)
+
 if 'size-ratio' in report:
     fig = plt.figure(dpi = 300, figsize = (cm_to_inch(SINGLE_COL_WIDTH), cm_to_inch(5)), constrained_layout=True)
     ax = plt.gca()

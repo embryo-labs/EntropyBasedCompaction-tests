@@ -158,6 +158,10 @@ with_compaction_limit_MB_s() (
 	suffix="-compaction-${compaction_MB_s}MB-s$suffix" "$@" \
 		--rate_limiter_bytes_per_sec=$(($compaction_MB_s * 1000000))
 )
+with_rate_limiter_auto_tuned() (
+	suffix="-autotuned$suffix" "$@" \
+		--rate_limiter_auto_tuned=true
+)
 
 mixgraph_wo() (
 	version=$1
