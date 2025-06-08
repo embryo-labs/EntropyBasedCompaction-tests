@@ -12,12 +12,7 @@ shift
 value_size=$1
 shift
 workspace=$(realpath "$(dirname $0)"/../..)
-mkdir -p "$output_dir"
-if [ "$(ls -A "$output_dir")" ]; then
-	echo "$output_dir" is not empty!
-	exit 1
-fi
-rm "$workspace/testdb"/*
+"$(dirname $0)"/prepare.sh "$output_dir" || return $?
 "$(dirname $0)"/dbbench.sh "$output_dir" "$num_unique_keys" "$key_size" \
 	--value_size="$value_size" \
 	--benchmarks=filluniquerandomdeterministic,compactall,stats \

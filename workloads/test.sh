@@ -1,6 +1,8 @@
 #!/usr/bin/env sh
 . $(dirname $0)/common.sh
 
+../helper/build.sh
+
 bench_num_sorted_runs() (
 	benchmark=$1
 	shift
@@ -14,14 +16,12 @@ bench_num_sorted_runs() (
 	num_unique_keys=$((unique_bytes / (key_size + load_value_size)))
 	workspace=$(realpath "$(dirname $0)"/../..)
 
-	../helper/build.sh
-
 	mkdir -p "$output_dir"
 	if [ "$(ls -A "$output_dir")" ]; then
 		echo "$output_dir" is not empty!
 		exit 1
 	fi
-	rm "$workspace/testdb"/*
+	"$(dirname $0)"/prepare.sh "$output_dir" || return $?
 	"$(dirname $0)"/dbbench-num-sorted-runs.sh "$output_dir" "$num_unique_keys" "$key_size" "$num_sorted_runs" \
 		--value_size="$load_value_size" \
 		--benchmarks=filluniquerandomdeterministic,compact0,stats \
@@ -49,14 +49,12 @@ num_sorted_runs_mergerandom_readrandom() (
 	num_unique_keys=$((unique_bytes / (key_size + load_value_size)))
 	workspace=$(realpath "$(dirname $0)"/../..)
 
-	../helper/build.sh
-
 	mkdir -p "$output_dir"
 	if [ "$(ls -A "$output_dir")" ]; then
 		echo "$output_dir" is not empty!
 		exit 1
 	fi
-	rm "$workspace/testdb"/*
+	"$(dirname $0)"/prepare.sh "$output_dir" || return $?
 	"$(dirname $0)"/dbbench-num-sorted-runs.sh "$output_dir" "$num_unique_keys" "$key_size" "$num_sorted_runs" \
 		--value_size="$load_value_size" \
 		--benchmarks=filluniquerandomdeterministic,compact0,stats \
@@ -83,6 +81,26 @@ while [ $num_sorted_runs -le 100 ]; do
 	num_sorted_runs=$((num_sorted_runs + 1))
 done
 
+run_rocksdb() (
+	output_dir=$1
+	shift
+	version=$1
+	shift
+	benchmark=$1
+	shift
+	key_size=$1
+	shift
+	value_size=$1
+	shift
+	num_unique_keys=$((unique_bytes / (key_size + value_size)))
+	"$(dirname $0)"/dbbench-$version-run.sh "$output_dir" "$num_unique_keys" "$key_size" \
+		--benchmarks=$benchmark,stats \
+		--value_size="$value_size" \
+		"$@"
+	"$(dirname $0)"/../helper/data-rocksdb.sh "$output_dir"
+	"$(dirname $0)"/../helper/plot-rocksdb.sh "$output_dir"
+)
+
 test_rocksdb() (
 	version=$1
 	shift
@@ -92,7 +110,6 @@ test_rocksdb() (
 	shift
 	load_value_size=$1
 	shift
-	../helper/build.sh
 	output_dir=../../data/$benchmark$suffix/$version
 	num_unique_keys=$((unique_bytes / (key_size + load_value_size)))
 	"$(dirname $0)"/dbbench-$version-load.sh "$output_dir" "$num_unique_keys" "$key_size" "$load_value_size" || exit $?
@@ -115,16 +132,10 @@ test_three_levels() (
 	shift
 	load_value_size=$1
 	shift
-	../helper/build.sh
 	output_dir=../../data/$workload_name/$version
 	num_unique_keys=$((unique_bytes / (key_size + load_value_size)))
 	"$(dirname $0)"/dbbench-load-L2.sh "$output_dir" "$num_unique_keys" "$key_size" "$load_value_size" || exit $?
-	"$(dirname $0)"/dbbench-$version-run.sh "$output_dir" "$num_unique_keys" "$key_size" \
-		--benchmarks=$benchmark,stats \
-		--value_size="$load_value_size" \
-		"$@"
-	"$(dirname $0)"/../helper/data-rocksdb.sh "$output_dir"
-	"$(dirname $0)"/../helper/plot-rocksdb.sh "$output_dir"
+	run_rocksdb "$output_dir" "$version" "$benchmark" "$key_size" "$load_value_size" "$@"
 )
 
 test_steady() (
@@ -168,15 +179,18 @@ mixgraph_wo() (
 	shift
 	threads=$1
 	shift
-	sine_a=100000
+	sine_a=200000
 	sine_b=0.02
-	sine_d=150000
+	sine_d=201000
 	key_size=48
 	load_value_size=43
 	num_unique_keys=$((unique_bytes / (key_size + load_value_size)))
 	num_overwrites=4
+	workload_name="mixgraph-wo-num-overwrites-$num_overwrites-cache-1GB-sine_a-$sine_a-sine_b-$sine_b-sine_d-$sine_d-threads-$threads$suffix"
+	output_dir=../../data/$workload_name/$version
+	"$(dirname $0)"/prepare.sh "$output_dir" || return $?
 	# --reads is actually the number of all operations for mixgraph
-	test_three_levels "mixgraph-wo-num-overwrites-$num_overwrites-cache-1GB-sine_a-$sine_a-sine_b-$sine_b-sine_d-$sine_d-threads-$threads$suffix" \
+	run_rocksdb "$output_dir" \
 		"$version" mixgraph "$key_size" "$load_value_size" "$@" \
 			--reads=$(($num_overwrites * num_unique_keys / threads)) \
 			--threads="$threads" \
@@ -199,18 +213,19 @@ mixgraph_wo() (
 			--sine_mix_rate_interval_milliseconds=5000 \
 			--sine_mix_rate=true
 )
-with_compaction_limit_MB_s 100 mixgraph_wo dynamic-tiering 16
-with_compaction_limit_MB_s 100 mixgraph_wo dynamic-size-ratio 16
+with_compaction_limit_MB_s 100 mixgraph_wo lazy-leveling 16
+with_compaction_limit_MB_s 100 mixgraph_wo benefit-cost 16
 
 meituan() (
 	workspace=$(realpath "$(dirname $0)"/../..)
 	version=$1
 	shift
+	speedup=$1
+	shift
 	threads=$1
 	shift
 	key_size=16
-	value_size=200
-	speedup=100
+	value_size=1000
 	period_secs=144
 	repeat=10
 	writes_per_second_file=$(mktemp)
@@ -221,16 +236,22 @@ meituan() (
 	awk "{print \$0 * $speedup}" "$workspace"/meituan/write.txt > $writes_per_second_file
 	awk "{print \$0 * $speedup}" "$workspace"/meituan/read.txt > $reads_per_second_file
 	awk "{print \$0 * 1000000}" $workspace/meituan/compaction-MB-s.txt > $compaction_limit_file
-	test_three_levels "meituan-speedup-$speedup-period-secs-$period_secs-repeat-$repeat-value-size-$value_size-threads-$threads$suffix" \
-		"$version" "customperiodic" "$key_size" "$value_size" "$@" \
-			--threads="$threads" \
-			--period_secs="$period_secs" \
-			--writes_per_second_file="$writes_per_second_file" \
-			--reads_per_second_file="$reads_per_second_file" \
-			--compaction_limit_file="$compaction_limit_file" \
-			--duration=$((period_secs * repeat))
+	workload_name="meituan-speedup-$speedup-period-secs-$period_secs-repeat-$repeat-value-size-$value_size-threads-$threads$suffix"
+	output_dir=../../data/$workload_name/$version
+	"$(dirname $0)"/prepare.sh "$output_dir" || return $?
+	run_rocksdb "$output_dir" "$version" "customperiodic" "$key_size" "$value_size" "$@" \
+		--threads="$threads" \
+		--period_secs="$period_secs" \
+		--writes_per_second_file="$writes_per_second_file" \
+		--reads_per_second_file="$reads_per_second_file" \
+		--compaction_limit_file="$compaction_limit_file" \
+		--duration=$((period_secs * repeat))
 )
-with_compaction_limit_MB_s 100 meituan dynamic-size-ratio 16
+meituan lazy-leveling 20 128
+meituan benefit-cost 20 128
+
+meituan lazy-leveling 30 128
+meituan benefit-cost 30 128
 
 read=10000
 while [ "$read" -le 70000 ]; do
