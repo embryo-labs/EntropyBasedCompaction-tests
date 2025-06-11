@@ -213,12 +213,16 @@ mixgraph_wo() (
 			--sine_mix_rate_interval_milliseconds=5000 \
 			--sine_mix_rate=true
 )
-with_compaction_limit_MB_s 100 mixgraph_wo lazy-leveling 16
+with_compaction_limit_MB_s 100 mixgraph_wo leveling 16
+with_compaction_limit_MB_s 100 mixgraph_wo universal 16
+with_compaction_limit_MB_s 100 mixgraph_wo tiering 16
 with_compaction_limit_MB_s 100 mixgraph_wo benefit-cost 16
 
 meituan() (
 	workspace=$(realpath "$(dirname $0)"/../..)
 	version=$1
+	shift
+	period_secs=$1
 	shift
 	speedup=$1
 	shift
@@ -226,7 +230,6 @@ meituan() (
 	shift
 	key_size=16
 	value_size=1000
-	period_secs=144
 	repeat=10
 	writes_per_second_file=$(mktemp)
 	reads_per_second_file=$(mktemp)
@@ -247,11 +250,11 @@ meituan() (
 		--compaction_limit_file="$compaction_limit_file" \
 		--duration=$((period_secs * repeat))
 )
-meituan lazy-leveling 20 128
-meituan benefit-cost 20 128
+meituan lazy-leveling 144 20 128
+meituan benefit-cost 144 20 128
 
-meituan lazy-leveling 30 128
-meituan benefit-cost 30 128
+meituan lazy-leveling 144 30 128
+meituan benefit-cost 144 30 128
 
 read=10000
 while [ "$read" -le 70000 ]; do
