@@ -12,12 +12,6 @@ shift
 . $(dirname $0)/common.sh
 workspace=$(realpath "$(dirname $0)"/../..)
 
-if [ "$s" -gt 1 ]; then
-	main_level_size_threshold=$((memtable_size + memtable_size / 10))
-else
-	main_level_size_threshold=0
-fi
-
 ulimit -n 100000
 # Dump core when crash
 ulimit -c unlimited
@@ -41,5 +35,4 @@ $workspace/rocksdb/build/db_bench \
 	--num=$num_unique_keys \
 	--level0_slowdown_writes_trigger=100000 \
 	--level0_stop_writes_trigger=100000 \
-	--main_level_size_threshold="$main_level_size_threshold" \
 	"$@"
