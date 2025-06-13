@@ -3,12 +3,21 @@
 
 ../helper/build.sh
 
+with_memtable_size() {
+	arg_memtable_size=$1
+	shift
+	memtable_size=$(humanfriendly --parse-size="$arg_memtable_size")
+	suffix="-memtable-$arg_memtable_size$suffix" "$@" \
+		--write_buffer_size=$memtable_size \
+		--target_file_size_base=$memtable_size \
+		--max_bytes_for_level_base=$((memtable_size * 4))
+}
+
 with_policy_leveling() {
 	T=$1
 	shift
 	"$@" \
 		--level_compaction_dynamic_level_bytes=true \
-		--max_bytes_for_level_base=$((memtable_size * 4)) \
 		--max_bytes_for_level_multiplier=$T \
 		--num_levels=10
 }

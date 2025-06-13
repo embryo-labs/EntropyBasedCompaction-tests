@@ -29,8 +29,6 @@ $workspace/rocksdb/build/db_bench \
 	--block_size=4096 \
 	--enable_pipelined_write=false \
 	--unordered_write=true \
-	--write_buffer_size=$memtable_size \
-	--target_file_size_base=$memtable_size \
 	--db="$workspace/testdb" \
 	--num=$num_unique_keys \
 	--level0_slowdown_writes_trigger=100000 \
