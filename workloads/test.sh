@@ -87,7 +87,8 @@ with_policy_leveling() {
 	"$@" \
 		--level_compaction_dynamic_level_bytes=true \
 		--max_bytes_for_level_base=$((memtable_size * 4)) \
-		--max_bytes_for_level_multiplier=$T
+		--max_bytes_for_level_multiplier=$T \
+		--num_levels=10
 }
 with_policy_universal() {
 	"$@" \
