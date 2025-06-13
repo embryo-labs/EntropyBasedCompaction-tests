@@ -76,7 +76,7 @@ with_compaction_limit_MB_s() (
 		--rate_limiter_bytes_per_sec=$(($compaction_MB_s * 1000000))
 )
 with_rate_limiter_auto_tuned() (
-	suffix="-autotuned$suffix" "$@" \
+	suffix="-rate-limiter-autotuned$suffix" "$@" \
 		--rate_limiter_auto_tuned=true
 )
 
