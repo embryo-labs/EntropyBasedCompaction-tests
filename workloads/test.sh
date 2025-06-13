@@ -133,8 +133,12 @@ test_rocksdb() (
 	shift
 	benchmark=$1
 	shift
+	output_dir="../../data/$benchmark$suffix/$version"
 	"$(dirname $0)"/prepare.sh "$output_dir" || return $?
-	run_rocksdb "../../data/$benchmark$suffix/$version" "$benchmark" "$@"
+	run_rocksdb "$output_dir" "$benchmark" "$@"
+	mkdir "$output_dir"/load
+	mv "$output_dir"/* "$output_dir"/load
+	run_rocksdb "$output_dir" "$benchmark" "$@"
 )
 
 with_bgwrite_MB_s() (
@@ -171,7 +175,7 @@ mixgraph_wo() (
 	"$(dirname $0)"/prepare.sh "$output_dir" || return $?
 	# --reads is actually the number of all operations for mixgraph
 	run_rocksdb "$output_dir" \
-		mixgraph "$key_size" "$load_value_size" "$@" \
+		mixgraph "$key_size" "$load_value_size" \
 			--reads=$(($writes / threads)) \
 			--threads="$threads" \
 			--cache_size=1000000000 \
@@ -191,7 +195,8 @@ mixgraph_wo() (
 			--iter_k=2.517 \
 			--iter_sigma=14.236 \
 			--sine_mix_rate_interval_milliseconds=5000 \
-			--sine_mix_rate=true
+			--sine_mix_rate=true \
+			"$@"
 )
 with_compaction_limit_MB_s 100 with_policy_leveling 3 mixgraph_wo leveling3 16
 with_compaction_limit_MB_s 100 with_policy_tiering 2 mixgraph_wo tiering2 16
@@ -222,13 +227,14 @@ meituan() (
 	workload_name="meituan-speedup-$speedup-period-secs-$period_secs-repeat-$repeat-value-size-$value_size-threads-$threads$suffix"
 	output_dir=../../data/$workload_name/$version
 	"$(dirname $0)"/prepare.sh "$output_dir" || return $?
-	run_rocksdb "$output_dir" "customperiodic" "$key_size" "$value_size" "$@" \
+	run_rocksdb "$output_dir" "customperiodic" "$key_size" "$value_size" \
 		--threads="$threads" \
 		--period_secs="$period_secs" \
 		--writes_per_second_file="$writes_per_second_file" \
 		--reads_per_second_file="$reads_per_second_file" \
 		--compaction_limit_file="$compaction_limit_file" \
-		--duration=$((period_secs * repeat))
+		--duration=$((period_secs * repeat)) \
+		"$@"
 )
 with_policy_leveling 3 meituan leveling3 144 10 128
 with_policy_tiering 2 meituan tiering2 144 10 128
