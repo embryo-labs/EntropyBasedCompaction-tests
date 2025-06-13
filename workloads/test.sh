@@ -86,6 +86,7 @@ with_policy_leveling() {
 	shift
 	"$@" \
 		--level_compaction_dynamic_level_bytes=true \
+		--max_bytes_for_level_base=$((memtable_size * 4)) \
 		--max_bytes_for_level_multiplier=$T
 }
 with_policy_universal() {
@@ -131,19 +132,8 @@ test_rocksdb() (
 	shift
 	benchmark=$1
 	shift
-	key_size=$1
-	shift
-	load_value_size=$1
-	shift
-	output_dir=../../data/$benchmark$suffix/$version
-	num_unique_keys=$((unique_bytes / (key_size + load_value_size)))
-	"$(dirname $0)"/dbbench-load.sh "$output_dir" "$num_unique_keys" "$key_size" "$load_value_size" || exit $?
-	"$(dirname $0)"/dbbench-run.sh "$output_dir" "$num_unique_keys" "$key_size" \
-		--benchmarks=$benchmark,resetstats,$benchmark,stats \
-		--value_size="$load_value_size" \
-		"$@"
-	"$(dirname $0)"/../helper/data-rocksdb.sh "$output_dir"
-	"$(dirname $0)"/../helper/plot-rocksdb.sh "$output_dir"
+	"$(dirname $0)"/prepare.sh "$output_dir" || return $?
+	run_rocksdb "../../data/$benchmark$suffix/$version" "$benchmark" "$@"
 )
 
 with_bgwrite_MB_s() (
