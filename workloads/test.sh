@@ -149,12 +149,10 @@ meituan() (
 	repeat=10
 	writes_per_second_file=$(mktemp)
 	reads_per_second_file=$(mktemp)
-	compaction_limit_file=$(mktemp)
 	command="rm $writes_per_second_file $reads_per_second_file"
 	trap "echo $command; $command" EXIT
 	awk "{print \$0 * $speedup}" "$workspace"/meituan/write.txt > $writes_per_second_file
 	awk "{print \$0 * $speedup}" "$workspace"/meituan/read.txt > $reads_per_second_file
-	awk "{print \$0 * 1000000}" $workspace/meituan/compaction-MB-s.txt > $compaction_limit_file
 	workload_name="meituan-speedup-$speedup-period-secs-$period_secs-repeat-$repeat-value-size-$value_size-threads-$threads$suffix"
 	output_dir=../../data/$workload_name/$version
 	"$(dirname $0)"/prepare.sh "$output_dir" || return $?
@@ -163,7 +161,6 @@ meituan() (
 		--period_secs="$period_secs" \
 		--writes_per_second_file="$writes_per_second_file" \
 		--reads_per_second_file="$reads_per_second_file" \
-		--compaction_limit_file="$compaction_limit_file" \
 		--duration=$((period_secs * repeat)) \
 		"$@"
 )
