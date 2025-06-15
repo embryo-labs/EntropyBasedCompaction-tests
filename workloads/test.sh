@@ -164,10 +164,10 @@ meituan() (
 		--duration=$((period_secs * repeat)) \
 		"$@"
 )
-with_policy_leveling 3 meituan leveling3 144 10 128
-with_policy_tiering 2 meituan tiering2 144 10 128
-with_policy_universal meituan universal 144 10 128
-with_policy_benefit_cost meituan benefit-cost 144 10 128
+with_memtable_size 1MB with_policy_leveling 3 meituan leveling3 144 20 128
+with_memtable_size 1MB with_policy_tiering 2 meituan tiering2 144 20 128
+with_memtable_size 1MB with_policy_universal meituan universal 144 20 128
+with_memtable_size 1MB with_policy_benefit_cost meituan benefit-cost 144 20 128
 
 read=10000
 while [ "$read" -le 70000 ]; do
