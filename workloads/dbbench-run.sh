@@ -9,7 +9,6 @@ num_unique_keys=$1
 shift
 key_size=$1
 shift
-. $(dirname $0)/common.sh
 workspace=$(realpath "$(dirname $0)"/../..)
 mkdir -p "$output_dir"
 cd "$output_dir"

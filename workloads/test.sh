@@ -1,5 +1,4 @@
 #!/usr/bin/env sh
-. $(dirname $0)/common.sh
 
 ../helper/build.sh
 
@@ -50,7 +49,9 @@ run_rocksdb() (
 	shift
 	value_size=$1
 	shift
-	num_unique_keys=$((unique_bytes / (key_size + value_size)))
+	unique_size=$1
+	shift
+	num_unique_keys=$(($(humanfriendly --parse-size="$unique_size") / (key_size + value_size)))
 	"$(dirname $0)"/dbbench-run.sh "$output_dir" "$num_unique_keys" "$key_size" \
 		--benchmarks=$benchmark,stats \
 		--value_size="$value_size" \
@@ -64,12 +65,18 @@ test_rocksdb() (
 	shift
 	benchmark=$1
 	shift
-	output_dir="../../data/$benchmark$suffix/$version"
+	key_size=$1
+	shift
+	value_size=$1
+	shift
+	unique_size=$1
+	shift
+	output_dir="../../data/$benchmark-unique-size-$unique_size$suffix/$version"
 	"$(dirname $0)"/prepare.sh "$output_dir" || return $?
-	run_rocksdb "$output_dir" "$benchmark" "$@"
+	run_rocksdb "$output_dir" "$benchmark" "$key_size" "$value_size" "$unique_size" "$@"
 	mkdir "$output_dir"/load
 	mv "$output_dir"/* "$output_dir"/load
-	run_rocksdb "$output_dir" "$benchmark" "$@"
+	run_rocksdb "$output_dir" "$benchmark" "$key_size" "$value_size" "$unique_size" "$@"
 )
 
 with_bgwrite_MB_s() (
@@ -85,7 +92,9 @@ with_compaction_limit_MB_s() (
 		--rate_limiter_bytes_per_sec=$(($compaction_MB_s * 1000000))
 )
 with_rate_limiter_auto_tuned() (
+	shift
 	suffix="-rate-limiter-autotuned$suffix" "$@" \
+		--rate_limiter_bytes_per_sec=1000000000 \
 		--rate_limiter_auto_tuned=true
 )
 
@@ -142,6 +151,8 @@ meituan() (
 	shift
 	speedup=$1
 	shift
+	unique_size=$1
+	shift
 	threads=$1
 	shift
 	key_size=16
@@ -153,10 +164,10 @@ meituan() (
 	trap "echo $command; $command" EXIT
 	awk "{print \$0 * $speedup}" "$workspace"/meituan/write.txt > $writes_per_second_file
 	awk "{print \$0 * $speedup}" "$workspace"/meituan/read.txt > $reads_per_second_file
-	workload_name="meituan-speedup-$speedup-period-secs-$period_secs-repeat-$repeat-value-size-$value_size-threads-$threads$suffix"
+	workload_name="meituan-speedup-$speedup-period-secs-$period_secs-repeat-$repeat-value-size-$value_size-unique-size-$unique_size-threads-$threads$suffix"
 	output_dir=../../data/$workload_name/$version
 	"$(dirname $0)"/prepare.sh "$output_dir" || return $?
-	run_rocksdb "$output_dir" "customperiodic" "$key_size" "$value_size" \
+	run_rocksdb "$output_dir" "customperiodic" "$key_size" "$value_size" "$unique_size" \
 		--threads="$threads" \
 		--period_secs="$period_secs" \
 		--writes_per_second_file="$writes_per_second_file" \
@@ -164,10 +175,10 @@ meituan() (
 		--duration=$((period_secs * repeat)) \
 		"$@"
 )
-with_memtable_size 1MB with_policy_leveling 3 meituan leveling3 144 20 128
-with_memtable_size 1MB with_policy_tiering 2 meituan tiering2 144 20 128
-with_memtable_size 1MB with_policy_universal meituan universal 144 20 128
-with_memtable_size 1MB with_policy_benefit_cost meituan benefit-cost 144 20 128
+with_memtable_size 8MB with_policy_leveling 3 meituan leveling3 1000 20 10GB 128
+with_memtable_size 8MB with_policy_tiering 2 meituan tiering2 1000 20 10GB 128
+with_memtable_size 8MB with_policy_universal meituan universal 1000 20 10GB 128
+with_memtable_size 8MB with_policy_benefit_cost meituan benefit-cost 1000 20 10GB 128
 
 read=10000
 while [ "$read" -le 70000 ]; do
