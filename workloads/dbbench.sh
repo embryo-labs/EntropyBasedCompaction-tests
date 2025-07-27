@@ -1,9 +1,9 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
 if [ ! "$3" ]; then
 	echo Usage: $0 output-dir num-unique-keys key-size args...
 	exit 1
 fi
-output_dir=$1
+output_dir=$(realpath "$1")
 shift
 num_unique_keys=$1
 shift
@@ -16,7 +16,11 @@ ulimit -n 100000
 ulimit -c unlimited
 export ASAN_OPTIONS="abort_on_error=1:disable_coredump=0"
 cd "$output_dir"
-$workspace/rocksdb/build/db_bench \
+command=("$workspace"/tests/helper/exe-while.sh .)
+if [ "$with_perf" ] && [ "$with_perf" -gt 0 ]; then
+	command+=(perf record --call-graph=fp -o "$output_dir"/perf.data)
+fi
+"${command[@]}" "$workspace"/rocksdb/build/db_bench \
 	--ttl_seconds=0 \
 	--use_direct_io_for_flush_and_compaction=true \
 	--use_direct_reads=true \
@@ -30,6 +34,12 @@ $workspace/rocksdb/build/db_bench \
 	--unordered_write=true \
 	--db="$workspace/testdb" \
 	--num=$num_unique_keys \
-	--level0_slowdown_writes_trigger=100000 \
-	--level0_stop_writes_trigger=100000 \
-	"$@"
+	--statistics=true \
+	--report_file=report.csv \
+	--report_interval_seconds=1 \
+	--histogram=true \
+	"$@" \
+	> stdout.txt
+if [ "$with_perf" ] && [ "$with_perf" -gt 0 ]; then
+	perf script -i perf.data -f | inferno-collapse-perf > perf.folded
+fi

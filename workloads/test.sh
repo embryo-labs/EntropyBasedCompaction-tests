@@ -40,7 +40,7 @@ with_policy_benefit_cost() {
 		--num_levels=1
 }
 
-run_rocksdb() (
+dbbench() (
 	output_dir=$1
 	shift
 	benchmark=$1
@@ -52,7 +52,8 @@ run_rocksdb() (
 	unique_size=$1
 	shift
 	num_unique_keys=$(($(humanfriendly --parse-size="$unique_size") / (key_size + value_size)))
-	"$(dirname $0)"/dbbench-run.sh "$output_dir" "$num_unique_keys" "$key_size" \
+	"$(dirname $0)"/prepare.sh "$output_dir" || return $?
+	"$(dirname $0)"/dbbench.sh "$output_dir" "$num_unique_keys" "$key_size" \
 		--benchmarks=$benchmark,stats \
 		--value_size="$value_size" \
 		"$@"
@@ -72,11 +73,7 @@ test_rocksdb() (
 	unique_size=$1
 	shift
 	output_dir="../../data/$benchmark-unique-size-$unique_size$suffix/$version"
-	"$(dirname $0)"/prepare.sh "$output_dir" || return $?
-	run_rocksdb "$output_dir" "$benchmark" "$key_size" "$value_size" "$unique_size" "$@"
-	mkdir "$output_dir"/load
-	mv "$output_dir"/* "$output_dir"/load
-	run_rocksdb "$output_dir" "$benchmark" "$key_size" "$value_size" "$unique_size" "$@"
+	dbbench "$output_dir" "$benchmark" "$key_size" "$value_size" "$unique_size" "$@"
 )
 
 with_bgwrite_MB_s() (
@@ -111,9 +108,8 @@ mixgraph_wo() (
 	writes=100000000
 	workload_name="mixgraph-wo-writes-$writes-cache-1GB-sine_a-$sine_a-sine_b-$sine_b-sine_d-$sine_d-threads-$threads$suffix"
 	output_dir=../../data/$workload_name/$version
-	"$(dirname $0)"/prepare.sh "$output_dir" || return $?
 	# --reads is actually the number of all operations for mixgraph
-	run_rocksdb "$output_dir" \
+	dbbench "$output_dir" \
 		mixgraph "$key_size" "$load_value_size" \
 			--reads=$(($writes / threads)) \
 			--threads="$threads" \
@@ -165,8 +161,7 @@ meituan() (
 	awk "{print \$0 * $speedup}" "$workspace"/meituan/read.txt > $reads_per_second_file
 	workload_name="meituan-speedup-$speedup-period-secs-$period_secs-repeat-$repeat-value-size-$value_size-unique-size-$unique_size-threads-$threads$suffix"
 	output_dir=../../data/$workload_name/$version
-	"$(dirname $0)"/prepare.sh "$output_dir" || return $?
-	run_rocksdb "$output_dir" "customperiodic" "$key_size" "$value_size" "$unique_size" \
+	dbbench "$output_dir" "customperiodic" "$key_size" "$value_size" "$unique_size" \
 		--threads="$threads" \
 		--period_secs="$period_secs" \
 		--writes_per_second_file="$writes_per_second_file" \
@@ -196,3 +191,6 @@ while [ "$write" -le 20 ]; do
 	suffix="$suffix" with_bgwrite_MB_s $write with_compaction_limit_MB_s 100 with_policy_universal test_rocksdb universal "$bench" 24 1000 $args
 	write=$((write + 1))
 done
+
+num_threads=1
+suffix="-threads-$num_threads" with_memtable_size 8MB with_policy_leveling 3 test_rocksdb leveling3 fillrandom 24 1000 10GB "--threads=$num_threads"
