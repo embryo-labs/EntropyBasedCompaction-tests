@@ -2,7 +2,7 @@
 
 ../helper/build.sh
 
-with_memtable_size() {
+with_memtable_size() (
 	arg_memtable_size=$1
 	shift
 	memtable_size=$(humanfriendly --parse-size="$arg_memtable_size")
@@ -10,7 +10,7 @@ with_memtable_size() {
 		--write_buffer_size=$memtable_size \
 		--target_file_size_base=$memtable_size \
 		--max_bytes_for_level_base=$((memtable_size * 4))
-}
+)
 
 with_policy_leveling() {
 	T=$1
@@ -106,14 +106,13 @@ mixgraph_wo() (
 	load_value_size=43
 	num_unique_keys=$((unique_bytes / (key_size + load_value_size)))
 	writes=100000000
-	workload_name="mixgraph-wo-writes-$writes-cache-1GB-sine_a-$sine_a-sine_b-$sine_b-sine_d-$sine_d-threads-$threads$suffix"
+	workload_name="mixgraph-wo-writes-$writes-sine_a-$sine_a-sine_b-$sine_b-sine_d-$sine_d-threads-$threads$suffix"
 	output_dir=../../data/$workload_name/$version
 	# --reads is actually the number of all operations for mixgraph
 	dbbench "$output_dir" \
 		mixgraph "$key_size" "$load_value_size" \
 			--reads=$(($writes / threads)) \
 			--threads="$threads" \
-			--cache_size=1000000000 \
 			--sine_a=$sine_a \
 			--sine_b=$sine_b \
 			--sine_d=$sine_d \
@@ -191,6 +190,3 @@ while [ "$write" -le 20 ]; do
 	suffix="$suffix" with_bgwrite_MB_s $write with_compaction_limit_MB_s 100 with_policy_universal test_rocksdb universal "$bench" 24 1000 $args
 	write=$((write + 1))
 done
-
-num_threads=1
-suffix="-threads-$num_threads" with_memtable_size 8MB with_policy_leveling 3 test_rocksdb leveling3 fillrandom 24 1000 10GB "--threads=$num_threads"
