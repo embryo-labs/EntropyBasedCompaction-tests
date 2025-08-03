@@ -40,6 +40,44 @@ with_policy_benefit_cost() {
 		--num_levels=1
 }
 
+with_writes_per_writer() {
+	writes_per_thread=$1
+	shift
+	"$@" --writes="$writes_per_thread" --finish_after_writes=true
+}
+with_write_MB_s() (
+	write_MB_s=$1
+	shift
+	suffix="-write-${write_MB_s}MB-s$suffix" "$@" \
+		--benchmark_write_rate_limit=$((write_MB_s * 1000000))
+)
+with_read_ops() (
+	read_ops=$1
+	shift
+	suffix="-read-ops-$read_ops$suffix" "$@" \
+		--benchmark_read_rate_limit="$read_ops"
+)
+
+with_threads() (
+	threads=$1
+	shift
+	suffix="-threads-$threads$suffix" "$@" \
+		--threads="$threads"
+)
+with_cache() (
+	cache=$1
+	shift
+	cache_size=$(humanfriendly --parse-size="$cache")
+	suffix="-cache-$cache$suffix" "$@" \
+		--cache_size="$cache_size"
+)
+with_exp_range() (
+	exp_range=$1
+	shift
+	suffix="-exp-range-$exp_range$suffix" "$@" \
+		--read_random_exp_range="$exp_range"
+)
+
 dbbench() (
 	output_dir=$1
 	shift
@@ -76,12 +114,6 @@ test_rocksdb() (
 	dbbench "$output_dir" "$benchmark" "$key_size" "$value_size" "$unique_size" "$@"
 )
 
-with_bgwrite_MB_s() (
-	bgwrite_MB_s=$1
-	shift
-	suffix="-write-${bgwrite_MB_s}MB-s$suffix" "$@" \
-		--benchmark_write_rate_limit=$((bgwrite_MB_s * 1000000))
-)
 with_compaction_limit_MB_s() (
 	compaction_MB_s=$1
 	shift
@@ -147,8 +179,6 @@ meituan() (
 	shift
 	unique_size=$1
 	shift
-	threads=$1
-	shift
 	key_size=16
 	value_size=1000
 	repeat=10
@@ -158,20 +188,24 @@ meituan() (
 	trap "echo $command; $command" EXIT
 	awk "{print \$0 * $speedup}" "$workspace"/meituan/write.txt > $writes_per_second_file
 	awk "{print \$0 * $speedup}" "$workspace"/meituan/read.txt > $reads_per_second_file
-	workload_name="meituan-speedup-$speedup-period-secs-$period_secs-repeat-$repeat-value-size-$value_size-unique-size-$unique_size-threads-$threads$suffix"
+	workload_name="meituan-speedup-$speedup-period-secs-$period_secs-repeat-$repeat-value-size-$value_size-unique-size-$unique_size$suffix"
 	output_dir=../../data/$workload_name/$version
 	dbbench "$output_dir" "customperiodic" "$key_size" "$value_size" "$unique_size" \
-		--threads="$threads" \
 		--period_secs="$period_secs" \
 		--writes_per_second_file="$writes_per_second_file" \
 		--reads_per_second_file="$reads_per_second_file" \
 		--duration=$((period_secs * repeat)) \
 		"$@"
 )
-with_memtable_size 8MB with_policy_leveling 3 meituan leveling3 1000 20 10GB 128
-with_memtable_size 8MB with_policy_tiering 2 meituan tiering2 1000 20 10GB 128
-with_memtable_size 8MB with_policy_universal meituan universal 1000 20 10GB 128
-with_memtable_size 8MB with_policy_benefit_cost meituan benefit-cost 1000 20 10GB 128
+threads=32
+cache=100MB
+exp_range=16
+speedup=20
+with_threads $threads with_exp_range $exp_range with_cache $cache with_memtable_size 8MB with_policy_leveling 3 meituan leveling3 1000 $speedup 10GB
+with_threads $threads with_exp_range $exp_range with_cache $cache with_memtable_size 8MB with_policy_tiering 2 meituan tiering2 1000 $speedup 10GB
+with_threads $threads with_exp_range $exp_range with_cache $cache with_memtable_size 8MB with_policy_universal meituan universal 1000 $speedup 10GB
+with_threads $threads with_exp_range $exp_range with_cache $cache with_memtable_size 8MB with_policy_benefit_cost meituan benefit-cost 1000 $speedup 10GB
+with_threads $threads with_exp_range $exp_range with_cache $cache with_memtable_size 8MB with_rate_limiter_auto_tuned with_policy_benefit_cost meituan benefit-cost 1000 $speedup 10GB
 
 read=10000
 while [ "$read" -le 70000 ]; do
