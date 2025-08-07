@@ -37,7 +37,8 @@ with_policy_tiering() {
 with_policy_benefit_cost() {
 	"$@" \
 		--compaction_style=6 \
-		--num_levels=1
+		--num_levels=1 \
+		--max_background_jobs=100
 }
 
 with_writes_per_writer() {
