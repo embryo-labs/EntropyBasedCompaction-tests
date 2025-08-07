@@ -126,6 +126,13 @@ with_rate_limiter_auto_tuned() (
 		--rate_limiter_auto_tuned=true
 )
 
+with_max_running_background_jobs() (
+	max_running_bg_jobs=$1
+	shift
+	suffix="-max-running-bg-jobs-$max_running_bg_jobs$suffix" "$@" \
+		--max_running_background_jobs=$max_running_bg_jobs
+)
+
 mixgraph_wo() (
 	version=$1
 	shift
