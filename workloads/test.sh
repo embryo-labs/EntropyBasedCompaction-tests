@@ -37,8 +37,7 @@ with_policy_tiering() {
 with_policy_benefit_cost() {
 	"$@" \
 		--compaction_style=6 \
-		--num_levels=1 \
-		--max_background_jobs=100
+		--num_levels=1
 }
 
 with_writes_per_writer() {
@@ -131,6 +130,7 @@ with_max_running_background_jobs() (
 	max_running_bg_jobs=$1
 	shift
 	suffix="-max-running-bg-jobs-$max_running_bg_jobs$suffix" "$@" \
+		--max_background_jobs=100 \
 		--max_running_background_jobs=$max_running_bg_jobs
 )
 
