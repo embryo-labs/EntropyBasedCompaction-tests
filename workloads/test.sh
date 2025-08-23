@@ -25,15 +25,16 @@ with_policy_universal() {
 		--compaction_style=1 \
 		--num_levels=1
 }
-with_policy_tiering() {
+with_policy_tiering() (
 	T=$1
 	shift
 	"$@" \
 		--compaction_style=4 \
 		--compaction_policy="tiering" \
 		--max_bytes_for_level_multiplier=$T \
-		--num_levels=1
-}
+		--num_levels=1 \
+		--max_background_jobs=100
+)
 with_policy_benefit_cost() {
 	"$@" \
 		--compaction_style=6 \
