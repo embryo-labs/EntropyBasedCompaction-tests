@@ -182,22 +182,23 @@ meituan() (
 	workspace=$(realpath "$(dirname $0)"/../..)
 	version=$1
 	shift
-	period_secs=$1
-	shift
 	speedup=$1
+	shift
+	scale=$1
 	shift
 	unique_size=$1
 	shift
 	key_size=16
 	value_size=1000
-	repeat=10
+	repeat=8
+	period_secs=$((24 * 3600 / speedup))
 	writes_per_second_file=$(mktemp)
 	reads_per_second_file=$(mktemp)
 	command="rm $writes_per_second_file $reads_per_second_file"
 	trap "echo $command; $command" EXIT
-	awk "{print \$0 * $speedup}" "$workspace"/meituan/write.txt > $writes_per_second_file
-	awk "{print \$0 * $speedup}" "$workspace"/meituan/read.txt > $reads_per_second_file
-	workload_name="meituan-speedup-$speedup-period-secs-$period_secs-repeat-$repeat-value-size-$value_size-unique-size-$unique_size$suffix"
+	awk "{print \$0 * $speedup * $scale}" "$workspace"/meituan/write.txt > $writes_per_second_file
+	awk "{print \$0 * $speedup * $scale}" "$workspace"/meituan/read.txt > $reads_per_second_file
+	workload_name="meituan-speedup-$speedup-scale-$scale-repeat-$repeat-value-size-$value_size-unique-size-$unique_size$suffix"
 	output_dir=../../data/$workload_name/$version
 	dbbench "$output_dir" "customperiodic" "$key_size" "$value_size" "$unique_size" \
 		--period_secs="$period_secs" \
@@ -209,12 +210,12 @@ meituan() (
 threads=32
 cache=100MB
 exp_range=16
-speedup=20
-with_threads $threads with_exp_range $exp_range with_cache $cache with_memtable_size 8MB with_policy_leveling 3 meituan leveling3 1000 $speedup 10GB
-with_threads $threads with_exp_range $exp_range with_cache $cache with_memtable_size 8MB with_policy_tiering 2 meituan tiering2 1000 $speedup 10GB
-with_threads $threads with_exp_range $exp_range with_cache $cache with_memtable_size 8MB with_policy_universal meituan universal 1000 $speedup 10GB
-with_threads $threads with_exp_range $exp_range with_cache $cache with_memtable_size 8MB with_policy_benefit_cost meituan benefit-cost 1000 $speedup 10GB
-with_threads $threads with_exp_range $exp_range with_cache $cache with_memtable_size 8MB with_rate_limiter_auto_tuned with_policy_benefit_cost meituan benefit-cost 1000 $speedup 10GB
+speedup=50
+with_threads $threads with_exp_range $exp_range with_cache $cache with_memtable_size 8MB with_policy_leveling 3 meituan leveling3 $speedup 1 10GB
+with_threads $threads with_exp_range $exp_range with_cache $cache with_memtable_size 8MB with_policy_tiering 2 meituan tiering2 $speedup 1 10GB
+with_threads $threads with_exp_range $exp_range with_cache $cache with_memtable_size 8MB with_policy_universal meituan universal $speedup 1 10GB
+with_threads $threads with_exp_range $exp_range with_cache $cache with_memtable_size 8MB with_policy_benefit_cost meituan benefit-cost $speedup 1 10GB
+with_threads $threads with_exp_range $exp_range with_cache $cache with_memtable_size 8MB with_rate_limiter_auto_tuned with_policy_benefit_cost meituan benefit-cost $speedup 1 10GB
 
 read=10000
 while [ "$read" -le 70000 ]; do
