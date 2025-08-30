@@ -25,7 +25,8 @@ with_policy_leveling() (
 		--level_compaction_dynamic_level_bytes=true \
 		--num_levels=10 \
 		--max_bytes_for_level_multiplier=$T \
-		--level0_file_num_compaction_trigger=1
+		--level0_file_num_compaction_trigger=1 \
+		--allow_intra_l0_compactions=false
 )
 with_policy_universal() {
 	"$@" \
