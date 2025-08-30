@@ -12,14 +12,21 @@ with_memtable_size() (
 		--max_bytes_for_level_base=$((memtable_size * 4))
 )
 
-with_policy_leveling() {
+with_policy_rocksdb_tuned() (
+	"$@" \
+		--level_compaction_dynamic_level_bytes=true \
+		--num_levels=10 \
+		--max_bytes_for_level_multiplier=10
+)
+with_policy_leveling() (
 	T=$1
 	shift
 	"$@" \
 		--level_compaction_dynamic_level_bytes=true \
+		--num_levels=10 \
 		--max_bytes_for_level_multiplier=$T \
-		--num_levels=10
-}
+		--level0_file_num_compaction_trigger=1
+)
 with_policy_universal() {
 	"$@" \
 		--compaction_style=1 \
