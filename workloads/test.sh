@@ -129,11 +129,6 @@ with_compaction_limit_MB_s() (
 	suffix="-compaction-${compaction_MB_s}MB-s$suffix" "$@" \
 		--rate_limiter_bytes_per_sec=$(($compaction_MB_s * 1000000))
 )
-with_rate_limiter_auto_tuned() (
-	suffix="-rate-limiter-autotuned$suffix" "$@" \
-		--rate_limiter_bytes_per_sec=1000000000 \
-		--rate_limiter_auto_tuned=true
-)
 
 with_max_running_background_jobs() (
 	max_running_bg_jobs=$1
@@ -223,7 +218,6 @@ with_threads $threads with_exp_range $exp_range with_cache $cache with_memtable_
 with_threads $threads with_exp_range $exp_range with_cache $cache with_memtable_size 8MB with_policy_tiering 2 meituan tiering2 $speedup 1 10GB
 with_threads $threads with_exp_range $exp_range with_cache $cache with_memtable_size 8MB with_policy_universal meituan universal $speedup 1 10GB
 with_threads $threads with_exp_range $exp_range with_cache $cache with_memtable_size 8MB with_policy_benefit_cost meituan benefit-cost $speedup 1 10GB
-with_threads $threads with_exp_range $exp_range with_cache $cache with_memtable_size 8MB with_rate_limiter_auto_tuned with_policy_benefit_cost meituan benefit-cost $speedup 1 10GB
 
 read=10000
 while [ "$read" -le 70000 ]; do
