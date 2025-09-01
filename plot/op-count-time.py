@@ -47,6 +47,14 @@ for op in operations:
 	if not os.path.exists(stat):
 		continue
 	stat = pd.read_csv(stat)
+	# Drop the first 1% because it is usually abnormal
+	stat = stat.iloc[len(stat) // 100:]
+
+	if (len(stat) >= 1000):
+		mean_step = len(stat) // 1000
+	else:
+		mean_step = 1
+	stat = stat.groupby(stat.index // mean_step).mean()
 
 	fig = plt.figure(dpi = 300, figsize = (cm_to_inch(SINGLE_COL_WIDTH), cm_to_inch(5)), constrained_layout=True)
 	ax = plt.gca()
