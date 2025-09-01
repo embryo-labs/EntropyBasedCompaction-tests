@@ -54,7 +54,7 @@ for op in operations:
 		mean_step = len(stat) // 1000
 	else:
 		mean_step = 1
-	stat = stat.groupby(stat.index // mean_step).mean()
+	throughput = stat[['secs_elapsed', 'count']].groupby(stat.index // mean_step).mean()
 
 	fig = plt.figure(dpi = 300, figsize = (cm_to_inch(SINGLE_COL_WIDTH), cm_to_inch(5)), constrained_layout=True)
 	ax = plt.gca()
@@ -62,7 +62,7 @@ for op in operations:
 	formatter.set_powerlimits((-3, 4))
 	ax.yaxis.set_major_formatter(formatter)
 	ax.yaxis.get_offset_text().set_fontsize(8)
-	plt.plot(stat['secs_elapsed'], stat['count'], linewidth=0.5)
+	plt.plot(throughput['secs_elapsed'], throughput['count'], linewidth=0.5)
 	plt.xticks(fontsize=8)
 	plt.yticks(fontsize=8)
 	ax.set_ylim(bottom=0)
