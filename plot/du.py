@@ -19,7 +19,7 @@ mpl.rcParams.update({
     })  # 设置全局字体
 plt.rcParams['axes.unicode_minus'] = False  # 用来正常显示负号
 
-du = pd.read_table(os.path.join(d, 'du.sh.txt'), sep='\s+')
+du = pd.read_table(os.path.join(d, 'du.sh.txt'), sep=r'\s+')
 time = (du['Timestamp(ns)'] - du['Timestamp(ns)'][0]) / 1e9
 
 plot_dir = os.path.join(d, 'plot')

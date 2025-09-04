@@ -24,7 +24,7 @@ mpl.rcParams.update({
 plt.rcParams['axes.unicode_minus'] = False
 
 def read_table(file):
-    iostat_raw = pd.read_table(file, sep='\s+')
+    iostat_raw = pd.read_table(file, sep=r'\s+')
     iostat_raw['Time(Seconds)'] = (iostat_raw['Timestamp(ns)'] - iostat_raw['Timestamp(ns)'][0]) / 1e9
     iostat = iostat_raw[['r/s', 'w/s', 'rkB/s', 'wkB/s']].groupby(iostat_raw.index // mean_step).mean()
     iostat['Time(Seconds)'] = iostat_raw['Time(Seconds)'].groupby(iostat_raw.index // mean_step).first()
