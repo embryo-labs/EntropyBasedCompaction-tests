@@ -6,6 +6,7 @@ if len(sys.argv) != 2:
 data_dir = sys.argv[1]
 
 import os
+import numpy as np
 import pandas as pd
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -75,6 +76,25 @@ plt.xlabel('Time (Seconds)', fontsize=8)
 plt.ylabel('# of sorted runs', fontsize=8)
 plt.legend(['Total', 'Merging'], fontsize=8)
 pdf_path = os.path.join(plot_dir, 'num-sorted-runs-main-level.pdf')
+plt.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01)
+print('Plot saved to ' + pdf_path)
+if 'DISPLAY' in os.environ:
+    plt.show(block=False)
+
+fig = plt.figure(dpi = 300, figsize = (cm_to_inch(SINGLE_COL_WIDTH), cm_to_inch(5)), constrained_layout=True)
+ax = plt.gca()
+x = sorted(report['num-sorted-runs'])
+plt.ylim(0, 4)
+y = np.linspace(0, 1, num=len(x), endpoint=False)
+y_log = -np.log10(1 - y)
+plt.plot(x, y_log)
+ticks = np.array([0, 0.5, 0.9, 0.99, 0.999, 0.9999])
+ticks_log = -np.log10(1 - ticks)
+plt.yticks(ticks_log, labels=ticks, fontsize=8)
+ax.grid(axis='y')
+plt.xlabel('# of sorted runs', fontsize=8)
+plt.ylabel('CDF', fontsize=8)
+pdf_path = os.path.join(plot_dir, 'num-sorted-runs-cdf.pdf')
 plt.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01)
 print('Plot saved to ' + pdf_path)
 if 'DISPLAY' in os.environ:
