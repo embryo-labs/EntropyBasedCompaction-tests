@@ -1,11 +1,13 @@
 #!/usr/bin/env sh
 
 work() {
-	cd ../../../testdb/
+	cd ../../../
 	echo Timestamp\(ns\) size
 	while true; do
-		echo -n "$(date +%s%N) "
-		du -sb . | awk '{print $1}' | xargs echo
+		if out=$(du -sb testdb 2> /dev/null); then
+			echo -n "$(date +%s%N) "
+			echo "$out" | awk '{print $1}' | xargs echo
+		fi
 		sleep 1
 	done
 }
