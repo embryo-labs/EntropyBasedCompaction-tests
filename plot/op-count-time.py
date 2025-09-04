@@ -38,15 +38,13 @@ operations = [
 		'name': 'Seeks',
 	},
 	{
-		'path': 'read',
-		'name': 'Reads',
+		'path': 'get',
+		'name': 'Gets',
 	}
 ]
-for op in operations:
-	stat = os.path.join(data_dir, op['path'] + '-count-time.csv')
-	if not os.path.exists(stat):
-		continue
-	stat = pd.read_csv(stat)
+read_operations = ['get', 'seek']
+
+def draw(stat, op_path, op_name):
 	# Drop the first 1% because it is usually abnormal
 	stat = stat.iloc[len(stat) // 100:]
 
@@ -67,8 +65,8 @@ for op in operations:
 	plt.yticks(fontsize=8)
 	ax.set_ylim(bottom=0)
 	plt.xlabel('Time (Seconds)', fontsize=8)
-	plt.ylabel(op['name'] + ' per second', fontsize=8)
-	pdf_path = os.path.join(plot_dir, op['path'] + '-per-second.pdf')
+	plt.ylabel(op_path + ' per second', fontsize=8)
+	pdf_path = os.path.join(plot_dir, op_path + '-per-second.pdf')
 	plt.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01)
 	print('Plot saved to ' + pdf_path)
 
@@ -80,6 +78,26 @@ for op in operations:
 	ax.set_ylim(bottom=0)
 	plt.xlabel('Time (Seconds)', fontsize=8)
 	plt.ylabel('Average latency (us)', fontsize=8)
-	pdf_path = os.path.join(plot_dir, op['path'] + '-avg-latency.pdf')
+	pdf_path = os.path.join(plot_dir, op_path + '-avg-latency.pdf')
 	plt.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01)
 	print('Plot saved to ' + pdf_path)
+
+num_read_types = 0
+stat_read = pd.DataFrame({'secs_elapsed': [], 'read-count': [], 'read-micros': []})
+for op in operations:
+	stat = os.path.join(data_dir, op['path'] + '-count-time.csv')
+	if not os.path.exists(stat):
+		continue
+	stat = pd.read_csv(stat)
+	if op['path'] in read_operations:
+		num_read_types += 1
+		stat_read = pd.merge_ordered(stat_read, stat, on='secs_elapsed', how='outer').fillna(0)
+		stat_read['read-count'] += stat_read.pop('count')
+		stat_read['read-micros'] += stat_read.pop('micros')
+
+	draw(stat, op['path'], op['name'])
+
+stat_read = stat_read.rename(columns={'read-count': 'count', 'read-micros': 'micros'})
+
+if num_read_types > 1:
+	draw(stat_read, 'read', 'Read')
