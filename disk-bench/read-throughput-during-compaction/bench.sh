@@ -1,10 +1,12 @@
 #!/usr/bin/env sh
-if [ ! "$3" ]; then
-	echo Usage: "$0 test-dir step(MB/s) max(MB/s)"
+if [ ! "$4" ]; then
+	echo Usage: "$0 test-dir max(MB/s) step(MB/s) numjobs"
 	exit 1
 fi
-step_MB_s=$2
-max_MB_s=$3
+output_dir=$(pwd)
+max_MB_s=$2
+step_MB_s=$3
+numjobs=$4
 mydir=$(realpath "$(dirname $0)")
 cd "$1"
 seq_rw=test2
@@ -18,51 +20,53 @@ rw_out=$(mktemp)
 trap "exit 1" INT TERM
 trap "pkill -P $$; rm $rw_out" EXIT
 
-echo '['
-i=0
-while true; do
-	echo "\
-	{
-		\"expected(MiB/s)\": ${i},
-		\"results\": ["
-	repeat=5
+(
+	echo '['
+	i=0
 	while true; do
-		if [ $i -gt 0 ]; then
-			fio --rate=$((i / 2))M --filename="$seq_rw" --bs=1M --size=$seq_rw_size --readwrite=rw --loops=100 --ioengine=sync --direct=1 --name=test --group_reporting --unified_rw_reporting=mixed > "$rw_out" &
-			rw=$!
-		else
-			rw=""
-		fi
-		out=$(fio --numjobs=32 --runtime=100 --bs=4K --size=$rand_read_size --filename=$rand_read --readwrite=randread --randrepeat=0 --ioengine=psync --direct=1 --name=test --group_reporting)
-		if [ "$rw" ]; then
-			kill $rw
-			wait $rw
-			real=$(grep "MIXED" $rw_out | cut -d'=' -f2 | cut -d' ' -f1)
-		else
-			real=0MiB/s
-		fi
+		echo "\
+		{
+			\"expected(MiB/s)\": ${i},
+			\"results\": ["
+		repeat=5
+		while true; do
+			if [ $i -gt 0 ]; then
+				fio --rate=$((i / 2))M --filename="$seq_rw" --bs=1M --size=$seq_rw_size --readwrite=rw --loops=100 --ioengine=sync --direct=1 --name=test --group_reporting --unified_rw_reporting=mixed > "$rw_out" &
+				rw=$!
+			else
+				rw=""
+			fi
+			out=$(fio --numjobs=$numjobs --runtime=100 --bs=4K --size=$rand_read_size --filename=$rand_read --readwrite=randread --randrepeat=0 --ioengine=psync --direct=1 --name=test --group_reporting)
+			if [ "$rw" ]; then
+				kill $rw
+				wait $rw
+				real=$(grep "MIXED" $rw_out | cut -d'=' -f2 | cut -d' ' -f1)
+			else
+				real=0MiB/s
+			fi
+			echo -n "\
+				{
+					\"compaction\": \"$real\",
+					\"rand-read\": $(echo "$out" | grep "READ" | cut -d'=' -f2 | cut -d' ' -f1)
+				}"
+			repeat=$(($repeat - 1))
+			if [ $repeat -gt 0 ]; then
+				echo ','
+			else
+				echo
+				break
+			fi
+		done
 		echo -n "\
-			{
-				\"compaction\": \"$real\",
-				\"rand-read\": $(echo "$out" | grep "READ" | cut -d'=' -f2 | cut -d' ' -f1)
-			}"
-		repeat=$(($repeat - 1))
-		if [ $repeat -gt 0 ]; then
-			echo ','
-		else
+			]
+		}"
+		i=$((i + step_MB_s))
+		if [ $i -gt "$max_MB_s" ]; then
 			echo
 			break
+		else
+			echo ','
 		fi
 	done
-	echo -n "\
-		]
-	}"
-	i=$((i + step_MB_s))
-	if [ $i -gt "$max_MB_s" ]; then
-		echo
-		break
-	else
-		echo ','
-	fi
-done
-echo ']'
+	echo ']'
+) | tee "$output_dir/max-$max_MB_s-MB-s-step-$step_MB_s-MB-s-numjobs-$numjobs.json"
