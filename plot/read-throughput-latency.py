@@ -31,7 +31,6 @@ P999 = []
 import os
 for read in range(10000, 70000 + 1, 10000):
     data_dir = os.path.join(dir, prefix + str(read), 'leveling')
-    data_dir = os.path.join(dir, prefix + str(read), 'leveling')
     stdout = open(os.path.join(data_dir, 'stdout.txt'))
     while stdout.readline() != 'Microseconds per read:\n':
         pass
