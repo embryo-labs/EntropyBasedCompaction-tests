@@ -80,11 +80,23 @@ with_cache() (
 	suffix="-cache-$cache$suffix" "$@" \
 		--cache_size="$cache_size"
 )
-with_exp_range() (
+with_read_exp_range() (
 	exp_range=$1
 	shift
 	suffix="-exp-range-$exp_range$suffix" "$@" \
 		--read_random_exp_range="$exp_range"
+)
+with_write_exp_range() (
+	exp_range=$1
+	shift
+	suffix="-write-exp-range-$exp_range$suffix" "$@" \
+		--write_random_exp_range="$exp_range"
+)
+with_merge_operator() (
+	op=$1
+	shift
+	suffix="-merge-operator-$op$suffix" "$@" \
+		--merge_operator="$op"
 )
 
 dbbench() (
@@ -119,7 +131,7 @@ test_rocksdb() (
 	shift
 	unique_size=$1
 	shift
-	output_dir="../../data/$benchmark-unique-size-$unique_size$suffix/$version"
+	output_dir="../../data/$benchmark-key-$key_size-value-$value_size-unique-size-$unique_size$suffix/$version"
 	dbbench "$output_dir" "$benchmark" "$key_size" "$value_size" "$unique_size" "$@"
 )
 
@@ -214,10 +226,10 @@ threads=32
 cache=100MB
 exp_range=16
 speedup=50
-with_threads $threads with_exp_range $exp_range with_cache $cache with_memtable_size 8MB with_policy_leveling 3 meituan leveling3 $speedup 1 10GB
-with_threads $threads with_exp_range $exp_range with_cache $cache with_memtable_size 8MB with_policy_tiering 2 meituan tiering2 $speedup 1 10GB
-with_threads $threads with_exp_range $exp_range with_cache $cache with_memtable_size 8MB with_policy_universal meituan universal $speedup 1 10GB
-with_threads $threads with_exp_range $exp_range with_cache $cache with_memtable_size 8MB with_policy_benefit_cost meituan benefit-cost $speedup 1 10GB
+with_threads $threads with_read_exp_range $exp_range with_cache $cache with_memtable_size 8MB with_policy_leveling 3 meituan leveling3 $speedup 1 10GB
+with_threads $threads with_read_exp_range $exp_range with_cache $cache with_memtable_size 8MB with_policy_tiering 2 meituan tiering2 $speedup 1 10GB
+with_threads $threads with_read_exp_range $exp_range with_cache $cache with_memtable_size 8MB with_policy_universal meituan universal $speedup 1 10GB
+with_threads $threads with_read_exp_range $exp_range with_cache $cache with_memtable_size 8MB with_policy_benefit_cost meituan benefit-cost $speedup 1 10GB
 
 read=10000
 while [ "$read" -le 70000 ]; do
