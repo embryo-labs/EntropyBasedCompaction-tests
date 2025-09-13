@@ -4,7 +4,7 @@ work() {
 	cd ../../../
 	echo Timestamp\(ns\) size
 	while true; do
-		if out=$(du -sb testdb 2> /dev/null); then
+		if out=$(du -sb testdb/ 2> /dev/null); then
 			echo -n "$(date +%s%N) "
 			echo "$out" | awk '{print $1}' | xargs echo
 		fi
