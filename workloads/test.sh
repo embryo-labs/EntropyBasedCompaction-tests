@@ -113,9 +113,23 @@ dbbench() (
 	num_unique_keys=$(($(humanfriendly --parse-size="$unique_size") / (key_size + value_size)))
 	"$(dirname $0)"/prepare.sh "$output_dir" || return $?
 	"$(dirname $0)"/dbbench.sh "$output_dir" "$num_unique_keys" "$key_size" \
-		--benchmarks=$benchmark,stats \
 		--value_size="$value_size" \
-		"$@"
+		--benchmarks_json="[
+	{
+		\"name\": \"filluniquerandom\",
+		\"duration\": 0,
+		\"writes\": $num_unique_keys
+	},
+	{
+		\"name\": \"waitforcompaction\"
+	},
+	{
+		\"name\": \"$benchmark\"
+	},
+	{
+		\"name\": \"stats\"
+	}
+]" "$@"
 	"$(dirname $0)"/../helper/data-rocksdb.sh "$output_dir"
 	"$(dirname $0)"/../helper/plot-rocksdb.sh "$output_dir"
 )
