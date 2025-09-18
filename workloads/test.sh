@@ -117,6 +117,7 @@ dbbench() (
 		--benchmarks_json="[
 	{
 		\"name\": \"filluniquerandom\",
+		\"threads\": 1,
 		\"duration\": 0,
 		\"writes\": $num_unique_keys
 	},
