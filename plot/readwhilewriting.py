@@ -25,7 +25,13 @@ mpl.rcParams.update({
 plt.rcParams['axes.unicode_minus'] = False
 
 vec_write_MB_s = [10, 20, 40, 50, 60, 70, 80, 90, 100]
-versions = ['leveling3', 'tiering2', 'universal', 'benefit-cost']
+versions = []
+for i in [5, 7, 10]:
+    versions.append('leveling' + str(i))
+for i in [2]:
+    versions.append('tiering' + str(i))
+versions.append('universal')
+versions.append('benefit-cost')
 
 percentiles_throughput = [10, 1, 0.1, 0.01]
 percentile_names_throughput = ['10%', '1%', '0.1%', '0.01%']
@@ -87,7 +93,8 @@ def draw(data, ylabel, filename):
     plt.yticks(fontsize=8)
     for version in versions:
         plt.plot(vec_write_MB_s, data[version])
-    ax.set_ylim(bottom=0)
+    plt.yscale('log')
+    ax.set_ylim((1, 100))
     plt.legend(versions, fontsize=8)
     pdf_path = os.path.join(dir, filename)
     plt.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01)
