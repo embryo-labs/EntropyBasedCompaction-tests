@@ -165,31 +165,25 @@ with_max_running_background_jobs() (
 		--max_running_background_jobs=$max_running_bg_jobs
 )
 
-mixgraph_wo() (
+mixgraph_common() (
 	version=$1
 	shift
-	threads=$1
+	unique_size=$1
 	shift
-	sine_a=100000
-	sine_b=0.1
-	sine_d=101000
+	period_secs=$1
+	shift
+	repeat=2
+	sine_a=200000
+	sine_d=201000
 	key_size=48
 	load_value_size=43
-	num_unique_keys=$((unique_bytes / (key_size + load_value_size)))
-	writes=100000000
-	workload_name="mixgraph-wo-writes-$writes-sine_a-$sine_a-sine_b-$sine_b-sine_d-$sine_d-threads-$threads$suffix"
-	output_dir=../../data/$workload_name/$version
 	# --reads is actually the number of all operations for mixgraph
-	dbbench "$output_dir" \
-		mixgraph "$key_size" "$load_value_size" \
-			--reads=$(($writes / threads)) \
-			--threads="$threads" \
+	suffix="-period-secs-$period_secs-repeat-$repeat-sine_a-$sine_a-sine_d-$sine_d$suffix" \
+	test_rocksdb "$version" mixgraph "$key_size" "$load_value_size" "$unique_size" \
+			--duration=$((period_secs * repeat)) \
 			--sine_a=$sine_a \
-			--sine_b=$sine_b \
+			--sine_b=$(python3 -c "import math; print(2 * math.pi / $period_secs)") \
 			--sine_d=$sine_d \
-			--mix_get_ratio=0 \
-			--mix_put_ratio=1 \
-			--mix_seek_ratio=0 \
 			--keyrange_dist_a=14.18 \
 			--keyrange_dist_b=-2.917 \
 			--keyrange_dist_c=0.0164 \
@@ -203,10 +197,44 @@ mixgraph_wo() (
 			--sine_mix_rate=true \
 			"$@"
 )
-with_compaction_limit_MB_s 100 with_policy_leveling 3 mixgraph_wo leveling3 16
-with_compaction_limit_MB_s 100 with_policy_tiering 2 mixgraph_wo tiering2 16
-with_compaction_limit_MB_s 100 with_policy_universal mixgraph_wo universal 16
-with_compaction_limit_MB_s 100 with_policy_benefit_cost mixgraph_wo benefit-cost 16
+with_mix_ratio_wo() (
+	suffix="-wo$suffix" "$@" \
+		--mix_get_ratio=0 \
+		--mix_put_ratio=1 \
+		--mix_seek_ratio=0
+)
+with_mix_ratio() (
+	"$@" \
+		--mix_get_ratio=0.83 \
+		--mix_put_ratio=0.14 \
+		--mix_seek_ratio=0.03 
+)
+prefix_random() (
+	version=$1
+	shift
+	unique_size=$1
+	shift
+	period_secs=$1
+	shift
+	suffix="-prefix-random$suffix" mixgraph_common "$version" "$unique_size" "$period_secs" "$@"
+)
+prefix_dist() (
+	version=$1
+	shift
+	unique_size=$1
+	shift
+	period_secs=$1
+	shift
+	suffix="-prefix-dist$suffix" mixgraph_common "$version" "$unique_size" "$period_secs" \
+		-key_dist_a=0.002312 \
+		-key_dist_b=0.3467 \
+		"$@"
+)
+
+with_threads 16 with_compaction_limit_MB_s 256 with_memtable_size 8MB with_policy_leveling 3 with_mix_ratio_wo prefix_random leveling3 10GB 1000
+with_threads 16 with_compaction_limit_MB_s 256 with_memtable_size 8MB with_policy_tiering 2 with_mix_ratio_wo prefix_random tiering2 10GB 1000
+with_threads 16 with_compaction_limit_MB_s 256 with_memtable_size 8MB with_policy_universal with_mix_ratio_wo prefix_random universal 10GB 1000
+with_threads 16 with_compaction_limit_MB_s 256 with_memtable_size 8MB with_policy_benefit_cost with_mix_ratio_wo prefix_random benefit-cost 10GB 1000
 
 meituan() (
 	workspace=$(realpath "$(dirname $0)"/../..)
