@@ -84,7 +84,7 @@ for version in versions:
         for i in range(len(p)):
             num_sorted_runs_percentiles[percentile_names_sr[i]][version].append(p[i])
 
-def draw(data, ylabel, filename):
+def draw1(data, ylabel):
     fig = plt.figure(dpi = 300, figsize = (cm_to_inch(SINGLE_COL_WIDTH), cm_to_inch(5)), constrained_layout=True)
     ax = plt.gca()
     plt.xlabel('Write (MB/s)', fontsize=8)
@@ -93,17 +93,27 @@ def draw(data, ylabel, filename):
     plt.yticks(fontsize=8)
     for version in versions:
         plt.plot(vec_write_MB_s, data[version])
-    plt.yscale('log')
-    ax.set_ylim((1, 100))
+
+def draw2(filename):
     plt.legend(versions, fontsize=8)
     pdf_path = os.path.join(dir, filename)
     plt.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01)
     print('Plot saved to ' + pdf_path)
 
-draw(throughput_avg, 'Throughput (average)', 'readwhilewriting-throughput-average.pdf')
-for i in range(len(percentiles_throughput)):
-    draw(throughput_percentiles[percentile_names_throughput[i]], 'Throughput (' + percentile_names_throughput[i] + ')', 'readwhilewriting-throughput-' + percentile_paths_throughput[i] + '.pdf')
+def draw_throughput(data, ylabel, filename):
+    draw1(data, ylabel)
+    draw2(filename)
 
-draw(num_sorted_runs_avg, '# of sorted runs (average)', 'readwhilewriting-num-sorted-runs-average.pdf')
+def draw_num_sorted_runs(data, ylabel, filename):
+    draw1(data, ylabel)
+    plt.yscale('log')
+    plt.ylim(1, 100)
+    draw2(filename)
+
+draw_throughput(throughput_avg, 'Throughput (average)', 'readwhilewriting-throughput-average.pdf')
+for i in range(len(percentiles_throughput)):
+    draw_throughput(throughput_percentiles[percentile_names_throughput[i]], 'Throughput (' + percentile_names_throughput[i] + ')', 'readwhilewriting-throughput-' + percentile_paths_throughput[i] + '.pdf')
+
+draw_num_sorted_runs(num_sorted_runs_avg, '# of sorted runs (average)', 'readwhilewriting-num-sorted-runs-average.pdf')
 for i in range(len(percentiles_sr)):
-    draw(num_sorted_runs_percentiles[percentile_names_sr[i]], '# of sorted runs (' + percentile_names_sr[i] + ')', 'readwhilewriting-num-sorted-runs-' + percentile_paths_sr[i] + '.pdf')
+    draw_num_sorted_runs(num_sorted_runs_percentiles[percentile_names_sr[i]], '# of sorted runs (' + percentile_names_sr[i] + ')', 'readwhilewriting-num-sorted-runs-' + percentile_paths_sr[i] + '.pdf')
