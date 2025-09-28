@@ -172,18 +172,16 @@ mixgraph_common() (
 	shift
 	period_secs=$1
 	shift
+	scale=$1
+	shift
 	repeat=2
-	sine_a=200000
-	sine_d=201000
-	key_size=48
-	load_value_size=43
 	# --reads is actually the number of all operations for mixgraph
-	suffix="-period-secs-$period_secs-repeat-$repeat-sine_a-$sine_a-sine_d-$sine_d$suffix" \
-	test_rocksdb "$version" mixgraph "$key_size" "$load_value_size" "$unique_size" \
+	suffix="-period-secs-$period_secs-scale-$scale-repeat-$repeat$suffix" \
+	test_rocksdb "$version" mixgraph 48 43 "$unique_size" \
 			--duration=$((period_secs * repeat)) \
-			--sine_a=$sine_a \
+			--sine_a=$((1000 * scale)) \
 			--sine_b=$(python3 -c "import math; print(2 * math.pi / $period_secs)") \
-			--sine_d=$sine_d \
+			--sine_d=$((4500 * scale)) \
 			--keyrange_dist_a=14.18 \
 			--keyrange_dist_b=-2.917 \
 			--keyrange_dist_c=0.0164 \
@@ -207,34 +205,22 @@ with_mix_ratio() (
 	"$@" \
 		--mix_get_ratio=0.83 \
 		--mix_put_ratio=0.14 \
-		--mix_seek_ratio=0.03 
+		--mix_seek_ratio=0.03
 )
 prefix_random() (
-	version=$1
-	shift
-	unique_size=$1
-	shift
-	period_secs=$1
-	shift
-	suffix="-prefix-random$suffix" mixgraph_common "$version" "$unique_size" "$period_secs" "$@"
+	suffix="-prefix-random$suffix" mixgraph_common "$@"
 )
 prefix_dist() (
-	version=$1
-	shift
-	unique_size=$1
-	shift
-	period_secs=$1
-	shift
-	suffix="-prefix-dist$suffix" mixgraph_common "$version" "$unique_size" "$period_secs" \
+	suffix="-prefix-dist$suffix" mixgraph_common "$@" \
 		-key_dist_a=0.002312 \
-		-key_dist_b=0.3467 \
-		"$@"
+		-key_dist_b=0.3467
 )
 
-with_threads 16 with_compaction_limit_MB_s 256 with_memtable_size 8MB with_policy_leveling 3 with_mix_ratio_wo prefix_random leveling3 10GB 1000
-with_threads 16 with_compaction_limit_MB_s 256 with_memtable_size 8MB with_policy_tiering 2 with_mix_ratio_wo prefix_random tiering2 10GB 1000
-with_threads 16 with_compaction_limit_MB_s 256 with_memtable_size 8MB with_policy_universal with_mix_ratio_wo prefix_random universal 10GB 1000
-with_threads 16 with_compaction_limit_MB_s 256 with_memtable_size 8MB with_policy_benefit_cost with_mix_ratio_wo prefix_random benefit-cost 10GB 1000
+with_threads 16 with_compaction_limit_MB_s 256 with_memtable_size 8MB with_policy_leveling 3 with_mix_ratio_wo prefix_random leveling3 10GB 1000 70
+with_threads 16 with_compaction_limit_MB_s 256 with_memtable_size 8MB with_policy_tiering 2 with_mix_ratio_wo prefix_random tiering2 10GB 1000 70
+with_threads 16 with_compaction_limit_MB_s 256 with_memtable_size 8MB with_policy_universal with_mix_ratio_wo prefix_random universal 10GB 1000 70
+with_threads 16 with_compaction_limit_MB_s 256 with_memtable_size 8MB with_policy_benefit_cost with_mix_ratio_wo prefix_random benefit-cost 10GB 1000 70
+
 
 meituan() (
 	workspace=$(realpath "$(dirname $0)"/../..)
