@@ -36,6 +36,8 @@ fi
 	--num=$num_unique_keys \
 	--level0_slowdown_writes_trigger=100000 \
 	--level0_stop_writes_trigger=100000 \
+	--soft_pending_compaction_bytes_limit=1000000000000000 \
+	--hard_pending_compaction_bytes_limit=1000000000000000 \
 	--statistics=true \
 	--report_file=report.csv \
 	--report_interval_seconds=1 \
