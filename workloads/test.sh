@@ -99,7 +99,45 @@ with_merge_operator() (
 		--merge_operator="$op"
 )
 
-dbbench() (
+load_some_run() (
+	output_dir=$1
+	shift
+	benchmark=$1
+	shift
+	key_size=$1
+	shift
+	value_size=$1
+	shift
+	unique_size=$1
+	shift
+	load_size=$1
+	shift
+	num_unique_keys=$(($(humanfriendly --parse-size="$unique_size") / (key_size + value_size)))
+	num_load_keys=$(($(humanfriendly --parse-size="$load_size") / (key_size + value_size)))
+	"$(dirname $0)"/prepare.sh "$output_dir" || return $?
+	"$(dirname $0)"/dbbench.sh "$output_dir" "$num_unique_keys" "$key_size" \
+		--value_size="$value_size" \
+		--benchmarks_json="[
+	{
+		\"name\": \"fillrandom\",
+		\"threads\": 1,
+		\"duration\": 0,
+		\"writes\": $num_load_keys
+	},
+	{
+		\"name\": \"waitforcompaction\"
+	},
+	{
+		\"name\": \"$benchmark\"
+	},
+	{
+		\"name\": \"stats\"
+	}
+]" "$@"
+	"$(dirname $0)"/../helper/data-rocksdb.sh "$output_dir"
+	"$(dirname $0)"/../helper/plot-rocksdb.sh "$output_dir"
+)
+load_all_run() (
 	output_dir=$1
 	shift
 	benchmark=$1
@@ -135,7 +173,23 @@ dbbench() (
 	"$(dirname $0)"/../helper/plot-rocksdb.sh "$output_dir"
 )
 
-test_rocksdb() (
+dbbench_load_some() (
+	version=$1
+	shift
+	benchmark=$1
+	shift
+	key_size=$1
+	shift
+	value_size=$1
+	shift
+	unique_size=$1
+	shift
+	load_size=$1
+	shift
+	output_dir="../../data/$benchmark-key-$key_size-value-$value_size-unique-size-$unique_size-load-$load_size$suffix/$version"
+	load_some_run "$output_dir" "$benchmark" "$key_size" "$value_size" "$unique_size" "$load_size" "$@"
+)
+dbbench_load_all() (
 	version=$1
 	shift
 	benchmark=$1
@@ -147,7 +201,7 @@ test_rocksdb() (
 	unique_size=$1
 	shift
 	output_dir="../../data/$benchmark-key-$key_size-value-$value_size-unique-size-$unique_size$suffix/$version"
-	dbbench "$output_dir" "$benchmark" "$key_size" "$value_size" "$unique_size" "$@"
+	load_all_run "$output_dir" "$benchmark" "$key_size" "$value_size" "$unique_size" "$@"
 )
 
 with_compaction_limit_MB_s() (
@@ -188,7 +242,7 @@ meituan() (
 	awk "{print \$0 * $speedup * $scale}" "$workspace"/meituan/read.txt > $reads_per_second_file
 	workload_name="meituan-speedup-$speedup-scale-$scale-repeat-$repeat-value-size-$value_size-unique-size-$unique_size$suffix"
 	output_dir=../../data/$workload_name/$version
-	dbbench "$output_dir" "customperiodic" "$key_size" "$value_size" "$unique_size" \
+	load_all_run "$output_dir" "customperiodic" "$key_size" "$value_size" "$unique_size" \
 		--period_secs="$period_secs" \
 		--writes_per_second_file="$writes_per_second_file" \
 		--reads_per_second_file="$reads_per_second_file" \
