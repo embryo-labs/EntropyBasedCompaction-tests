@@ -98,6 +98,12 @@ with_merge_operator() (
 	suffix="-merge-operator-$op$suffix" "$@" \
 		--merge_operator="$op"
 )
+with_perf_level() (
+	perf_level=$1
+	shift
+	suffix="-perf-level-$perf_level$suffix" "$@" \
+		--perf_level=$perf_level
+)
 
 load_some_run() (
 	output_dir=$1
