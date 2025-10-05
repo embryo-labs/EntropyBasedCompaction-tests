@@ -62,7 +62,7 @@ for version in versions:
     for name in percentile_names_sr:
         num_sorted_runs_percentiles[name][version] = []
     for write_MB_s in vec_write_MB_s:
-        data_dir = os.path.join(dir, 'readwhilewriting-key-24-value-1000-unique-size-10GB-memtable-8MB-compaction-500MB-s-write-' + str(write_MB_s) + 'MB-s-threads-64-write-100GB-get-0.97-seek-0.03', version)
+        data_dir = os.path.join(dir, 'readwhilewriting-key-24-value-1000-unique-size-10GB-memtable-8MB-compaction-256MB-s-write-' + str(write_MB_s) + 'MB-s-threads-64-write-100GB-get-0.97-seek-0.03', version)
         stat_read = pd.DataFrame({'secs_elapsed': [], 'read-count': []})
         for op in ['get', 'seek']:
             stat = pd.read_csv(os.path.join(data_dir, op + '-count-time.csv'))
