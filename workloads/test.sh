@@ -128,7 +128,8 @@ load_some_run() (
 		\"name\": \"fillrandom\",
 		\"threads\": 1,
 		\"duration\": 0,
-		\"writes\": $num_load_keys
+		\"writes\": $num_load_keys,
+		\"benchmark_write_rate_limit\": 0
 	},
 	{
 		\"name\": \"waitforcompaction\"
@@ -163,7 +164,8 @@ load_all_run() (
 		\"name\": \"filluniquerandom\",
 		\"threads\": 1,
 		\"duration\": 0,
-		\"writes\": $num_unique_keys
+		\"writes\": $num_unique_keys,
+		\"benchmark_write_rate_limit\": 0
 	},
 	{
 		\"name\": \"waitforcompaction\"
