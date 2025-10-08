@@ -265,21 +265,3 @@ with_threads $threads with_read_exp_range $exp_range with_cache $cache with_memt
 with_threads $threads with_read_exp_range $exp_range with_cache $cache with_memtable_size 8MB with_policy_tiering 2 meituan tiering2 $speedup 1 10GB
 with_threads $threads with_read_exp_range $exp_range with_cache $cache with_memtable_size 8MB with_policy_universal meituan universal $speedup 1 10GB
 with_threads $threads with_read_exp_range $exp_range with_cache $cache with_memtable_size 8MB with_policy_benefit_cost meituan benefit-cost $speedup 1 10GB
-
-read=10000
-while [ "$read" -le 70000 ]; do
-	suffix="-threads-16-read-$read" with_bgwrite_MB_s 10 with_policy_leveling 3 test_rocksdb leveling3 queuedreadrandomwhilewriting 24 1000 --threads=16 --benchmark_read_rate_limit=$read
-	suffix="-threads-16-read-$read" with_bgwrite_MB_s 10 with_compaction_limit_MB_s 100 with_policy_leveling 3 test_rocksdb leveling3 queuedreadrandomwhilewriting 24 1000 --threads=16 --benchmark_read_rate_limit=$read
-	read=$((read + 10000))
-done
-
-bench=seekrandomwhilewriting
-suffix="-threads-16"
-args="--threads=16"
-
-write=1
-while [ "$write" -le 20 ]; do
-	suffix="$suffix" with_bgwrite_MB_s $write with_compaction_limit_MB_s 100 with_policy_leveling 3 test_rocksdb leveling3 "$bench" 24 1000 $args
-	suffix="$suffix" with_bgwrite_MB_s $write with_compaction_limit_MB_s 100 with_policy_universal test_rocksdb universal "$bench" 24 1000 $args
-	write=$((write + 1))
-done
