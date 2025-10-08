@@ -8,8 +8,7 @@ with_memtable_size() (
 	memtable_size=$(humanfriendly --parse-size="$arg_memtable_size")
 	suffix="-memtable-$arg_memtable_size$suffix" "$@" \
 		--write_buffer_size=$memtable_size \
-		--target_file_size_base=$memtable_size \
-		--max_bytes_for_level_base=$((memtable_size * 4))
+		--target_file_size_base=$memtable_size
 )
 
 with_policy_rocksdb_tuned() (
@@ -19,12 +18,17 @@ with_policy_rocksdb_tuned() (
 		--max_bytes_for_level_multiplier=10
 )
 with_policy_leveling() (
+	if [ -z "$memtable_size" ]; then
+		echo with_memtable_size should be placed before with_policy_leveling
+		exit 1
+	fi
 	T=$1
 	shift
 	"$@" \
 		--level_compaction_dynamic_level_bytes=true \
 		--num_levels=10 \
 		--max_bytes_for_level_multiplier=$T \
+		--max_bytes_for_level_base=$((memtable_size * $T)) \
 		--level0_file_num_compaction_trigger=1 \
 		--allow_intra_l0_compactions=false
 )
@@ -135,6 +139,9 @@ load_some_run() (
 		\"name\": \"waitforcompaction\"
 	},
 	{
+		\"name\": \"stats\"
+	},
+	{
 		\"name\": \"$benchmark\"
 	},
 	{
@@ -169,6 +176,9 @@ load_all_run() (
 	},
 	{
 		\"name\": \"waitforcompaction\"
+	},
+	{
+		\"name\": \"stats\"
 	},
 	{
 		\"name\": \"$benchmark\"
@@ -261,7 +271,7 @@ threads=32
 cache=100MB
 exp_range=16
 speedup=50
-with_threads $threads with_read_exp_range $exp_range with_cache $cache with_memtable_size 8MB with_policy_leveling 3 meituan leveling3 $speedup 1 10GB
-with_threads $threads with_read_exp_range $exp_range with_cache $cache with_memtable_size 8MB with_policy_tiering 2 meituan tiering2 $speedup 1 10GB
-with_threads $threads with_read_exp_range $exp_range with_cache $cache with_memtable_size 8MB with_policy_universal meituan universal $speedup 1 10GB
-with_threads $threads with_read_exp_range $exp_range with_cache $cache with_memtable_size 8MB with_policy_benefit_cost meituan benefit-cost $speedup 1 10GB
+with_threads $threads with_read_exp_range $exp_range with_cache $cache with_memtable_size 8MiB with_policy_leveling 3 meituan leveling3 $speedup 1 10GB
+with_threads $threads with_read_exp_range $exp_range with_cache $cache with_memtable_size 8MiB with_policy_tiering 2 meituan tiering2 $speedup 1 10GB
+with_threads $threads with_read_exp_range $exp_range with_cache $cache with_memtable_size 8MiB with_policy_universal meituan universal $speedup 1 10GB
+with_threads $threads with_read_exp_range $exp_range with_cache $cache with_memtable_size 8MiB with_policy_benefit_cost meituan benefit-cost $speedup 1 10GB
