@@ -40,9 +40,13 @@ operations = [
 	{
 		'path': 'get',
 		'name': 'Gets',
+	},
+	{
+		'path': 'prefix-scan',
+		'name': 'Prefix scans',
 	}
 ]
-read_operations = ['get', 'seek']
+read_operations = ['get', 'seek', 'prefix-scan']
 
 def draw(stat, op_path, op_name):
 	# Drop the first 1% because it is usually abnormal
