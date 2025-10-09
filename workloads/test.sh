@@ -8,7 +8,8 @@ with_memtable_size() (
 	memtable_size=$(humanfriendly --parse-size="$arg_memtable_size")
 	suffix="-memtable-$arg_memtable_size$suffix" "$@" \
 		--write_buffer_size=$memtable_size \
-		--target_file_size_base=$memtable_size
+		--target_file_size_base=$memtable_size \
+		--max_bytes_for_level_base=$((memtable_size * 4))
 )
 
 with_policy_rocksdb_tuned() (
@@ -18,17 +19,12 @@ with_policy_rocksdb_tuned() (
 		--max_bytes_for_level_multiplier=10
 )
 with_policy_leveling() (
-	if [ -z "$memtable_size" ]; then
-		echo with_memtable_size should be placed before with_policy_leveling
-		exit 1
-	fi
 	T=$1
 	shift
 	"$@" \
 		--level_compaction_dynamic_level_bytes=true \
 		--num_levels=10 \
 		--max_bytes_for_level_multiplier=$T \
-		--max_bytes_for_level_base=$((memtable_size * $T)) \
 		--level0_file_num_compaction_trigger=1 \
 		--allow_intra_l0_compactions=false
 )
