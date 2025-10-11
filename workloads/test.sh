@@ -49,6 +49,12 @@ with_policy_benefit_cost() {
 		--num_levels=1
 }
 
+with_num_writers() (
+	num_writers=$1
+	shift
+	suffix="-writers-$num_writers$suffix" "$@" \
+		--num_writers=$num_writers
+)
 with_writes_per_writer() {
 	writes_per_thread=$1
 	shift
@@ -57,8 +63,14 @@ with_writes_per_writer() {
 with_write_MB_s() (
 	write_MB_s=$1
 	shift
+	if [ "$num_writers" ]; then
+		per_writer=$((write_MB_s / num_writers))
+		echo "$per_writer" MB/s per writer
+	else
+		per_writer=$write_MB_s
+	fi
 	suffix="-write-${write_MB_s}MB-s$suffix" "$@" \
-		--benchmark_write_rate_limit=$((write_MB_s * 1000000))
+		--benchmark_write_rate_limit=$((per_writer * 1000000))
 )
 with_read_ops() (
 	read_ops=$1
