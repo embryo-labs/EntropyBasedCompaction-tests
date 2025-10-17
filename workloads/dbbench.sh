@@ -11,7 +11,7 @@ key_size=$1
 shift
 workspace=$(realpath "$(dirname $0)"/../..)
 
-ulimit -n 100000
+ulimit -n 1000000
 # Dump core when crash
 ulimit -c unlimited
 export ASAN_OPTIONS="abort_on_error=1:disable_coredump=0"
