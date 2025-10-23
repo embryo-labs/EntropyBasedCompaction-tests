@@ -65,28 +65,29 @@ print('Plot saved to ' + pdf_path)
 if 'DISPLAY' in os.environ:
     plt.show(block=False)
 
-def draw_num_sorted_runs(yscale=None):
-    fname = 'num-sorted-runs'
+def draw_num_sorted_runs(report, fname, yscale=None):
     fig = plt.figure(dpi = 300, figsize = (cm_to_inch(SINGLE_COL_WIDTH), cm_to_inch(5)), constrained_layout=True)
     ax = plt.gca()
-    plt.plot(report['secs_elapsed'], report['num-sorted-runs'] - report['rocksdb.num-top-level-sorted-runs'])
+    plt.plot(report['secs_elapsed'], report['num-sorted-runs'])
     plt.plot(report['secs_elapsed'], report['rocksdb.num-merging-main-level-sorted-runs'])
     plt.xticks(fontsize=8)
     plt.yticks(fontsize=8)
     if yscale is not None:
         plt.yscale(yscale)
-        fname = fname + '-' + yscale
     ax.set_ylim(bottom=1)
     plt.xlabel('Time (Seconds)', fontsize=8)
     plt.ylabel('# of sorted runs', fontsize=8)
     plt.legend(['Total', 'Merging'], fontsize=8)
-    pdf_path = os.path.join(plot_dir, fname + '.pdf')
+    pdf_path = os.path.join(plot_dir, fname)
     plt.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01)
     print('Plot saved to ' + pdf_path)
     if 'DISPLAY' in os.environ:
         plt.show(block=False)
-draw_num_sorted_runs()
-draw_num_sorted_runs('log')
+draw_num_sorted_runs(report, 'num-sorted-runs.pdf')
+draw_num_sorted_runs(report, 'num-sorted-runs-log.pdf')
+if len(report) >= 200:
+    mean_step = len(report) // 100
+    draw_num_sorted_runs(report[['secs_elapsed', 'num-sorted-runs', 'rocksdb.num-merging-main-level-sorted-runs']].groupby(report.index // mean_step).mean(), 'num-sorted-runs-mean-every-1p.pdf')
 
 fig = plt.figure(dpi = 300, figsize = (cm_to_inch(SINGLE_COL_WIDTH), cm_to_inch(5)), constrained_layout=True)
 ax = plt.gca()
