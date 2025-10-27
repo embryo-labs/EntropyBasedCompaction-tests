@@ -10,6 +10,7 @@ shift
 key_size=$1
 shift
 workspace=$(realpath "$(dirname $0)"/../..)
+echo Output dir: "$output_dir"
 
 ulimit -n 1000000
 # Dump core when crash
