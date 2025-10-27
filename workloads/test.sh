@@ -63,14 +63,13 @@ with_writes_per_writer() {
 with_write_MB_s() (
 	write_MB_s=$1
 	shift
+	per_writer=$((write_MB_s * 1000000))
 	if [ "$num_writers" ]; then
-		per_writer=$((write_MB_s / num_writers))
-		echo "$per_writer" MB/s per writer
-	else
-		per_writer=$write_MB_s
+		per_writer=$((per_writer / num_writers))
+		echo "$per_writer" B/s per writer
 	fi
 	suffix="-write-${write_MB_s}MB-s$suffix" "$@" \
-		--benchmark_write_rate_limit=$((per_writer * 1000000))
+		--benchmark_write_rate_limit=$per_writer
 )
 with_read_ops() (
 	read_ops=$1
