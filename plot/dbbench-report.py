@@ -51,19 +51,21 @@ print('Plot saved to ' + pdf_path)
 if 'DISPLAY' in os.environ:
     plt.show(block=False)
 
-fig = plt.figure(dpi = 300, figsize = (cm_to_inch(SINGLE_COL_WIDTH), cm_to_inch(5)), constrained_layout=True)
-ax = plt.gca()
-plt.plot(report['secs_elapsed'], report['wait-for-last-level-compaction'])
-plt.xticks(fontsize=8)
-plt.yticks(fontsize=8)
-ax.set_ylim(bottom=0)
-plt.xlabel('Time (Seconds)', fontsize=8)
-plt.ylabel('Number of wait for LLC', fontsize=8)
-pdf_path = os.path.join(plot_dir, 'wait-for-last-level-compaction.pdf')
-plt.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01)
-print('Plot saved to ' + pdf_path)
-if 'DISPLAY' in os.environ:
-    plt.show(block=False)
+def draw_ticker(name, ylabel):
+    fig = plt.figure(dpi = 300, figsize = (cm_to_inch(SINGLE_COL_WIDTH), cm_to_inch(5)), constrained_layout=True)
+    ax = plt.gca()
+    plt.plot(report['secs_elapsed'], report[name])
+    plt.xticks(fontsize=8)
+    plt.yticks(fontsize=8)
+    ax.set_ylim(bottom=0)
+    plt.xlabel('Time (Seconds)', fontsize=8)
+    plt.ylabel(ylabel, fontsize=8)
+    pdf_path = os.path.join(plot_dir, name + '.pdf')
+    plt.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01)
+    print('Plot saved to ' + pdf_path)
+    if 'DISPLAY' in os.environ:
+        plt.show(block=False)
+draw_ticker('wait-for-last-level-compaction', 'Number of wait for LLC')
 
 def draw_num_sorted_runs(report, fname, yscale=None):
     fig = plt.figure(dpi = 300, figsize = (cm_to_inch(SINGLE_COL_WIDTH), cm_to_inch(5)), constrained_layout=True)
