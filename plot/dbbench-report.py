@@ -51,7 +51,7 @@ print('Plot saved to ' + pdf_path)
 if 'DISPLAY' in os.environ:
     plt.show(block=False)
 
-def draw_ticker(name, ylabel):
+def draw(name, ylabel):
     fig = plt.figure(dpi = 300, figsize = (cm_to_inch(SINGLE_COL_WIDTH), cm_to_inch(5)), constrained_layout=True)
     ax = plt.gca()
     plt.plot(report['secs_elapsed'], report[name])
@@ -65,7 +65,8 @@ def draw_ticker(name, ylabel):
     print('Plot saved to ' + pdf_path)
     if 'DISPLAY' in os.environ:
         plt.show(block=False)
-draw_ticker('wait-for-last-level-compaction', 'Number of wait for LLC')
+draw('wait-for-last-level-compaction', 'Number of wait for LLC')
+draw('size', 'Size')
 
 def draw_num_sorted_runs(report, fname, yscale=None):
     fig = plt.figure(dpi = 300, figsize = (cm_to_inch(SINGLE_COL_WIDTH), cm_to_inch(5)), constrained_layout=True)
