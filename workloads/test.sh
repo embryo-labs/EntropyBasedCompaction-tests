@@ -103,6 +103,11 @@ with_write_exp_range() (
 	suffix="-write-exp-range-$exp_range$suffix" "$@" \
 		--write_random_exp_range="$exp_range"
 )
+with_nexts() (
+	nexts=$1
+	shift
+	suffix="-nexts-$nexts$suffix" "$@" --seek_nexts="$nexts"
+)
 with_merge_operator() (
 	op=$1
 	shift
