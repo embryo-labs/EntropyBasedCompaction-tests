@@ -26,14 +26,36 @@ mpl.rcParams.update({
 })
 plt.rcParams['axes.unicode_minus'] = False
 
-fig = plt.figure(dpi = 300, figsize = (cm_to_inch(SINGLE_COL_WIDTH), cm_to_inch(5)), constrained_layout=True)
-ax = plt.gca()
-plt.xlabel('Write (MB/s)', fontsize=8)
-plt.ylabel('# of sorted runs')
-plt.xticks(np.linspace(from_MB_s, to_MB_s, 10), fontsize=8)
-plt.yticks(fontsize=8)
+def draw(plot_version, name, ylabel, ylim = None):
+    fig = plt.figure(dpi = 300, figsize = (cm_to_inch(SINGLE_COL_WIDTH), cm_to_inch(5)), constrained_layout=True)
+    ax = plt.gca()
+    plt.xlabel('Write (MB/s)', fontsize=8)
+    plt.ylabel(ylabel)
+    plt.xticks(np.linspace(from_MB_s, to_MB_s, 10), fontsize=8)
+    plt.yticks(fontsize=8)
+    versions = []
+    for ratio in [5, 10]:
+        version = 'leveling' + str(ratio)
+        plot_version(version)
+        versions.append(version)
+    for ratio in [2, 10]:
+        version = 'tiering' + str(ratio)
+        plot_version(version)
+        versions.append(version)
+    for version in ['rocksdb-tuned', 'universal', 'benefit-cost']:
+        if os.path.exists(os.path.join(dir, version)):
+            plot_version(version)
+            versions.append(version)
+    plt.yscale('log')
+    plt.xlim((from_MB_s, to_MB_s))
+    if ylim is not None:
+        plt.ylim(ylim)
+    plt.legend(versions, fontsize=8)
+    pdf_path = os.path.join(dir, 'increasing-write-speed-' + name + '-avg-every-1p.pdf')
+    plt.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01)
+    print('Plot saved to ' + pdf_path)
 
-def add(version):
+def plot_num_sorted_runs(version):
     data_dir = os.path.join(dir, version)
     data = pd.read_csv(os.path.join(data_dir, 'report.csv'))
     max_secs_elapsed = data.iloc[-1]['secs_elapsed']
@@ -42,24 +64,18 @@ def add(version):
     data = data[['write-speed', 'num-sorted-runs']].groupby(data.index // mean_step).mean()
     plt.plot(data['write-speed'], data['num-sorted-runs'])
 
-versions = []
-for ratio in [5, 10]:
-    version = 'leveling' + str(ratio)
-    add(version)
-    versions.append(version)
-for ratio in [2, 10]:
-    version = 'tiering' + str(ratio)
-    add(version)
-    versions.append(version)
-for version in ['rocksdb-tuned', 'universal', 'benefit-cost']:
-    add(version)
-    versions.append(version)
+draw(plot_num_sorted_runs, 'num-sorted-runs', '# of sorted runs', (1, 100))
 
-plt.yscale('log')
-plt.xlim((from_MB_s, to_MB_s))
-ax.set_ylim(bottom=1, top=100)
-plt.legend(versions, fontsize=8)
+for op in ['prefix-scan', 'seek']:
+    def plot_version(version):
+        data_dir = os.path.join(dir, version)
+        data = pd.read_csv(os.path.join(data_dir, op + '-count-time.csv'))
+        latency_us = data['micros'] / data['count']
+        if (len(latency_us) >= 200):
+            mean_step = len(latency_us) / 100
+            latency_us = latency_us.groupby(latency_us.index // mean_step).mean()
+        write_speed = np.linspace(0, 1, num=len(latency_us), endpoint=False) * (to_MB_s - from_MB_s) + from_MB_s
+        plt.plot(write_speed, latency_us)
 
-pdf_path = os.path.join(dir, 'increasing-write-speed-num-sorted-runs-avg-every-1p.pdf')
-plt.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01)
-print('Plot saved to ' + pdf_path)
+    if os.path.exists(os.path.join(dir, 'benefit-cost', op + '-count-time.csv')):
+        draw(plot_version, op, 'Latency (us)')
