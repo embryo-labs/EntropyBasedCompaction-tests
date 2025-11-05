@@ -39,6 +39,7 @@ fi
 	--level0_stop_writes_trigger=100000 \
 	--soft_pending_compaction_bytes_limit=1000000000000000 \
 	--hard_pending_compaction_bytes_limit=1000000000000000 \
+	--ops_between_duration_checks=1 \
 	--statistics=true \
 	--report_file=report.csv \
 	--report_interval_seconds=1 \
