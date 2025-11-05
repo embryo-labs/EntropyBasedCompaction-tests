@@ -193,6 +193,9 @@ load_all_run() (
 		\"name\": \"stats\"
 	},
 	{
+		\"name\": \"resetstats\"
+	},
+	{
 		\"name\": \"$benchmark\"
 	},
 	{
