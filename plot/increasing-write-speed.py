@@ -64,7 +64,7 @@ def plot_num_sorted_runs(version):
     data = data[['write-speed', 'num-sorted-runs']].groupby(data.index // mean_step).mean()
     plt.plot(data['write-speed'], data['num-sorted-runs'])
 
-draw(plot_num_sorted_runs, 'num-sorted-runs', '# of sorted runs', (1, 100))
+draw(plot_num_sorted_runs, 'num-sorted-runs', '# of sorted runs', (1, 1000))
 
 for op in ['prefix-scan', 'seek']:
     def plot_version(version):
