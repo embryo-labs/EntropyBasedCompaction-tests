@@ -154,6 +154,25 @@ load_some_run() (
 		\"name\": \"stats\"
 	},
 	{
+		\"name\": \"resetstats\"
+	},
+	{
+		\"name\": \"overwrite\",
+		\"threads\": 1,
+		\"duration\": 0,
+		\"writes\": $((num_unique_keys / 10)),
+		\"benchmark_write_rate_limit\": 10000000
+	},
+	{
+		\"name\": \"waitforcompaction\"
+	},
+	{
+		\"name\": \"stats\"
+	},
+	{
+		\"name\": \"resetstats\"
+	},
+	{
 		\"name\": \"$benchmark\"
 	},
 	{
@@ -185,6 +204,22 @@ load_all_run() (
 		\"duration\": 0,
 		\"writes\": $num_unique_keys,
 		\"benchmark_write_rate_limit\": 0
+	},
+	{
+		\"name\": \"waitforcompaction\"
+	},
+	{
+		\"name\": \"stats\"
+	},
+	{
+		\"name\": \"resetstats\"
+	},
+	{
+		\"name\": \"overwrite\",
+		\"threads\": 1,
+		\"duration\": 0,
+		\"writes\": $((num_unique_keys / 10)),
+		\"benchmark_write_rate_limit\": 10000000
 	},
 	{
 		\"name\": \"waitforcompaction\"
