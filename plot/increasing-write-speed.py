@@ -30,7 +30,7 @@ def draw(plot_version, name, ylabel, ylim = None):
     fig = plt.figure(dpi = 300, figsize = (cm_to_inch(SINGLE_COL_WIDTH), cm_to_inch(5)), constrained_layout=True)
     ax = plt.gca()
     plt.xlabel('Write (MB/s)', fontsize=8)
-    plt.ylabel(ylabel)
+    plt.ylabel(ylabel, fontsize=8)
     plt.xticks(np.linspace(from_MB_s, to_MB_s, 10), fontsize=8)
     plt.yticks(fontsize=8)
     versions = []
