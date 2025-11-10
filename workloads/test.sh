@@ -37,7 +37,7 @@ with_policy_tiering() (
 	T=$1
 	shift
 	"$@" \
-		--compaction_style=4 \
+		--compaction_style=3 \
 		--compaction_policy="tiering" \
 		--max_bytes_for_level_multiplier=$T \
 		--num_levels=1 \
@@ -45,7 +45,7 @@ with_policy_tiering() (
 )
 with_policy_benefit_cost() {
 	"$@" \
-		--compaction_style=6 \
+		--compaction_style=5 \
 		--num_levels=1
 }
 
