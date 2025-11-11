@@ -87,7 +87,7 @@ def draw_num_sorted_runs(report, fname, yscale=None):
     if 'DISPLAY' in os.environ:
         plt.show(block=False)
 draw_num_sorted_runs(report, 'num-sorted-runs.pdf')
-draw_num_sorted_runs(report, 'num-sorted-runs-log.pdf')
+draw_num_sorted_runs(report, 'num-sorted-runs-log.pdf', yscale='log')
 if len(report) >= 200:
     mean_step = len(report) // 100
     draw_num_sorted_runs(report[['secs_elapsed', 'num-sorted-runs', 'rocksdb.num-merging-main-level-sorted-runs']].groupby(report.index // mean_step).mean(), 'num-sorted-runs-mean-every-1p.pdf')
