@@ -26,26 +26,15 @@ mpl.rcParams.update({
 })
 plt.rcParams['axes.unicode_minus'] = False
 
-def draw(plot_version, name, ylabel, ylim = None):
+def draw(plot_version, versions, name, ylabel, ylim = None):
     fig = plt.figure(dpi = 300, figsize = (cm_to_inch(SINGLE_COL_WIDTH), cm_to_inch(5)), constrained_layout=True)
     ax = plt.gca()
     plt.xlabel('Write (MB/s)', fontsize=8)
     plt.ylabel(ylabel, fontsize=8)
     plt.xticks(np.linspace(from_MB_s, to_MB_s, 10), fontsize=8)
     plt.yticks(fontsize=8)
-    versions = []
-    for ratio in [5, 10]:
-        version = 'leveling' + str(ratio)
+    for version in versions:
         plot_version(version)
-        versions.append(version)
-    for ratio in [2, 10]:
-        version = 'tiering' + str(ratio)
-        plot_version(version)
-        versions.append(version)
-    for version in ['rocksdb-tuned', 'universal', 'benefit-cost']:
-        if os.path.exists(os.path.join(dir, version)):
-            plot_version(version)
-            versions.append(version)
     plt.yscale('log')
     plt.xlim((from_MB_s, to_MB_s))
     if ylim is not None:
@@ -64,18 +53,41 @@ def plot_num_sorted_runs(version):
     data = data[['write-speed', 'num-sorted-runs']].groupby(data.index // mean_step).mean()
     plt.plot(data['write-speed'], data['num-sorted-runs'])
 
-draw(plot_num_sorted_runs, 'num-sorted-runs', '# of sorted runs', (1, 1000))
+def concat(a, b):
+    if a is None:
+        return b
+    if b is None:
+        return a
+    return a + '-' + b
+def draw2(versions, name=None):
+    draw(plot_num_sorted_runs, versions, concat('num-sorted-runs', name), '# of sorted runs', (1, 1000))
 
-for op in ['prefix-scan', 'seek']:
-    def plot_version(version):
-        data_dir = os.path.join(dir, version)
-        data = pd.read_csv(os.path.join(data_dir, op + '-count-time.csv'))
-        latency_us = data['micros'] / data['count']
-        if (len(latency_us) >= 200):
-            mean_step = len(latency_us) / 100
-            latency_us = latency_us.groupby(latency_us.index // mean_step).mean()
-        write_speed = np.linspace(0, 1, num=len(latency_us), endpoint=False) * (to_MB_s - from_MB_s) + from_MB_s
-        plt.plot(write_speed, latency_us)
+    for op in ['prefix-scan', 'seek']:
+        def plot_version(version):
+            data_dir = os.path.join(dir, version)
+            data = pd.read_csv(os.path.join(data_dir, op + '-count-time.csv'))
+            latency_us = data['micros'] / data['count']
+            if (len(latency_us) >= 200):
+                mean_step = len(latency_us) / 100
+                latency_us = latency_us.groupby(latency_us.index // mean_step).mean()
+            write_speed = np.linspace(0, 1, num=len(latency_us), endpoint=False) * (to_MB_s - from_MB_s) + from_MB_s
+            plt.plot(write_speed, latency_us)
 
-    if os.path.exists(os.path.join(dir, 'benefit-cost', op + '-count-time.csv')):
-        draw(plot_version, op, 'Latency (us)')
+        if os.path.exists(os.path.join(dir, 'benefit-cost', op + '-count-time.csv')):
+            draw(plot_version, versions, concat(op, name), 'Latency (us)')
+
+if os.path.exists(os.path.join(dir, 'universal')):
+    versions = []
+    for ratio in [5, 10]:
+        version = 'leveling' + str(ratio)
+        versions.append(version)
+    for ratio in [2, 10]:
+        version = 'tiering' + str(ratio)
+        versions.append(version)
+    for version in ['rocksdb-tuned', 'universal', 'benefit-cost']:
+        if os.path.exists(os.path.join(dir, version)):
+            versions.append(version)
+    draw2(versions)
+
+if os.path.exists(os.path.join(dir, 'preempt-only-by-num')):
+    draw2(['preempt-only-by-entropy-ke-1', 'preempt-only-by-num', 'no-sliding-window', 'benefit-cost'], 'ablation')
