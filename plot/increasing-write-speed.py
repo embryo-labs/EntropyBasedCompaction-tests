@@ -4,7 +4,7 @@ if len(sys.argv) != 2:
 	print('Usage: ' + sys.argv[0] + ' dir')
 	exit()
 dir = sys.argv[1]
-from_MB_s = 10
+from_MB_s = 1
 to_MB_s = 100
 
 import os
@@ -31,12 +31,12 @@ def draw(plot_version, versions, name, ylabel, ylim = None):
     ax = plt.gca()
     plt.xlabel('Write (MB/s)', fontsize=8)
     plt.ylabel(ylabel, fontsize=8)
-    plt.xticks(np.linspace(from_MB_s, to_MB_s, 10), fontsize=8)
+    plt.xticks(np.linspace(0, to_MB_s, 11), fontsize=8)
     plt.yticks(fontsize=8)
     for version in versions:
         plot_version(version)
     plt.yscale('log')
-    plt.xlim((from_MB_s, to_MB_s))
+    plt.xlim((0, to_MB_s))
     if ylim is not None:
         plt.ylim(ylim)
     plt.legend(versions, fontsize=8)
