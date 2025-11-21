@@ -11,9 +11,12 @@ N = args.N
 
 import os
 import math
+from dataclasses import dataclass
+from typing import Optional
 import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+from matplotlib import gridspec
 
 import Bc_inf
 
@@ -37,88 +40,170 @@ mpl.rcParams.update({
 })
 plt.rcParams['axes.unicode_minus'] = False
 
+@dataclass
+class Result:
+    vec_wa: list
+    vec_avg_num_srs: list
+    vec_max_num_srs: list
+    vec_space_amp: Optional[list]
+    def __init__(self):
+        self.vec_wa = []
+        self.vec_avg_num_srs = []
+        self.vec_max_num_srs = []
+        if S is not None:
+            self.vec_space_amp = []
+result_leveling = Result()
+for T in range(3, 11):
+    (wa, avg_num_srs, max_num_srs, max_size) = Bc_inf.leveling(N, T, S)
+    if args.verbose:
+        print('%d\t%f\t%f\t%f' %(T, wa, avg_num_srs, max_num_srs))
+    result_leveling.vec_wa.append(wa)
+    result_leveling.vec_avg_num_srs.append(avg_num_srs)
+    result_leveling.vec_max_num_srs.append(max_num_srs)
+    if S is not None:
+        result_leveling.vec_space_amp.append(max_size / S)
+
+result_tiering = Result()
+for T in range(2, 11):
+    (wa, avg_num_srs, max_num_srs, max_size) = Bc_inf.tiering(N, T, S)
+    result_tiering.vec_wa.append(wa)
+    result_tiering.vec_avg_num_srs.append(avg_num_srs)
+    result_tiering.vec_max_num_srs.append(max_num_srs)
+    if S is not None:
+        result_tiering.vec_space_amp.append(max_size / S)
+
+@dataclass
+class BenefitCostResult:
+    vec_entropy_threshold: list
+    vec_wa_theory: list
+    vec_wa: list
+    vec_avg_num_srs: list
+    vec_max_num_srs: list
+    vec_space_amp: Optional[list]
+    def __init__(self):
+        self.vec_entropy_threshold = []
+        self.vec_wa_theory = []
+        self.vec_wa = []
+        self.vec_avg_num_srs = []
+        self.vec_max_num_srs = []
+def benefit_cost(C, k_n):
+    result = BenefitCostResult()
+    if S is not None:
+        result.vec_space_amp = []
+    for entropy_threshold in np.arange(args.entropy_threshold_begin, 3, 0.05):
+        (wa, avg_num_srs, max_num_srs, max_size) = Bc_inf.benefit_cost(N, entropy_threshold, S, C, k_n)
+        if args.verbose:
+            print('%f\t%f\t%f\t%f' %(entropy_threshold, wa, avg_num_srs, max_num_srs))
+        result.vec_entropy_threshold.append(entropy_threshold)
+        if S is None:
+            wa_theory = math.log2(N) / entropy_threshold
+        else:
+            wa_theory = math.log2(S / math.e) / entropy_threshold + math.e + 1
+            # wa_theory = math.log2(S) / entropy_threshold
+        result.vec_wa_theory.append(wa_theory)
+        result.vec_wa.append(wa)
+        result.vec_avg_num_srs.append(avg_num_srs)
+        result.vec_max_num_srs.append(max_num_srs)
+        if S is not None:
+            result.vec_space_amp.append(max_size / S)
+    return result
+result_entropy_only = benefit_cost(None, None)
+result_with_large_compaction = benefit_cost(math.e, None)
+result_with_mid_compaction = benefit_cost(math.e, math.inf)
+result_sliding_window = benefit_cost(math.e, 1.7)
+
 fig = plt.figure(dpi = 300, figsize = (cm_to_inch(SINGLE_COL_WIDTH), cm_to_inch(5)), constrained_layout=True)
 ax = plt.gca()
 plt.xlabel('Write amplification', fontsize=8)
 plt.ylabel('Num sorted runs', fontsize=8)
-
-vec_wa = []
-vec_avg_num_srs = []
-vec_max_num_srs = []
-for T in range(3, 11):
-    (wa, avg_num_srs, max_num_srs) = Bc_inf.leveling(N, T, S)
-    if args.verbose:
-        print('%d\t%f\t%f\t%f' %(T, wa, avg_num_srs, max_num_srs))
-    vec_wa.append(wa)
-    vec_avg_num_srs.append(avg_num_srs)
-    vec_max_num_srs.append(max_num_srs)
-plt.plot(vec_wa, vec_avg_num_srs)
-plt.plot(vec_wa, vec_max_num_srs)
-
-vec_wa = []
-vec_avg_num_srs = []
-vec_max_num_srs = []
-for T in range(2, 11):
-    (wa, avg_num_srs, max_num_srs) = Bc_inf.tiering(N, T, S)
-    vec_wa.append(wa)
-    vec_avg_num_srs.append(avg_num_srs)
-    vec_max_num_srs.append(max_num_srs)
-plt.plot(vec_wa, vec_avg_num_srs)
-plt.plot(vec_wa, vec_max_num_srs)
-
-vec_entropy_threshold = []
-vec_wa_theory = []
-vec_num_srs_theory = []
-vec_wa = []
-vec_avg_num_srs = []
-vec_max_num_srs = []
-for entropy_threshold in np.arange(args.entropy_threshold_begin, 3, 0.05):
-    (wa, avg_num_srs, max_num_srs) = Bc_inf.benefit_cost(N, entropy_threshold, S)
-    if args.verbose:
-        print('%f\t%f\t%f\t%f' %(entropy_threshold, wa, avg_num_srs, max_num_srs))
-    vec_entropy_threshold.append(entropy_threshold)
-    if S is None:
-        wa_theory = math.log2(N) / entropy_threshold
-    else:
-        wa_theory = math.log2(S / math.e) / entropy_threshold + math.e + 1
-    vec_wa_theory.append(wa_theory)
-    # vec_num_srs_theory.append()
-    vec_wa.append(wa)
-    vec_avg_num_srs.append(avg_num_srs)
-    vec_max_num_srs.append(max_num_srs)
-plt.plot(vec_wa, vec_avg_num_srs)
-plt.plot(vec_wa, vec_max_num_srs)
-
+plt.plot(result_leveling.vec_wa, result_leveling.vec_avg_num_srs)
+plt.plot(result_leveling.vec_wa, result_leveling.vec_max_num_srs)
+plt.plot(result_tiering.vec_wa, result_tiering.vec_avg_num_srs)
+plt.plot(result_tiering.vec_wa, result_tiering.vec_max_num_srs)
+plt.plot(result_with_mid_compaction.vec_wa, result_with_mid_compaction.vec_avg_num_srs)
+plt.plot(result_with_mid_compaction.vec_wa, result_with_mid_compaction.vec_max_num_srs)
 plt.ylim(bottom=0)
-plt.legend(['leveling avg', 'leveling max', 'tiering avg', 'tiering max', 'benefit-cost avg', 'benefit-cost max'], fontsize=8)
+plt.legend(['leveling avg', 'leveling max', 'tiering avg', 'tiering max', 'with-mid-comp avg', 'with-mid-comp max'], fontsize=8)
 pdf_path = get_pdf_path('simulation-wa-ra')
 plt.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01)
 print('Plot saved to ' + pdf_path)
 if 'DISPLAY' in os.environ:
     plt.show(block=False)
 
-color_list = plt.rcParams['axes.prop_cycle'].by_key()['color']
-color_index = 0
-
 fig = plt.figure(dpi = 300, figsize = (cm_to_inch(SINGLE_COL_WIDTH), cm_to_inch(5)), constrained_layout=True)
-plt.xlabel('Entropy threshold', fontsize=8)
-ax1 = plt.gca()
-ax1.set_ylabel('Write amplification', fontsize=8)
-ax1.plot(vec_entropy_threshold, vec_wa_theory, label='WA theory', color=color_list[color_index])
-color_index += 1
-ax1.plot(vec_entropy_threshold, vec_wa, label='WA simulation', color=color_list[color_index])
-color_index += 1
-ax1.set_ylim(bottom=0)
-ax2 = ax1.twinx()
-ax2.set_ylabel('Num sorted runs', fontsize=8)
-ax2.plot(vec_entropy_threshold, vec_avg_num_srs, label='# runs avg', color=color_list[color_index])
-color_index += 1
-ax2.plot(vec_entropy_threshold, vec_max_num_srs, label='# runs max', color=color_list[color_index])
-color_index += 1
-ax2.set_ylim(bottom=0)
-lines1, labels1 = ax1.get_legend_handles_labels()
-lines2, labels2 = ax2.get_legend_handles_labels()
-ax1.legend(lines1 + lines2, labels1 + labels2, fontsize=8)
+ax = plt.gca()
+plt.xlabel('Write amplification', fontsize=8)
+plt.ylabel('Space amplification', fontsize=8)
+plt.plot(result_leveling.vec_wa, result_leveling.vec_space_amp, label='leveling')
+plt.plot(result_tiering.vec_wa, result_tiering.vec_space_amp, label='tiering')
+plt.plot(result_entropy_only.vec_wa, result_entropy_only.vec_space_amp, label='entropy-only')
+plt.plot(result_with_large_compaction.vec_wa, result_with_large_compaction.vec_space_amp, label='with-large-comp')
+plt.plot(result_with_mid_compaction.vec_wa, result_with_mid_compaction.vec_space_amp, label='with-mid-comp')
+plt.plot(result_sliding_window.vec_wa, result_sliding_window.vec_space_amp, label='sliding-window')
+plt.ylim(bottom=1)
+plt.xticks(fontsize=8)
+plt.yticks(fontsize=8)
+lines, labels = ax.get_legend_handles_labels()
+ax.legend(lines, labels, fontsize=8)
+pdf_path = get_pdf_path('simulation-wa-sa')
+plt.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01)
+print('Plot saved to ' + pdf_path)
+if 'DISPLAY' in os.environ:
+    plt.show()
+
+fig = plt.figure(dpi = 300, figsize = (cm_to_inch(SINGLE_COL_WIDTH), cm_to_inch(10)), constrained_layout=True)
+gs = gridspec.GridSpec(2, 2, figure=fig)
+subfig = plt.subplot(gs[0, 0])
+ax = plt.gca()
+ax.set_xlabel('Entropy threshold', fontsize=8)
+ax.set_ylabel('Write amplification', fontsize=8)
+ax.plot(result_entropy_only.vec_entropy_threshold, result_entropy_only.vec_wa, label='entropy-only')
+ax.plot(result_with_large_compaction.vec_entropy_threshold, result_with_large_compaction.vec_wa, label='with-large-comp')
+ax.plot(result_with_mid_compaction.vec_entropy_threshold, result_with_mid_compaction.vec_wa, label='with-mid-comp')
+ax.plot(result_sliding_window.vec_entropy_threshold, result_sliding_window.vec_wa, label='sliding-window')
+ax.plot(result_entropy_only.vec_entropy_threshold, result_entropy_only.vec_wa_theory, label='theory bound')
+ax.set_ylim(bottom=0)
+plt.xticks(fontsize=8)
+plt.yticks(fontsize=8)
+lines, labels = ax.get_legend_handles_labels()
+ax.legend(lines, labels, fontsize=8)
+
+subfig = plt.subplot(gs[0, 1])
+ax = plt.gca()
+ax.set_xlabel('Entropy threshold', fontsize=8)
+ax.set_ylabel('Space amplification', fontsize=8)
+ax.plot(result_entropy_only.vec_entropy_threshold, result_entropy_only.vec_space_amp, label='entropy-only')
+ax.plot(result_with_large_compaction.vec_entropy_threshold, result_with_large_compaction.vec_space_amp, label='with-large-comp')
+ax.plot(result_with_mid_compaction.vec_entropy_threshold, result_with_mid_compaction.vec_space_amp, label='with-mid-comp')
+ax.plot(result_sliding_window.vec_entropy_threshold, result_sliding_window.vec_space_amp, label='sliding-window')
+ax.set_ylim(bottom=1)
+plt.xticks(fontsize=8)
+plt.yticks(fontsize=8)
+
+subfig = plt.subplot(gs[1, 0])
+ax = plt.gca()
+ax.set_xlabel('Entropy threshold', fontsize=8)
+ax.set_ylabel('Average num of sorted runs', fontsize=8)
+ax.plot(result_entropy_only.vec_entropy_threshold, result_entropy_only.vec_avg_num_srs, label='entropy-only')
+ax.plot(result_with_large_compaction.vec_entropy_threshold, result_with_large_compaction.vec_avg_num_srs, label='with-large-comp')
+ax.plot(result_with_mid_compaction.vec_entropy_threshold, result_with_mid_compaction.vec_avg_num_srs, label='with-mid-comp')
+ax.plot(result_sliding_window.vec_entropy_threshold, result_sliding_window.vec_avg_num_srs, label='sliding-window')
+ax.set_ylim(bottom=0)
+plt.xticks(fontsize=8)
+plt.yticks(fontsize=8)
+
+subfig = plt.subplot(gs[1, 1])
+ax = plt.gca()
+ax.set_xlabel('Entropy threshold', fontsize=8)
+ax.set_ylabel('Max num of sorted runs', fontsize=8)
+ax.plot(result_entropy_only.vec_entropy_threshold, result_entropy_only.vec_max_num_srs, label='entropy-only')
+ax.plot(result_with_large_compaction.vec_entropy_threshold, result_with_large_compaction.vec_max_num_srs, label='with-large-comp')
+ax.plot(result_with_mid_compaction.vec_entropy_threshold, result_with_mid_compaction.vec_max_num_srs, label='with-mid-comp')
+ax.plot(result_sliding_window.vec_entropy_threshold, result_sliding_window.vec_max_num_srs, label='sliding-window')
+ax.set_ylim(bottom=0)
+plt.xticks(fontsize=8)
+plt.yticks(fontsize=8)
+
 pdf_path = get_pdf_path('simulation-benefit-cost')
 plt.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01)
 print('Plot saved to ' + pdf_path)
