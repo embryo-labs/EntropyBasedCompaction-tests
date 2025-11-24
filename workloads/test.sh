@@ -287,6 +287,33 @@ with_max_running_background_jobs() (
 		--max_running_background_jobs=$max_running_bg_jobs
 )
 
+(
+	key_size=24
+	value_size=1000
+	from_MB_s=1
+	to_MB_s=100
+	writes_per_second_file=$(mktemp)
+	from=$((from_MB_s * 1000000 / (key_size + value_size)))
+	to=$((to_MB_s * 1000000 / (key_size + value_size)))
+	step=$(((to - from) / 1000))
+	seq $from $step $to > $writes_per_second_file
+	command="rm $writes_per_second_file"
+	trap "echo $command; $command" EXIT
+
+	# 10GB unique size
+	secs=10000
+	for nexts in 1 10 100 1000 10000; do
+		for ratio in 5 10; do
+			suffix="-secs-$secs-from-$from_MB_s-MB-s-to-$to_MB_s-MB-s-seek" with_nexts $nexts with_compaction_limit_MB_s 256 with_memtable_size 8MiB with_policy_leveling $ratio dbbench_load_all leveling$ratio "customperiodic" $key_size $value_size 10GB --writes_per_second_file=$writes_per_second_file --period_secs=$secs --duration=$secs --mix_get_ratio=0 --mix_seek_ratio=1
+		done
+		for ratio in 2 10; do
+			suffix="-secs-$secs-from-$from_MB_s-MB-s-to-$to_MB_s-MB-s-seek" with_nexts $nexts with_compaction_limit_MB_s 256 with_memtable_size 8MiB with_policy_tiering $ratio dbbench_load_all tiering$ratio "customperiodic" $key_size $value_size 10GB --writes_per_second_file=$writes_per_second_file --period_secs=$secs --duration=$secs --mix_get_ratio=0 --mix_seek_ratio=1
+		done
+		suffix="-secs-$secs-from-$from_MB_s-MB-s-to-$to_MB_s-MB-s-seek" with_nexts $nexts with_compaction_limit_MB_s 256 with_memtable_size 8MiB with_policy_rocksdb_tuned dbbench_load_all rocksdb-tuned "customperiodic" $key_size $value_size 10GB --writes_per_second_file=$writes_per_second_file --period_secs=$secs --duration=$secs --mix_get_ratio=0 --mix_seek_ratio=1
+		suffix="-secs-$secs-from-$from_MB_s-MB-s-to-$to_MB_s-MB-s-seek" with_nexts $nexts with_compaction_limit_MB_s 256 with_memtable_size 8MiB with_policy_universal dbbench_load_all universal "customperiodic" $key_size $value_size 10GB --writes_per_second_file=$writes_per_second_file --period_secs=$secs --duration=$secs --mix_get_ratio=0 --mix_seek_ratio=1
+		suffix="-secs-$secs-from-$from_MB_s-MB-s-to-$to_MB_s-MB-s-seek" with_nexts $nexts with_compaction_limit_MB_s 256 with_memtable_size 8MiB with_policy_benefit_cost dbbench_load_all benefit-cost "customperiodic" $key_size $value_size 10GB --writes_per_second_file=$writes_per_second_file --period_secs=$secs --duration=$secs --mix_get_ratio=0 --mix_seek_ratio=1
+	done
+)
 
 meituan() (
 	workspace=$(realpath "$(dirname $0)"/../..)
