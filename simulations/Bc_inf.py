@@ -123,8 +123,6 @@ class BenefitCost:
                         return self.Compaction(i, len(self.s) - 1, self.CompactionReason.LargeCompaction)
             else:
                 j = len(self.s) - 2
-                while self.s[j].compact_to_last:
-                    j -= 1
                 if j > 0:
                     size = self.s[j].size + self.s[j-1].size
                     i = j - 2
