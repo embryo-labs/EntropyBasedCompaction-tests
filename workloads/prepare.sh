@@ -2,7 +2,7 @@
 output_dir="$1"
 workspace=$(realpath "$(dirname $0)"/../..)
 
-rm "$workspace/testdb"/*
+find "$workspace/testdb/" -mindepth 1 -delete
 mkdir -p "$output_dir"
 if [ "$(ls -A "$output_dir")" ]; then
 	echo "$output_dir" is not empty!
