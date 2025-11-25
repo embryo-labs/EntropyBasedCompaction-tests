@@ -83,7 +83,8 @@ if os.path.exists(os.path.join(dir, 'universal')):
         versions.append(version)
     for ratio in [2, 10]:
         version = 'tiering' + str(ratio)
-        versions.append(version)
+        if os.path.exists(os.path.join(dir, version)):
+            versions.append(version)
     for version in ['rocksdb-tuned', 'universal', 'benefit-cost']:
         if os.path.exists(os.path.join(dir, version)):
             versions.append(version)
