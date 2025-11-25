@@ -130,7 +130,6 @@ class BenefitCost:
                         size += self.s[i].size
                         i -= 1
                     i += 1
-                    # print(f'size {size}')
                     if size > size_threshold:
                         return self.Compaction(i, j, self.CompactionReason.MidCompaction)
         best_Re = None
