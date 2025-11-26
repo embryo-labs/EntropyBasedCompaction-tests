@@ -44,14 +44,14 @@ def draw(plot_version, versions, name, ylabel, ylim = None):
     plt.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01)
     print('Plot saved to ' + pdf_path)
 
-def plot_num_sorted_runs(version):
+def plot_stat(version, stat_name):
     data_dir = os.path.join(dir, version)
     data = pd.read_csv(os.path.join(data_dir, 'report.csv'))
     max_secs_elapsed = data.iloc[-1]['secs_elapsed']
     data['write-speed'] = data['secs_elapsed'] / max_secs_elapsed * (to_MB_s - from_MB_s) + from_MB_s
     mean_step = len(data['write-speed']) / 100
-    data = data[['write-speed', 'num-sorted-runs']].groupby(data.index // mean_step).mean()
-    plt.plot(data['write-speed'], data['num-sorted-runs'])
+    data = data[['write-speed', stat_name]].groupby(data.index // mean_step).mean()
+    plt.plot(data['write-speed'], data[stat_name])
 
 def concat(a, b):
     if a is None:
@@ -60,7 +60,8 @@ def concat(a, b):
         return a
     return a + '-' + b
 def draw2(versions, name=None):
-    draw(plot_num_sorted_runs, versions, concat('num-sorted-runs', name), '# of sorted runs', (1, 1000))
+    draw(lambda version: plot_stat(version, 'num-sorted-runs'), versions, concat('num-sorted-runs', name), '# of sorted runs', (1, 1000))
+    draw(lambda version: plot_stat(version, 'size'), versions, concat('size', name), 'Size')
 
     for op in ['prefix-scan', 'seek']:
         def plot_version(version):
