@@ -46,13 +46,23 @@ class Leveling:
     def flush(self):
         self.s.insert(0, 1)
     def pick(self):
-        next_level_capacity = 1
-        for i in range(0, len(self.s) - 1):
-            while next_level_capacity <= self.s[i]:
-                next_level_capacity *= self.T
-            # next_level_capacity > s[i]
-            if self.s[i+1] < next_level_capacity:
-                return (i, i+1)
+        level_capacity = self.s[-1] / self.T
+        i = len(self.s) - 2
+        next_level_not_empty = True
+        while i >= 0:
+            if self.s[i] <= level_capacity / self.T:
+                level_capacity /= self.T
+                next_level_not_empty = False
+                continue
+            # self.s[i] > level_capacity / self.T
+            if self.s[i] <= level_capacity:
+                level_capacity /= self.T
+                i -= 1
+                next_level_not_empty = True
+                continue
+            # self.s[i] > level_capacity
+            assert next_level_not_empty
+            return (i,i+1)
     # Return the amount of data written
     def pick_and_do_compaction(self):
         picked = self.pick()
