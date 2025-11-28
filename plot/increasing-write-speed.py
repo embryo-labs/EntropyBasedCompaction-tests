@@ -77,19 +77,19 @@ def draw2(versions, name=None):
         if os.path.exists(os.path.join(dir, 'benefit-cost', op + '-count-time.csv')):
             draw(plot_version, versions, concat(op, name), 'Latency (us)')
 
-if os.path.exists(os.path.join(dir, 'universal')):
-    versions = []
-    for ratio in [5, 10]:
-        version = 'leveling' + str(ratio)
+versions = []
+for ratio in [5, 10]:
+    version = 'leveling' + str(ratio)
+    if os.path.exists(os.path.join(dir, version)):
         versions.append(version)
-    for ratio in [2, 10]:
-        version = 'tiering' + str(ratio)
-        if os.path.exists(os.path.join(dir, version)):
-            versions.append(version)
-    for version in ['rocksdb-tuned', 'universal', 'benefit-cost']:
-        if os.path.exists(os.path.join(dir, version)):
-            versions.append(version)
-    draw2(versions)
+for ratio in [2, 10]:
+    version = 'tiering' + str(ratio)
+    if os.path.exists(os.path.join(dir, version)):
+        versions.append(version)
+for version in ['rocksdb-tuned', 'universal', 'benefit-cost']:
+    if os.path.exists(os.path.join(dir, version)):
+        versions.append(version)
+draw2(versions)
 
 if os.path.exists(os.path.join(dir, 'preempt-only-by-num')):
     draw2(['preempt-only-by-entropy-ke-1', 'preempt-only-by-num', 'no-sliding-window', 'benefit-cost'], 'ablation')
