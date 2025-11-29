@@ -9,6 +9,8 @@ args = parser.parse_args()
 S = args.S
 N = args.N
 
+entropy_threshold_step = 0.05
+
 import os
 import math
 from dataclasses import dataclass
@@ -90,7 +92,7 @@ def benefit_cost(C, k_n):
     result = BenefitCostResult()
     if S is not None:
         result.vec_space_amp = []
-    for entropy_threshold in np.arange(args.entropy_threshold_begin, 3, 0.05):
+    for entropy_threshold in np.arange(args.entropy_threshold_begin, 3, entropy_threshold_step):
         (wa, avg_num_srs, max_num_srs, max_size) = Bc_inf.benefit_cost(N, entropy_threshold, S, C, k_n)
         if args.verbose:
             print('%f\t%f\t%f\t%f' %(entropy_threshold, wa, avg_num_srs, max_num_srs))
@@ -142,7 +144,23 @@ plt.plot(result_with_mid_compaction.vec_wa, result_with_mid_compaction.vec_space
 plt.plot(result_sliding_window.vec_wa, result_sliding_window.vec_space_amp, label='sliding-window')
 plt.ylim(bottom=1)
 plt.xticks(fontsize=8)
-plt.yticks(fontsize=8)
+plt.yticks(list(range(1, math.ceil(max(result_tiering.vec_space_amp)) + 1, 1)), fontsize=8)
+ax.grid(axis='y')
+points_x = []
+points_y = []
+points_text = []
+for T in [3, 5, 10]:
+    points_x.append(result_leveling.vec_wa[T - 3])
+    points_y.append(result_leveling.vec_space_amp[T - 3])
+    points_text.append('L-' + str(T))
+for entropy_threshold in [args.entropy_threshold_begin, 0.65, 1, 2, 3]:
+    i = round((entropy_threshold - args.entropy_threshold_begin) / entropy_threshold_step)
+    points_x.append(result_sliding_window.vec_wa[i])
+    points_y.append(result_sliding_window.vec_space_amp[i])
+    points_text.append('E-' + str(entropy_threshold))
+plt.scatter(points_x, points_y)
+for i in range(0, len(points_text)):
+    plt.text(points_x[i], points_y[i] + 0.4, points_text[i], fontsize=7, ha='center', va='center')
 lines, labels = ax.get_legend_handles_labels()
 ax.legend(lines, labels, fontsize=8)
 pdf_path = get_pdf_path('simulation-wa-sa')
