@@ -92,7 +92,7 @@ def benefit_cost(C, k_n):
     result = BenefitCostResult()
     if S is not None:
         result.vec_space_amp = []
-    for entropy_threshold in np.arange(args.entropy_threshold_begin, 3, entropy_threshold_step):
+    for entropy_threshold in np.arange(args.entropy_threshold_begin, 3 + entropy_threshold_step, entropy_threshold_step):
         (wa, avg_num_srs, max_num_srs, max_size) = Bc_inf.benefit_cost(N, entropy_threshold, S, C, k_n)
         if args.verbose:
             print('%f\t%f\t%f\t%f' %(entropy_threshold, wa, avg_num_srs, max_num_srs))
@@ -101,7 +101,6 @@ def benefit_cost(C, k_n):
             wa_theory = math.log2(N) / entropy_threshold
         else:
             wa_theory = math.log2(S / math.e) / entropy_threshold + math.e + 1
-            # wa_theory = math.log2(S) / entropy_threshold
         result.vec_wa_theory.append(wa_theory)
         result.vec_wa.append(wa)
         result.vec_avg_num_srs.append(avg_num_srs)
