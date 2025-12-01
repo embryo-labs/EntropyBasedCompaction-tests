@@ -326,7 +326,7 @@ meituan() (
 	unique_size=$1
 	shift
 	key_size=16
-	value_size=1000
+	value_size=503
 	repeat=1
 	writes_per_second_file=$(mktemp)
 	reads_per_second_file=$(mktemp)
@@ -343,13 +343,17 @@ meituan() (
 		--duration=$((period_secs * repeat)) \
 		"$@"
 )
-threads=64
+threads=128
 period_secs=$((3600 * 4))
 cache=100MiB
-exp_range=16
-speedup=16
-with_threads $threads with_read_exp_range $exp_range with_cache $cache with_compaction_limit_MB_s 200 with_memtable_size 8MiB with_policy_leveling 5 meituan leveling5 $period_secs $speedup 10GB
-with_threads $threads with_read_exp_range $exp_range with_cache $cache with_compaction_limit_MB_s 200 with_memtable_size 8MiB with_policy_tiering 2 meituan tiering2 $period_secs $speedup 10GB
-with_threads $threads with_read_exp_range $exp_range with_cache $cache with_compaction_limit_MB_s 200 with_memtable_size 8MiB with_policy_rocksdb_tuned meituan rocksdb-tuned $period_secs $speedup 10GB
-with_threads $threads with_read_exp_range $exp_range with_cache $cache with_compaction_limit_MB_s 200 with_memtable_size 8MiB with_policy_universal meituan universal $period_secs $speedup 10GB
-with_threads $threads with_read_exp_range $exp_range with_cache $cache with_compaction_limit_MB_s 200 with_memtable_size 8MiB with_policy_benefit_cost meituan benefit-cost $period_secs $speedup 10GB
+exp_range=100
+speedup=24
+get_ratio=0.87
+seek_ratio=0.13
+for nexts in 1 10 100 1000 10000; do
+	suffix="-get-$get_ratio-seek-$seek_ratio" with_threads $threads with_read_exp_range $exp_range with_cache $cache with_nexts $nexts with_compaction_limit_MB_s 200 with_memtable_size 8MiB with_policy_leveling 5 meituan leveling5 $period_secs $speedup 10GB --mix_get_ratio=$get_ratio --mix_seek_ratio=$seek_ratio
+	suffix="-get-$get_ratio-seek-$seek_ratio" with_threads $threads with_read_exp_range $exp_range with_cache $cache with_nexts $nexts with_compaction_limit_MB_s 200 with_memtable_size 8MiB with_policy_tiering 2 meituan tiering2 $period_secs $speedup 10GB --mix_get_ratio=$get_ratio --mix_seek_ratio=$seek_ratio
+	suffix="-get-$get_ratio-seek-$seek_ratio" with_threads $threads with_read_exp_range $exp_range with_cache $cache with_nexts $nexts with_compaction_limit_MB_s 200 with_memtable_size 8MiB with_policy_rocksdb_tuned meituan rocksdb-tuned $period_secs $speedup 10GB --mix_get_ratio=$get_ratio --mix_seek_ratio=$seek_ratio
+	suffix="-get-$get_ratio-seek-$seek_ratio" with_threads $threads with_read_exp_range $exp_range with_cache $cache with_nexts $nexts with_compaction_limit_MB_s 200 with_memtable_size 8MiB with_policy_universal meituan universal $period_secs $speedup 10GB --mix_get_ratio=$get_ratio --mix_seek_ratio=$seek_ratio
+	suffix="-get-$get_ratio-seek-$seek_ratio" with_threads $threads with_read_exp_range $exp_range with_cache $cache with_nexts $nexts with_compaction_limit_MB_s 200 with_memtable_size 8MiB with_policy_benefit_cost meituan benefit-cost $period_secs $speedup 10GB --mix_get_ratio=$get_ratio --mix_seek_ratio=$seek_ratio
+done
