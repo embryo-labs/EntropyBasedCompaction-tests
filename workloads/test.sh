@@ -16,7 +16,8 @@ with_policy_rocksdb_tuned() (
 	"$@" \
 		--level_compaction_dynamic_level_bytes=true \
 		--num_levels=10 \
-		--max_bytes_for_level_multiplier=5
+		--max_bytes_for_level_multiplier=5 \
+		--level0_file_num_compaction_trigger=1
 )
 with_policy_leveling() (
 	T=$1
