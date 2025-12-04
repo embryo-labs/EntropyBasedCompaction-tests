@@ -16,6 +16,7 @@ import math
 from dataclasses import dataclass
 from typing import Optional
 import numpy as np
+from scipy.optimize import root_scalar
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 from matplotlib import gridspec
@@ -81,6 +82,7 @@ class BenefitCostResult:
     vec_wa: list
     vec_avg_num_srs: list
     vec_max_num_srs: list
+    vec_num_srs_estimation: list
     vec_space_amp: Optional[list]
     def __init__(self):
         self.vec_entropy_threshold = []
@@ -88,6 +90,7 @@ class BenefitCostResult:
         self.vec_wa = []
         self.vec_avg_num_srs = []
         self.vec_max_num_srs = []
+        self.vec_num_srs_estimation = []
 def benefit_cost(C, k_n):
     result = BenefitCostResult()
     if S is not None:
@@ -105,6 +108,27 @@ def benefit_cost(C, k_n):
         result.vec_wa.append(wa)
         result.vec_avg_num_srs.append(avg_num_srs)
         result.vec_max_num_srs.append(max_num_srs)
+
+        def f(k, n):
+            return math.log2(k+n-1) - k * math.log2(k) / (k+n-1)
+        n = math.ceil(2**entropy_threshold)
+        # Make sure that k0 > 1
+        while f(1, n) < entropy_threshold + 1e-6:
+            n += 1
+        best = math.inf
+        while n <= best:
+            k_upper = 2
+            while f(k_upper, n) >= entropy_threshold:
+                k_upper *= 2
+            sol = root_scalar(lambda k: f(k, n) - entropy_threshold, bracket=[1, k_upper])
+            assert sol.converged
+            k0 = sol.root
+            assert k0 > 1
+            estimation = (math.floor(math.log(S) / math.log(k0)) + 1) * (n-1)
+            best = min(best, estimation)
+            n += 1
+        result.vec_num_srs_estimation.append(best)
+
         if S is not None:
             result.vec_space_amp.append(max_size / S)
     return result
@@ -162,14 +186,14 @@ print('Plot saved to ' + pdf_path)
 if 'DISPLAY' in os.environ:
     plt.show()
 
-fig = plt.figure(dpi = 300, figsize = (cm_to_inch(SINGLE_COL_WIDTH), cm_to_inch(10)), constrained_layout=True)
-gs = gridspec.GridSpec(2, 2, figure=fig)
+fig = plt.figure(dpi = 300, figsize = (cm_to_inch(DOUBLE_COL_WIDTH), cm_to_inch(4)), constrained_layout=True)
+gs = gridspec.GridSpec(1, 3, figure=fig)
 subfig = plt.subplot(gs[0, 0])
 ax = plt.gca()
 ax.set_xlabel('Entropy threshold', fontsize=8)
 ax.set_ylabel('Write amplification', fontsize=8)
-ax.plot(result_benefit_cost.vec_entropy_threshold, result_benefit_cost.vec_wa, label='entropy-only')
 ax.plot(result_benefit_cost.vec_entropy_threshold, result_benefit_cost.vec_wa_theory, label='theory bound')
+ax.plot(result_benefit_cost.vec_entropy_threshold, result_benefit_cost.vec_wa, label='simulated')
 ax.set_ylim(bottom=0)
 plt.xticks(fontsize=8)
 plt.yticks(fontsize=8)
@@ -179,29 +203,25 @@ ax.legend(lines, labels, fontsize=8)
 subfig = plt.subplot(gs[0, 1])
 ax = plt.gca()
 ax.set_xlabel('Entropy threshold', fontsize=8)
+ax.set_ylabel('# of sorted runs', fontsize=8)
+ax.plot(result_benefit_cost.vec_entropy_threshold, result_benefit_cost.vec_num_srs_estimation, label='estimated')
+ax.plot(result_benefit_cost.vec_entropy_threshold, result_benefit_cost.vec_max_num_srs, label='max')
+ax.plot(result_benefit_cost.vec_entropy_threshold, result_benefit_cost.vec_avg_num_srs, label='avg')
+ax.set_ylim(bottom=0)
+plt.xticks(fontsize=8)
+plt.yticks(fontsize=8)
+lines, labels = ax.get_legend_handles_labels()
+ax.legend(lines, labels, fontsize=8)
+
+subfig = plt.subplot(gs[0, 2])
+ax = plt.gca()
+ax.set_xlabel('Entropy threshold', fontsize=8)
 ax.set_ylabel('Space amplification', fontsize=8)
 ax.plot(result_benefit_cost.vec_entropy_threshold, result_benefit_cost.vec_space_amp, label='entropy-only')
-ax.set_ylim(bottom=1)
 plt.xticks(fontsize=8)
-plt.yticks(fontsize=8)
-
-subfig = plt.subplot(gs[1, 0])
-ax = plt.gca()
-ax.set_xlabel('Entropy threshold', fontsize=8)
-ax.set_ylabel('Average num of sorted runs', fontsize=8)
-ax.plot(result_benefit_cost.vec_entropy_threshold, result_benefit_cost.vec_avg_num_srs, label='entropy-only')
-ax.set_ylim(bottom=0)
-plt.xticks(fontsize=8)
-plt.yticks(fontsize=8)
-
-subfig = plt.subplot(gs[1, 1])
-ax = plt.gca()
-ax.set_xlabel('Entropy threshold', fontsize=8)
-ax.set_ylabel('Max num of sorted runs', fontsize=8)
-ax.plot(result_benefit_cost.vec_entropy_threshold, result_benefit_cost.vec_max_num_srs, label='entropy-only')
-ax.set_ylim(bottom=0)
-plt.xticks(fontsize=8)
-plt.yticks(fontsize=8)
+ymax = math.ceil(max(result_benefit_cost.vec_space_amp))
+ax.set_ylim((1, ymax))
+plt.yticks(list(range(1, ymax + 1)), fontsize=8)
 
 pdf_path = get_pdf_path('simulation-benefit-cost')
 plt.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01)
