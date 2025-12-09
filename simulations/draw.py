@@ -4,12 +4,11 @@ parser = argparse.ArgumentParser()
 parser.add_argument('-S', type=int)
 parser.add_argument('-N', type=int, required=True)
 parser.add_argument('--entropy_threshold_begin', type=float, required=True)
+parser.add_argument('--entropy_threshold_step', type=float, default=0.01)
 parser.add_argument('--verbose', action='store_true')
 args = parser.parse_args()
 S = args.S
 N = args.N
-
-entropy_threshold_step = 0.05
 
 import os
 import math
@@ -83,6 +82,7 @@ class BenefitCostResult:
     vec_avg_num_srs: list
     vec_max_num_srs: list
     vec_num_srs_estimation: list
+    vec_space_amp_estimation: list
     vec_space_amp: Optional[list]
     def __init__(self):
         self.vec_entropy_threshold = []
@@ -91,11 +91,12 @@ class BenefitCostResult:
         self.vec_avg_num_srs = []
         self.vec_max_num_srs = []
         self.vec_num_srs_estimation = []
+        self.vec_space_amp_estimation = []
 def benefit_cost(C, k_n):
     result = BenefitCostResult()
     if S is not None:
         result.vec_space_amp = []
-    for entropy_threshold in np.arange(args.entropy_threshold_begin, 3 + entropy_threshold_step, entropy_threshold_step):
+    for entropy_threshold in np.arange(args.entropy_threshold_begin, 3 + args.entropy_threshold_step, args.entropy_threshold_step):
         (wa, avg_num_srs, max_num_srs, max_size) = Bc_inf.benefit_cost(N, entropy_threshold, S, C, k_n)
         if args.verbose:
             print('%f\t%f\t%f\t%f' %(entropy_threshold, wa, avg_num_srs, max_num_srs))
@@ -128,6 +129,16 @@ def benefit_cost(C, k_n):
             best = min(best, estimation)
             n += 1
         result.vec_num_srs_estimation.append(best)
+
+        def f(i, x):
+            if x > 1/i - 1e-6:
+                return -math.log2(i)
+            return (1 - i * x) * math.log2(1 - i * x) + i * x * math.log2(x)
+        i = math.ceil(2**entropy_threshold - 1)
+        sol = root_scalar(lambda x: f(i, x) + entropy_threshold, bracket=[1 / (i+1), 1 / i])
+        assert sol.converged
+        x = sol.root
+        result.vec_space_amp_estimation.append(1 / sol.root)
 
         if S is not None:
             result.vec_space_amp.append(max_size / S)
@@ -171,7 +182,7 @@ for T in [3, 5, 10]:
     points_y.append(result_leveling.vec_space_amp[T - 3])
     points_text.append('L-' + str(T))
 for entropy_threshold in [args.entropy_threshold_begin, 0.65, 1, 2, 3]:
-    i = round((entropy_threshold - args.entropy_threshold_begin) / entropy_threshold_step)
+    i = round((entropy_threshold - args.entropy_threshold_begin) / args.entropy_threshold_step)
     points_x.append(result_benefit_cost.vec_wa[i])
     points_y.append(result_benefit_cost.vec_space_amp[i])
     points_text.append('E-' + str(entropy_threshold))
@@ -217,11 +228,13 @@ subfig = plt.subplot(gs[0, 2])
 ax = plt.gca()
 ax.set_xlabel('Entropy threshold', fontsize=8)
 ax.set_ylabel('Space amplification', fontsize=8)
+ax.plot(result_benefit_cost.vec_entropy_threshold, result_benefit_cost.vec_space_amp_estimation, label='estimated')
 ax.plot(result_benefit_cost.vec_entropy_threshold, result_benefit_cost.vec_space_amp, label='entropy-only')
 plt.xticks(fontsize=8)
-ymax = math.ceil(max(result_benefit_cost.vec_space_amp))
+ymax = math.ceil(max(result_benefit_cost.vec_space_amp_estimation))
 ax.set_ylim((1, ymax))
 plt.yticks(list(range(1, ymax + 1)), fontsize=8)
+ax.grid()
 
 pdf_path = get_pdf_path('simulation-benefit-cost')
 plt.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01)
