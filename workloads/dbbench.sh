@@ -29,7 +29,7 @@ fi
 	--compression_ratio=1 \
 	--bloom_bits=10 \
 	--key_size="$key_size" \
-	--max_background_jobs=6 \
+	--max_background_jobs=8 \
 	--block_size=4096 \
 	--enable_pipelined_write=false \
 	--unordered_write=true \
