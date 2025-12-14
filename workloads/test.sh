@@ -316,7 +316,7 @@ with_max_running_background_jobs() (
 	done
 )
 
-meituan() (
+meituan_writer() (
 	workspace=$(realpath "$(dirname $0)"/../..)
 	version=$1
 	shift
@@ -330,31 +330,29 @@ meituan() (
 	value_size=503
 	repeat=1
 	writes_per_second_file=$(mktemp)
-	reads_per_second_file=$(mktemp)
-	command="rm $writes_per_second_file $reads_per_second_file"
+	command="rm $writes_per_second_file"
 	trap "echo $command; $command" EXIT
 	awk "{print \$0 * $speedup}" "$workspace"/meituan/write.txt > $writes_per_second_file
-	awk "{print \$0 * $speedup}" "$workspace"/meituan/read.txt > $reads_per_second_file
-	workload_name="meituan-period-secs-$period_secs-speedup-$speedup-repeat-$repeat-value-size-$value_size-unique-size-$unique_size$suffix"
+	workload_name="meituan-writer-period-secs-$period_secs-speedup-$speedup-repeat-$repeat-key-$key_size-value-$value_size-unique-size-$unique_size$suffix"
 	output_dir=../../data/$workload_name/$version
 	load_all_run "$output_dir" "customperiodic" "$key_size" "$value_size" "$unique_size" \
 		--period_secs="$period_secs" \
 		--writes_per_second_file="$writes_per_second_file" \
-		--reads_per_second_file="$reads_per_second_file" \
+		--scan_length_cdf_file="$workspace/meituan/scan-length.txt" \
 		--duration=$((period_secs * repeat)) \
 		"$@"
 )
-threads=128
 period_secs=$((3600 * 4))
-cache=100MiB
-exp_range=100
 speedup=24
 get_ratio=0.87
 seek_ratio=0.13
-for nexts in 1 10 100 1000 10000; do
-	suffix="-get-$get_ratio-seek-$seek_ratio" with_threads $threads with_read_exp_range $exp_range with_cache $cache with_nexts $nexts with_compaction_limit_MB_s 200 with_memtable_size 8MiB with_policy_leveling 5 meituan leveling5 $period_secs $speedup 10GB --mix_get_ratio=$get_ratio --mix_seek_ratio=$seek_ratio
-	suffix="-get-$get_ratio-seek-$seek_ratio" with_threads $threads with_read_exp_range $exp_range with_cache $cache with_nexts $nexts with_compaction_limit_MB_s 200 with_memtable_size 8MiB with_policy_tiering 2 meituan tiering2 $period_secs $speedup 10GB --mix_get_ratio=$get_ratio --mix_seek_ratio=$seek_ratio
-	suffix="-get-$get_ratio-seek-$seek_ratio" with_threads $threads with_read_exp_range $exp_range with_cache $cache with_nexts $nexts with_compaction_limit_MB_s 200 with_memtable_size 8MiB with_policy_rocksdb_tuned meituan rocksdb-tuned $period_secs $speedup 10GB --mix_get_ratio=$get_ratio --mix_seek_ratio=$seek_ratio
-	suffix="-get-$get_ratio-seek-$seek_ratio" with_threads $threads with_read_exp_range $exp_range with_cache $cache with_nexts $nexts with_compaction_limit_MB_s 200 with_memtable_size 8MiB with_policy_universal meituan universal $period_secs $speedup 10GB --mix_get_ratio=$get_ratio --mix_seek_ratio=$seek_ratio
-	suffix="-get-$get_ratio-seek-$seek_ratio" with_threads $threads with_read_exp_range $exp_range with_cache $cache with_nexts $nexts with_compaction_limit_MB_s 200 with_memtable_size 8MiB with_policy_benefit_cost meituan benefit-cost $period_secs $speedup 10GB --mix_get_ratio=$get_ratio --mix_seek_ratio=$seek_ratio
+
+compaction_MB_s=200
+suffix="-get-$get_ratio-seek-$seek_ratio" with_compaction_limit_MB_s $compaction_MB_s with_memtable_size 8MiB with_policy_leveling 5 meituan_writer leveling5 $period_secs $speedup 10GB --mix_get_ratio=$get_ratio --mix_seek_ratio=$seek_ratio
+suffix="-get-$get_ratio-seek-$seek_ratio" with_compaction_limit_MB_s $compaction_MB_s with_memtable_size 8MiB with_policy_rocksdb_tuned meituan_writer rocksdb-tuned $period_secs $speedup 10GB --mix_get_ratio=$get_ratio --mix_seek_ratio=$seek_ratio
+suffix="-get-$get_ratio-seek-$seek_ratio" with_compaction_limit_MB_s $compaction_MB_s with_memtable_size 8MiB with_policy_universal meituan_writer universal $period_secs $speedup 10GB --mix_get_ratio=$get_ratio --mix_seek_ratio=$seek_ratio
+
+for ratio in 2 4 8; do
+	suffix="-get-$get_ratio-seek-$seek_ratio" with_compaction_limit_MB_s $compaction_MB_s with_max_running_background_jobs 1 with_memtable_size 8MiB with_policy_tiering $ratio meituan_writer tiering$ratio $period_secs $speedup 10GB --mix_get_ratio=$get_ratio --mix_seek_ratio=$seek_ratio
 done
+suffix="-get-$get_ratio-seek-$seek_ratio" with_compaction_limit_MB_s $compaction_MB_s with_max_running_background_jobs 1 with_memtable_size 8MiB with_policy_benefit_cost meituan_writer benefit-cost $period_secs $speedup 10GB --mix_get_ratio=$get_ratio --mix_seek_ratio=$seek_ratio
