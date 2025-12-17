@@ -39,7 +39,6 @@ with_policy_tiering() (
 	shift
 	"$@" \
 		--compaction_style=3 \
-		--compaction_policy="tiering" \
 		--max_bytes_for_level_multiplier=$T \
 		--num_levels=1 \
 		--max_background_jobs=100
