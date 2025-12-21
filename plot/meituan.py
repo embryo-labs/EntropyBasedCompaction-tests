@@ -98,10 +98,14 @@ plt.xlabel('Time (hours)', fontsize=9)
 plt.ylabel('Read latency (us)', fontsize=9)
 for version in versions:
     read_count_time = pd.read_csv(os.path.join(dir, version['path'], 'read-count-time.csv'))
+
     time = read_count_time['secs_elapsed']
-    read_latency = read_count_time['micros'] / read_count_time['count']
     time = time.groupby(time.index // mean_step_secs).mean()
-    read_latency = read_latency.groupby(read_latency.index // mean_step_secs).mean()
+
+    micros = read_count_time['micros']
+    count = read_count_time['count']
+    read_latency = micros.groupby(micros.index // mean_step_secs).sum() / count.groupby(count.index // mean_step_secs).sum()
+
     plt.plot(time / 3600, read_latency, linewidth=linewidth, color=version['color'])
 plt.yscale('log')
 plt.xticks(fontsize=9)

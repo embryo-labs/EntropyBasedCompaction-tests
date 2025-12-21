@@ -28,10 +28,11 @@ plot_dir = data_dir + '/plot'
 if not os.path.exists(plot_dir):
 	os.system('mkdir -p ' + plot_dir)
 
-operations = ['write', 'seek', 'get', 'prefix-scan']
-read_operations = ['get', 'seek', 'prefix-scan']
-
-def draw(stat, op_path):
+def draw(op_path):
+	stat = os.path.join(data_dir, op + '-count-time.csv')
+	if not os.path.exists(stat):
+		return
+	stat = pd.read_csv(stat)
 	# Drop the first 1% because it is usually abnormal
 	stat = stat.iloc[len(stat) // 100:]
 
@@ -84,22 +85,5 @@ def draw(stat, op_path):
 	plt.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01)
 	print('Plot saved to ' + pdf_path)
 
-num_read_types = 0
-stat_read = pd.DataFrame({'secs_elapsed': [], 'read-count': [], 'read-micros': []})
-for op in operations:
-	stat = os.path.join(data_dir, op + '-count-time.csv')
-	if not os.path.exists(stat):
-		continue
-	stat = pd.read_csv(stat)
-	if op in read_operations:
-		num_read_types += 1
-		stat_read = pd.merge_ordered(stat_read, stat, on='secs_elapsed', how='outer').fillna(0)
-		stat_read['read-count'] += stat_read.pop('count')
-		stat_read['read-micros'] += stat_read.pop('micros')
-
-	draw(stat, op)
-
-stat_read = stat_read.rename(columns={'read-count': 'count', 'read-micros': 'micros'})
-
-if num_read_types > 1:
-	draw(stat_read, 'read')
+for op in ['write', 'seek', 'get', 'prefix-scan', 'read']:
+	draw(op)
