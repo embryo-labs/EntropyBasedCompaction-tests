@@ -300,7 +300,7 @@ with_max_running_background_jobs() (
 )
 
 (
-	key_size=24
+	key_size=16
 	value_size=1000
 	from_MB_s=1
 	to_MB_s=100
