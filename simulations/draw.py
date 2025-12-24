@@ -236,8 +236,8 @@ ax.set_ylim((1, ymax))
 plt.yticks(list(range(1, ymax + 1)), fontsize=8)
 ax.grid()
 
-pdf_path = get_pdf_path('simulation-benefit-cost')
-plt.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01)
+pdf_path = get_pdf_path('simulation')
+plt.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01, metadata={'CreationDate': None})
 print('Plot saved to ' + pdf_path)
 if 'DISPLAY' in os.environ:
     plt.show()
