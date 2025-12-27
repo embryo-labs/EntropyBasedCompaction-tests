@@ -52,7 +52,7 @@ for version in versions:
     avg = []
     p99 = []
     for write_MB_s in vec_write_MB_s:
-        workload = 'overwrite-key-16-value-603-unique-size-10GB-memtable-8MiB-'
+        workload = 'overwrite-key-16-value-1000-unique-size-10GB-memtable-8MiB-'
         if version in ['tiering2', 'tiering4', 'tiering8', 'benefit-cost']:
             workload += 'max-running-bg-jobs-1-'
         workload += 'compaction-200MB-s-write-' + str(write_MB_s) + 'MB-s-write-100GB'
