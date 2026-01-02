@@ -26,9 +26,52 @@ mpl.rcParams.update({
 })
 plt.rcParams['axes.unicode_minus'] = False
 
+compaction = '200MB-s'
 vec_write_MB_s = [10, 20, 30, 40, 50, 60]
 
-versions = ['rocksdb-tuned', 'tiering2', 'tiering4', 'tiering8', 'universal', 'benefit-cost']
+versions = [
+    {
+        'path': 'rocksdb-tuned',
+        'marker': 'o',
+        'markersize': 4,
+        'markerfacecolor': 'none',
+    },
+    {
+        'path': 'tiering2',
+        'marker': 'v',
+        'markersize': 4,
+        'markerfacecolor': 'none',
+    },
+    {
+        'path': 'tiering4',
+        'marker': '^',
+        'markersize': 4,
+        'markerfacecolor': 'none',
+    },
+    {
+        'path': 'tiering8',
+        'marker': '>',
+        'markersize': 4,
+        'markerfacecolor': 'none',
+    },
+    {
+        'path': 'universal',
+        'marker': 's',
+        'markersize': 2,
+    },
+    {
+        'path': 'benefit-cost',
+        'marker': 'D',
+        'markersize': 2,
+    },
+]
+import common
+for v in versions:
+    v['name'] = common.versions[v['path']]['name']
+    v['color'] = common.versions[v['path']]['color']
+    if 'markerfacecolor' not in v:
+        v['markerfacecolor'] = v['color']
+version_names = [v['name'] for v in versions]
 
 fig = plt.figure(dpi = 300, figsize = (cm_to_inch(SINGLE_COL_WIDTH), cm_to_inch(5)), constrained_layout=True)
 gs = gridspec.GridSpec(1, 2, figure=fig)
@@ -53,19 +96,19 @@ for version in versions:
     p99 = []
     for write_MB_s in vec_write_MB_s:
         workload = 'overwrite-key-16-value-1000-unique-size-10GB-memtable-8MiB-'
-        if version in ['tiering2', 'tiering4', 'tiering8', 'benefit-cost']:
+        if version['path'] in ['tiering2', 'tiering4', 'tiering8', 'benefit-cost']:
             workload += 'max-running-bg-jobs-1-'
-        workload += 'compaction-200MB-s-write-' + str(write_MB_s) + 'MB-s-write-100GB'
-        data_dir = os.path.join(dir, workload, version)
+        workload += 'compaction-' + compaction + '-write-' + str(write_MB_s) + 'MB-s-write-100GB'
+        data_dir = os.path.join(dir, workload, version['path'])
         report = pd.read_csv(os.path.join(data_dir, 'report.csv'))
         # Use the last 30%
         report = report.iloc[-math.ceil(len(report) * 0.3):]
         avg.append(report['num-sorted-runs'].mean())
         p99.append(np.percentile(report['num-sorted-runs'], 99))
-    ax_avg.plot(vec_write_MB_s, avg)
-    ax_p99.plot(vec_write_MB_s, p99)
+    ax_avg.plot(vec_write_MB_s, avg, linewidth=1, marker=version['marker'], markersize=version['markersize'], markerfacecolor=version['markerfacecolor'], markeredgewidth=0.8)
+    ax_p99.plot(vec_write_MB_s, p99, linewidth=1, marker=version['marker'], markersize=version['markersize'], markerfacecolor=version['markerfacecolor'], markeredgewidth=0.8)
 
-fig.legend(versions, fontsize=9, ncol=3, loc='center', bbox_to_anchor=(0.5, 1.1))
-pdf_path = os.path.join(dir, 'write-rates-num-srs.pdf')
+fig.legend(version_names, fontsize=9, ncol=3, loc='center', bbox_to_anchor=(0.5, 1.1))
+pdf_path = os.path.join(dir, 'write-rates-num-srs-' + compaction + '.pdf')
 plt.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01, metadata={'CreationDate': None})
 print('Plot saved to ' + pdf_path)
