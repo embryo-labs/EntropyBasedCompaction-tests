@@ -11,18 +11,18 @@ versions = {
     },
     'tiering4': {
         'name': 'Tiering4',
-        'color': plt.cm.tab10(2),
+        'color': plt.cm.tab10(3),
     },
     'tiering8': {
         'name': 'Tiering8',
-        'color': plt.cm.tab10(3),
+        'color': plt.cm.tab10(4),
     },
     'universal': {
         'name': 'Universal',
-        'color': plt.cm.tab10(4),
+        'color': plt.cm.tab10(5),
     },
     'benefit-cost': {
-        'name': 'Entropy-Based',
-        'color': plt.cm.tab10(5),
+        'name': 'Entropy-based',
+        'color': plt.cm.tab10(2),
     },
 }

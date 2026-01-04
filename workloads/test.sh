@@ -48,6 +48,31 @@ with_policy_benefit_cost() {
 		--compaction_style=5 \
 		--num_levels=1
 }
+with_policy_no_sliding_window() {
+	"$@" \
+		--compaction_style=5 \
+		--num_levels=1 \
+		--sliding_window=false
+}
+with_policy_preempt_only_by_entropy() (
+	k_e=$1
+	shift
+	"$@" \
+		--compaction_style=5 \
+		--num_levels=1 \
+		--sliding_window=false \
+		--preempt_by_entropy=true \
+		--preempt_by_num=false \
+		--k_e="$k_e"
+)
+with_policy_preempt_only_by_num() {
+	"$@" \
+		--compaction_style=5 \
+		--num_levels=1 \
+		--sliding_window=false \
+		--preempt_by_entropy=false \
+		--preempt_by_num=true
+}
 
 with_num_writers() (
 	num_writers=$1
@@ -312,6 +337,10 @@ for write_MB_s in 10 20 30 40 50 60; do
 		suffix="-write-$write" with_writes_per_writer "$writes" with_write_MB_s $write_MB_s with_compaction_limit_MB_s $compaction_MB_s with_max_running_background_jobs 1 with_memtable_size 8MiB with_policy_tiering $ratio dbbench_load_all tiering$ratio overwrite $key_size $value_size 10GB
 	done
 	suffix="-write-$write" with_writes_per_writer "$writes" with_write_MB_s $write_MB_s with_compaction_limit_MB_s $compaction_MB_s with_max_running_background_jobs 1 with_memtable_size 8MiB with_policy_benefit_cost dbbench_load_all benefit-cost overwrite $key_size $value_size 10GB
+
+	suffix="-write-$write" with_writes_per_writer "$writes" with_write_MB_s $write_MB_s with_compaction_limit_MB_s $compaction_MB_s with_max_running_background_jobs 1 with_memtable_size 8MiB with_policy_preempt_only_by_entropy 1 dbbench_load_all preempt-only-by-entropy-ke-1 overwrite $key_size $value_size 10GB
+	suffix="-write-$write" with_writes_per_writer "$writes" with_write_MB_s $write_MB_s with_compaction_limit_MB_s $compaction_MB_s with_max_running_background_jobs 1 with_memtable_size 8MiB with_policy_preempt_only_by_num dbbench_load_all preempt-only-by-num overwrite $key_size $value_size 10GB
+	suffix="-write-$write" with_writes_per_writer "$writes" with_write_MB_s $write_MB_s with_compaction_limit_MB_s $compaction_MB_s with_max_running_background_jobs 1 with_memtable_size 8MiB with_policy_no_sliding_window dbbench_load_all no-sliding-window overwrite $key_size $value_size 10GB
 done
 
 meituan_writer() (
