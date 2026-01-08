@@ -1,0 +1,55 @@
+#!/usr/bin/env python3
+import sys
+if len(sys.argv) < 3:
+    print('Usage: ' + sys.argv[0] + ' output-dir main-pid')
+    exit(1)
+import os
+mydir = os.path.dirname(sys.argv[0])
+output_dir = os.path.realpath(sys.argv[1])
+main_pid = sys.argv[2]
+
+import signal
+should_exit = False
+def mark_should_exit(sig=None, frame=None):
+    global should_exit
+    should_exit = True
+signal.signal(signal.SIGINT, mark_should_exit)
+signal.signal(signal.SIGTERM, mark_should_exit)
+
+import subprocess
+
+pid_signal = {}
+pid = subprocess.Popen([os.path.join(mydir, 'bg-jobs', 'du.sh'), output_dir]).pid
+pid_signal[pid] = signal.SIGTERM
+pid = subprocess.Popen([os.path.join(mydir, 'bg-jobs', 'iostat.sh'), output_dir]).pid
+pid_signal[pid] = signal.SIGTERM
+if int(os.getenv('with_perf', '0')) != 0:
+    pid = subprocess.Popen([os.path.join(mydir, 'bg-jobs', 'perf.sh'), output_dir, main_pid]).pid
+    pid_signal[pid] = signal.SIGTERM
+
+def on_chld(sig=None, frame=None):
+    global should_exit
+    global pids
+    if should_exit:
+        return
+    while True:
+        try:
+            reaped_pid, status = os.waitpid(-1, os.WNOHANG)
+        except ChildProcessError:
+            break
+        if reaped_pid == 0:
+            break
+        if reaped_pid in pid_signal.keys():
+            del pid_signal[reaped_pid]
+            should_exit = True
+            break
+signal.signal(signal.SIGCHLD, on_chld)
+on_chld()
+
+while not should_exit:
+    # Is it possible that the signal is handled here and the signal.pause below can't wake up?
+	signal.pause()
+
+print('exe-bg-jobs: exiting...', file=sys.stderr)
+for (pid, sig) in pid_signal.items():
+    os.kill(pid, sig)

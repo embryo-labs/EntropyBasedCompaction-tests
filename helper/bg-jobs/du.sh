@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 
 work() {
-	cd ../../../
+	cd "$(dirname $0)"/../../../
 	echo Timestamp\(ns\) size
 	while true; do
 		if out=$(du -sb testdb/ 2> /dev/null); then
@@ -11,8 +11,8 @@ work() {
 		sleep 1
 	done
 }
-if [ $1 ]; then
-	work > $1/du.sh.txt
+if [ "$1" ]; then
+	work > "$1"/du.sh.txt
 else
 	work
 fi
