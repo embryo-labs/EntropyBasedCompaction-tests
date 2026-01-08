@@ -17,11 +17,7 @@ ulimit -n 1000000
 ulimit -c unlimited
 export ASAN_OPTIONS="abort_on_error=1:disable_coredump=0"
 cd "$output_dir"
-command=("$workspace"/tests/helper/exe-while.sh .)
-if [ "$with_perf" ] && [ "$with_perf" -gt 0 ]; then
-	command+=(perf record --call-graph=fp -o "$output_dir"/perf.data)
-fi
-"${command[@]}" "$workspace"/rocksdb/build/db_bench \
+"$workspace"/tests/helper/exe-while . "$workspace"/rocksdb/build/db_bench \
 	--ttl_seconds=0 \
 	--use_direct_io_for_flush_and_compaction=true \
 	--use_direct_reads=true \

@@ -1,0 +1,52 @@
+#!/usr/bin/env python3
+import os
+import sys
+if len(sys.argv) < 3:
+	print('Usage: ' + sys.argv[0] + ' output-dir command args...')
+	exit(1)
+mydir = os.path.dirname(sys.argv[0])
+output_dir = sys.argv[1]
+cmd = sys.argv[2:]
+
+os.makedirs(output_dir, exist_ok=True)
+
+import signal
+import subprocess
+main_job = subprocess.Popen(cmd, preexec_fn=os.setsid)
+main_pgid = os.getpgid(main_job.pid)
+
+bg_job = subprocess.Popen([os.path.join(mydir, 'exe-bg-jobs.sh'), output_dir, str(main_job.pid)], stdout=sys.stderr)
+
+should_exit = False
+dead_pid = None
+def on_chld(sig=None, frame=None):
+    global should_exit
+    global dead_pid
+    if should_exit:
+        return
+    while True:
+        try:
+            dead_pid, status = os.waitpid(-1, os.WNOHANG)
+        except ChildProcessError:
+            break
+        if dead_pid == 0:
+            break
+        if dead_pid == main_job.pid or dead_pid == bg_job.pid:
+            should_exit = True
+            break
+signal.signal(signal.SIGCHLD, on_chld)
+
+def mark_should_exit(sig=None, frame=None):
+    global should_exit
+    should_exit = True
+signal.signal(signal.SIGINT, mark_should_exit)
+signal.signal(signal.SIGTERM, mark_should_exit)
+
+while not should_exit:
+    # Is it possible that the signal is handled here and the signal.pause below can't wake up?
+	signal.pause()
+
+if dead_pid != main_job.pid:
+    os.killpg(main_pgid, signal.SIGTERM)
+if dead_pid != bg_job.pid:
+    bg_job.terminate()
