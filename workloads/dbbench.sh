@@ -43,5 +43,8 @@ cd "$output_dir"
 	"$@" \
 	> stdout.txt
 if [ "$with_perf" ] && [ "$with_perf" -gt 0 ]; then
-	perf script -i perf.data -f | inferno-collapse-perf > perf.folded
+	perf script -i perf.data -f | inferno-collapse-perf | $FlameGraphPath/flamegraph.pl > perf.svg
+fi
+if [ "$with_offcputime" ] && [ "$with_offcputime" -gt 0 ]; then
+	$FlameGraphPath/flamegraph.pl --color=io --title="Off-CPU Time Flame Graph" --countname=us < offcputime.stacks > offcputime.svg
 fi

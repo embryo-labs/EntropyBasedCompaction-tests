@@ -8,15 +8,32 @@ mydir = os.path.dirname(sys.argv[0])
 output_dir = sys.argv[1]
 cmd = sys.argv[2:]
 
+import fcntl
+wakeup_fd, wakeup_fd_w = os.pipe()
+fcntl.fcntl(wakeup_fd_w, fcntl.F_SETFL, os.O_NONBLOCK)
+def wakeup():
+    global wakeup_fd_w
+    try:
+        os.write(wakeup_fd_w, b'1')
+    except BlockingIOError:
+        pass
+
 import signal
 should_exit = False
 def mark_should_exit(sig=None, frame=None):
     global should_exit
     should_exit = True
+    wakeup()
 signal.signal(signal.SIGINT, mark_should_exit)
 signal.signal(signal.SIGTERM, mark_should_exit)
 
 os.makedirs(output_dir, exist_ok=True)
+
+import tempfile
+tmp_dir = tempfile.mkdtemp()
+os.mkfifo(os.path.join(tmp_dir, 'db-bench-done'))
+os.mkfifo(os.path.join(tmp_dir, 'db-bench-can-exit'))
+cmd.extend(['--exec_before_exit', 'echo db_bench done 1>&2; echo 1 > ' + tmp_dir + '/db-bench-done; echo db_bench waiting for permission to exit 1>&2; read x < ' + tmp_dir + '/db-bench-can-exit; echo db_bench exit 1>&2'])
 
 import subprocess
 main_job = subprocess.Popen(cmd, preexec_fn=os.setsid)
@@ -24,12 +41,10 @@ main_pgid = os.getpgid(main_job.pid)
 
 bg_job = subprocess.Popen([os.path.join(mydir, 'exe-bg-jobs'), output_dir, str(main_job.pid)], stdout=sys.stderr)
 
-reaped_pid = None
+reaped_pids = [] # Immutable if should_exit
 def on_chld(sig=None, frame=None):
     global should_exit
-    global reaped_pid
-    if should_exit:
-        return
+    global reaped_pids
     while True:
         try:
             reaped_pid, status = os.waitpid(-1, os.WNOHANG)
@@ -38,17 +53,59 @@ def on_chld(sig=None, frame=None):
         if reaped_pid == 0:
             break
         if reaped_pid == main_job.pid or reaped_pid == bg_job.pid:
+            reaped_pids.append(reaped_pid)
             should_exit = True
+            wakeup()
             break
 signal.signal(signal.SIGCHLD, on_chld)
 # In case that CHLD has already been signaled before we installed the signal handler.
 on_chld()
 
-while not should_exit:
-    # Is it possible that the signal is handled here and the signal.pause below can't wake up?
-	signal.pause()
+import select
+import threading
+def kill_bg_job_when_db_bench_done(should_stop, tmp_dir, main_job, bg_job):
+    global should_exit
+    global reaped_pids
 
-if reaped_pid != main_job.pid:
-    os.killpg(main_pgid, signal.SIGTERM)
-if reaped_pid != bg_job.pid:
+    print('Waiting for db_bench to be done', file=sys.stderr)
+    fd_db_bench_done = os.open(os.path.join(tmp_dir, 'db-bench-done'), os.O_RDONLY | os.O_NONBLOCK)
+    rlist, _, _ = select.select([fd_db_bench_done, should_stop], [], [])
+    if should_stop in rlist:
+        return
+    assert fd_db_bench_done in rlist
+    os.read(fd_db_bench_done, 1)
+    print('ACK db_bench done', file=sys.stderr)
+
+    print('Terminating bg jobs', file=sys.stderr)
     bg_job.terminate()
+    bg_job.wait()
+    reaped_pids.append(bg_job.pid)
+    print('Terminated bg jobs. Permit db_bench to exit', file=sys.stderr)
+    fd_db_bench_can_exit = os.open(os.path.join(tmp_dir, 'db-bench-can-exit'), os.O_RDWR)
+    rlist, wlist, _ = select.select([should_stop], [fd_db_bench_can_exit], [])
+    if should_stop in rlist:
+        return
+    assert fd_db_bench_can_exit in wlist
+    os.write(fd_db_bench_can_exit, b'1\n')
+    main_job.wait()
+    print('ACK db_bench exit', file=sys.stderr)
+    reaped_pids.append(main_job.pid)
+    should_exit = True
+    wakeup()
+should_stop, should_stop_w = os.pipe()
+thread_kill_bg_job_when_db_bench_done = threading.Thread(target=kill_bg_job_when_db_bench_done, args=(should_stop, tmp_dir, main_job, bg_job))
+thread_kill_bg_job_when_db_bench_done.start()
+
+while not should_exit:
+    os.read(wakeup_fd, 1)
+
+os.close(should_stop_w)
+if main_job.pid not in reaped_pids:
+    os.killpg(main_pgid, signal.SIGTERM)
+if bg_job.pid not in reaped_pids:
+    bg_job.terminate()
+
+thread_kill_bg_job_when_db_bench_done.join()
+
+import shutil
+shutil.rmtree(tmp_dir)

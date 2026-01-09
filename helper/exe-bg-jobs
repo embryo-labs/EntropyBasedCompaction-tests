@@ -27,6 +27,12 @@ if int(os.getenv('with_perf', '0')) != 0:
     pid = subprocess.Popen([os.path.join(mydir, 'bg-jobs', 'perf.sh'), output_dir, main_pid]).pid
     pid_signal[pid] = signal.SIGTERM
 
+if int(os.getenv('with_offcputime', '0')) != 0:
+    with open(os.path.join(output_dir, 'offcputime.stacks'), 'w') as f:
+        os.chdir('/') # Avoid getcwd error in offcputime
+        pid = subprocess.Popen(['sudo', 'offcputime-bpfcc', '-df', '-p', main_pid], stdout=f).pid
+        pid_signal[pid] = signal.SIGINT
+
 def on_chld(sig=None, frame=None):
     global should_exit
     global pids
