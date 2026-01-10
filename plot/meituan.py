@@ -11,8 +11,10 @@ period_secs = 14400
 read_workload = 'nexts-50-seek-1'
 unique_size = '10GB'
 
-import humanfriendly
-unique_size_bytes = humanfriendly.parse_size(unique_size)
+# The humanfriendly module requires Python <= 3.12
+import subprocess
+unique_size_bytes = subprocess.run(['humanfriendly', '--parse-size', unique_size], stdout=subprocess.PIPE, text=True).stdout
+unique_size_bytes = int(unique_size_bytes)
 
 import os
 import numpy as np
