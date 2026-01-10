@@ -41,10 +41,12 @@ main_pgid = os.getpgid(main_job.pid)
 
 bg_job = subprocess.Popen([os.path.join(mydir, 'exe-bg-jobs'), output_dir, str(main_job.pid)], stdout=sys.stderr)
 
-reaped_pids = [] # Immutable if should_exit
+# They are immutable if should_exit
+pids_to_kill = [main_job.pid, bg_job.pid]
+pids_expected_alive = [main_job.pid, bg_job.pid]
 def on_chld(sig=None, frame=None):
     global should_exit
-    global reaped_pids
+    global pids_to_kill, pids_expected_alive
     while True:
         try:
             reaped_pid, status = os.waitpid(-1, os.WNOHANG)
@@ -52,8 +54,9 @@ def on_chld(sig=None, frame=None):
             break
         if reaped_pid == 0:
             break
-        if reaped_pid == main_job.pid or reaped_pid == bg_job.pid:
-            reaped_pids.append(reaped_pid)
+        if reaped_pid in pids_expected_alive:
+            pids_to_kill.remove(reaped_pid)
+            pids_expected_alive.remove(reaped_pid)
             should_exit = True
             wakeup()
             break
@@ -65,7 +68,7 @@ import select
 import threading
 def kill_bg_job_when_db_bench_done(should_stop, tmp_dir, main_job, bg_job):
     global should_exit
-    global reaped_pids
+    global pids_to_kill, pids_expected_alive
 
     print('Waiting for db_bench to be done', file=sys.stderr)
     fd_db_bench_done = os.open(os.path.join(tmp_dir, 'db-bench-done'), os.O_RDONLY | os.O_NONBLOCK)
@@ -77,19 +80,21 @@ def kill_bg_job_when_db_bench_done(should_stop, tmp_dir, main_job, bg_job):
     print('ACK db_bench done', file=sys.stderr)
 
     print('Terminating bg jobs', file=sys.stderr)
+    pids_to_kill.remove(bg_job.pid)
+    pids_expected_alive.remove(bg_job.pid)
     bg_job.terminate()
     bg_job.wait()
-    reaped_pids.append(bg_job.pid)
     print('Terminated bg jobs. Permit db_bench to exit', file=sys.stderr)
     fd_db_bench_can_exit = os.open(os.path.join(tmp_dir, 'db-bench-can-exit'), os.O_RDWR)
     rlist, wlist, _ = select.select([should_stop], [fd_db_bench_can_exit], [])
     if should_stop in rlist:
         return
     assert fd_db_bench_can_exit in wlist
+    pids_expected_alive.remove(main_job.pid)
     os.write(fd_db_bench_can_exit, b'1\n')
     main_job.wait()
     print('ACK db_bench exit', file=sys.stderr)
-    reaped_pids.append(main_job.pid)
+    pids_to_kill.remove(main_job.pid)
     should_exit = True
     wakeup()
 should_stop, should_stop_w = os.pipe()
@@ -100,9 +105,9 @@ while not should_exit:
     os.read(wakeup_fd, 1)
 
 os.close(should_stop_w)
-if main_job.pid not in reaped_pids:
+if main_job.pid in pids_to_kill:
     os.killpg(main_pgid, signal.SIGTERM)
-if bg_job.pid not in reaped_pids:
+if bg_job.pid in pids_to_kill:
     bg_job.terminate()
 
 thread_kill_bg_job_when_db_bench_done.join()
