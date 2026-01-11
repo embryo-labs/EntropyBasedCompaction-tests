@@ -29,6 +29,7 @@ cd "$output_dir"
 	--block_size=4096 \
 	--enable_pipelined_write=false \
 	--unordered_write=true \
+	--auto_readahead_size=true \
 	--db="$workspace/testdb" \
 	--num=$num_unique_keys \
 	--level0_slowdown_writes_trigger=100000 \
