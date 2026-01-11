@@ -59,3 +59,8 @@ while not should_exit:
 print('exe-bg-jobs: exiting...', file=sys.stderr)
 for (pid, sig) in pid_signal.items():
     os.kill(pid, sig)
+while True:
+    try:
+        os.wait()
+    except ChildProcessError:
+        break
