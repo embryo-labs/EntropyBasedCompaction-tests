@@ -131,7 +131,12 @@ with_write_exp_range() (
 with_nexts() (
 	nexts=$1
 	shift
-	suffix="-nexts-$nexts$suffix" "$@" --seek_nexts="$nexts"
+	# We specify large readahead_size so that data in the range can be prefetched in one I/O.
+	# Out-of-range part will not be prefetched due to auto_readahead_size.
+	suffix="-nexts-$nexts$suffix" "$@" \
+		--seek_nexts="$nexts" \
+		--max_scan_distance="$nexts" \
+		--readahead_size=$((1024 * 1024))
 )
 with_merge_operator() (
 	op=$1
