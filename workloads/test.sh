@@ -163,67 +163,6 @@ with_meituan_read() (
 			--mix_seek_ratio=$seek_ratio
 )
 
-load_some_run() (
-	output_dir=$1
-	shift
-	benchmark=$1
-	shift
-	key_size=$1
-	shift
-	value_size=$1
-	shift
-	unique_size=$1
-	shift
-	load_size=$1
-	shift
-	num_unique_keys=$(($(humanfriendly --parse-size="$unique_size") / (key_size + value_size)))
-	num_load_keys=$(($(humanfriendly --parse-size="$load_size") / (key_size + value_size)))
-	"$(dirname $0)"/prepare.sh "$output_dir" || return $?
-	"$(dirname $0)"/dbbench.sh "$output_dir" "$num_unique_keys" "$key_size" \
-		--value_size="$value_size" \
-		--benchmarks_json="[
-	{
-		\"name\": \"fillrandom\",
-		\"threads\": 1,
-		\"duration\": 0,
-		\"writes\": $num_load_keys,
-		\"benchmark_write_rate_limit\": 0
-	},
-	{
-		\"name\": \"waitforcompaction\"
-	},
-	{
-		\"name\": \"stats\"
-	},
-	{
-		\"name\": \"resetstats\"
-	},
-	{
-		\"name\": \"overwrite\",
-		\"threads\": 1,
-		\"duration\": 0,
-		\"writes\": $((num_unique_keys / 10)),
-		\"benchmark_write_rate_limit\": 10000000
-	},
-	{
-		\"name\": \"waitforcompaction\"
-	},
-	{
-		\"name\": \"stats\"
-	},
-	{
-		\"name\": \"resetstats\"
-	},
-	{
-		\"name\": \"$benchmark\"
-	},
-	{
-		\"name\": \"stats\"
-	}
-]" "$@"
-	"$(dirname $0)"/../helper/data-rocksdb.sh "$output_dir"
-	"$(dirname $0)"/../helper/plot-rocksdb.sh "$output_dir"
-)
 load_all_run() (
 	output_dir=$1
 	shift
@@ -283,22 +222,6 @@ load_all_run() (
 	"$(dirname $0)"/../helper/plot-rocksdb.sh "$output_dir"
 )
 
-dbbench_load_some() (
-	version=$1
-	shift
-	benchmark=$1
-	shift
-	key_size=$1
-	shift
-	value_size=$1
-	shift
-	unique_size=$1
-	shift
-	load_size=$1
-	shift
-	output_dir="../../data/$benchmark-key-$key_size-value-$value_size-unique-size-$unique_size-load-$load_size$suffix/$version"
-	load_some_run "$output_dir" "$benchmark" "$key_size" "$value_size" "$unique_size" "$load_size" "$@"
-)
 dbbench_load_all() (
 	version=$1
 	shift
