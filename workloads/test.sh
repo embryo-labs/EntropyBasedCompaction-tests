@@ -263,7 +263,7 @@ writes=$(($(humanfriendly --parse-size="$write") / (key_size + value_size)))
 compaction_MB_s=200
 for write_MB_s in 10 20 30 40 50 60; do
 	read_workload() {
-		seek_only with_nexts $nexts "$@"
+		seek_only with_nexts 50 "$@"
 	}
 	suffix="-write-$write" read_workload with_writes_per_writer "$writes" with_write_MB_s $write_MB_s with_compaction_limit_MB_s $compaction_MB_s with_memtable_size 8MiB with_policy_rocksdb_tuned dbbench_load_all rocksdb-tuned readwhilewriting $key_size $value_size 10GB
 	suffix="-write-$write" read_workload with_writes_per_writer "$writes" with_write_MB_s $write_MB_s with_compaction_limit_MB_s $compaction_MB_s with_memtable_size 8MiB with_policy_universal dbbench_load_all universal readwhilewriting $key_size $value_size 10GB
