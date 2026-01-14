@@ -74,6 +74,20 @@ with_policy_preempt_only_by_num() {
 		--preempt_by_num=true
 }
 
+with_threads() (
+	threads=$1
+	shift
+	suffix="-threads-$threads$suffix" "$@" \
+		--threads="$threads"
+)
+with_cache() (
+	cache=$1
+	shift
+	cache_size=$(humanfriendly --parse-size="$cache")
+	suffix="-cache-$cache$suffix" "$@" \
+		--cache_size="$cache_size"
+)
+
 with_num_writers() (
 	num_writers=$1
 	shift
@@ -103,19 +117,6 @@ with_read_ops() (
 		--benchmark_read_rate_limit="$read_ops"
 )
 
-with_threads() (
-	threads=$1
-	shift
-	suffix="-threads-$threads$suffix" "$@" \
-		--threads="$threads"
-)
-with_cache() (
-	cache=$1
-	shift
-	cache_size=$(humanfriendly --parse-size="$cache")
-	suffix="-cache-$cache$suffix" "$@" \
-		--cache_size="$cache_size"
-)
 with_read_exp_range() (
 	exp_range=$1
 	shift
@@ -162,6 +163,9 @@ with_meituan_read() (
 			--mix_get_ratio=$get_ratio \
 			--mix_seek_ratio=$seek_ratio
 )
+seek_only() {
+	suffix="-seek-1$suffix" "$@" --mix_get_ratio=0 --mix_seek_ratio=1
+}
 
 load_all_run() (
 	output_dir=$1
@@ -258,17 +262,20 @@ write=100GB
 writes=$(($(humanfriendly --parse-size="$write") / (key_size + value_size)))
 compaction_MB_s=200
 for write_MB_s in 10 20 30 40 50 60; do
-	suffix="-write-$write" with_writes_per_writer "$writes" with_write_MB_s $write_MB_s with_compaction_limit_MB_s $compaction_MB_s with_memtable_size 8MiB with_policy_rocksdb_tuned dbbench_load_all rocksdb-tuned overwrite $key_size $value_size 10GB
-	suffix="-write-$write" with_writes_per_writer "$writes" with_write_MB_s $write_MB_s with_compaction_limit_MB_s $compaction_MB_s with_memtable_size 8MiB with_policy_universal dbbench_load_all universal overwrite $key_size $value_size 10GB
+	read_workload() {
+		seek_only with_nexts $nexts "$@"
+	}
+	suffix="-write-$write" read_workload with_writes_per_writer "$writes" with_write_MB_s $write_MB_s with_compaction_limit_MB_s $compaction_MB_s with_memtable_size 8MiB with_policy_rocksdb_tuned dbbench_load_all rocksdb-tuned readwhilewriting $key_size $value_size 10GB
+	suffix="-write-$write" read_workload with_writes_per_writer "$writes" with_write_MB_s $write_MB_s with_compaction_limit_MB_s $compaction_MB_s with_memtable_size 8MiB with_policy_universal dbbench_load_all universal readwhilewriting $key_size $value_size 10GB
 
 	for ratio in 2 4 8; do
-		suffix="-write-$write" with_writes_per_writer "$writes" with_write_MB_s $write_MB_s with_compaction_limit_MB_s $compaction_MB_s with_max_running_background_jobs 1 with_memtable_size 8MiB with_policy_tiering $ratio dbbench_load_all tiering$ratio overwrite $key_size $value_size 10GB
+		suffix="-write-$write" read_workload with_writes_per_writer "$writes" with_write_MB_s $write_MB_s with_compaction_limit_MB_s $compaction_MB_s with_max_running_background_jobs 1 with_memtable_size 8MiB with_policy_tiering $ratio dbbench_load_all tiering$ratio readwhilewriting $key_size $value_size 10GB
 	done
-	suffix="-write-$write" with_writes_per_writer "$writes" with_write_MB_s $write_MB_s with_compaction_limit_MB_s $compaction_MB_s with_max_running_background_jobs 1 with_memtable_size 8MiB with_policy_benefit_cost dbbench_load_all benefit-cost overwrite $key_size $value_size 10GB
+	suffix="-write-$write" read_workload with_writes_per_writer "$writes" with_write_MB_s $write_MB_s with_compaction_limit_MB_s $compaction_MB_s with_max_running_background_jobs 1 with_memtable_size 8MiB with_policy_benefit_cost dbbench_load_all benefit-cost readwhilewriting $key_size $value_size 10GB
 
-	suffix="-write-$write" with_writes_per_writer "$writes" with_write_MB_s $write_MB_s with_compaction_limit_MB_s $compaction_MB_s with_max_running_background_jobs 1 with_memtable_size 8MiB with_policy_preempt_only_by_entropy 1 dbbench_load_all preempt-only-by-entropy-ke-1 overwrite $key_size $value_size 10GB
-	suffix="-write-$write" with_writes_per_writer "$writes" with_write_MB_s $write_MB_s with_compaction_limit_MB_s $compaction_MB_s with_max_running_background_jobs 1 with_memtable_size 8MiB with_policy_preempt_only_by_num dbbench_load_all preempt-only-by-num overwrite $key_size $value_size 10GB
-	suffix="-write-$write" with_writes_per_writer "$writes" with_write_MB_s $write_MB_s with_compaction_limit_MB_s $compaction_MB_s with_max_running_background_jobs 1 with_memtable_size 8MiB with_policy_no_sliding_window dbbench_load_all no-sliding-window overwrite $key_size $value_size 10GB
+	suffix="-write-$write" read_workload with_writes_per_writer "$writes" with_write_MB_s $write_MB_s with_compaction_limit_MB_s $compaction_MB_s with_max_running_background_jobs 1 with_memtable_size 8MiB with_policy_preempt_only_by_entropy 1 dbbench_load_all preempt-only-by-entropy-ke-1 readwhilewriting $key_size $value_size 10GB
+	suffix="-write-$write" read_workload with_writes_per_writer "$writes" with_write_MB_s $write_MB_s with_compaction_limit_MB_s $compaction_MB_s with_max_running_background_jobs 1 with_memtable_size 8MiB with_policy_preempt_only_by_num dbbench_load_all preempt-only-by-num readwhilewriting $key_size $value_size 10GB
+	suffix="-write-$write" read_workload with_writes_per_writer "$writes" with_write_MB_s $write_MB_s with_compaction_limit_MB_s $compaction_MB_s with_max_running_background_jobs 1 with_memtable_size 8MiB with_policy_no_sliding_window dbbench_load_all no-sliding-window readwhilewriting $key_size $value_size 10GB
 done
 
 meituan_writer() (
