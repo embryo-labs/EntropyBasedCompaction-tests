@@ -94,11 +94,6 @@ with_num_writers() (
 	suffix="-writers-$num_writers$suffix" "$@" \
 		--num_writers=$num_writers
 )
-with_writes_per_writer() {
-	writes_per_thread=$1
-	shift
-	"$@" --writes="$writes_per_thread" --finish_after_writes=true
-}
 with_write_MB_s() (
 	write_MB_s=$1
 	shift
@@ -167,8 +162,23 @@ seek_only() {
 	suffix="-seek-1$suffix" "$@" --mix_get_ratio=0 --mix_seek_ratio=1
 }
 
-load_all_run() (
-	output_dir=$1
+with_compaction_limit_MB_s() (
+	compaction_MB_s=$1
+	shift
+	suffix="-compaction-${compaction_MB_s}MB-s$suffix" "$@" \
+		--rate_limiter_bytes_per_sec=$((compaction_MB_s * 1000000))
+)
+
+with_max_running_background_jobs() (
+	max_running_bg_jobs=$1
+	shift
+	suffix="-max-running-bg-jobs-$max_running_bg_jobs$suffix" "$@" \
+		--max_background_jobs=100 \
+		--max_running_background_jobs=$max_running_bg_jobs
+)
+
+load_all_warmup_run() (
+	version=$1
 	shift
 	benchmark=$1
 	shift
@@ -178,12 +188,24 @@ load_all_run() (
 	shift
 	unique_size=$1
 	shift
+	warmup_write=$1
+	shift
+	write=$1
+	shift
+	output_dir="../../data/$benchmark-key-$key_size-value-$value_size-unique-size-$unique_size-warmup-$warmup_write-write-$write$suffix/$version"
 	num_unique_keys=$(($(humanfriendly --parse-size="$unique_size") / (key_size + value_size)))
+	warmup_num_writes=$(($(humanfriendly --parse-size="$warmup_write") / (key_size + value_size)))
+	num_writes=$(($(humanfriendly --parse-size="$write") / (key_size + value_size)))
+
 	"$(dirname $0)"/prepare.sh "$output_dir" || return $?
+	mkdir -p "$output_dir"/load
+	mkdir -p "$output_dir"/warmup
 	"$(dirname $0)"/dbbench.sh "$output_dir" "$num_unique_keys" "$key_size" \
 		--value_size="$value_size" \
+		--finish_after_writes=true \
 		--benchmarks_json="[
 	{
+		\"output_dir\": \"load\",
 		\"name\": \"filluniquerandom\",
 		\"threads\": 1,
 		\"duration\": 0,
@@ -200,14 +222,9 @@ load_all_run() (
 		\"name\": \"resetstats\"
 	},
 	{
-		\"name\": \"overwrite\",
-		\"threads\": 1,
-		\"duration\": 0,
-		\"writes\": $((num_unique_keys / 10)),
-		\"benchmark_write_rate_limit\": 10000000
-	},
-	{
-		\"name\": \"waitforcompaction\"
+		\"output_dir\": \"warmup\",
+		\"name\": \"$benchmark\",
+		\"writes\": $warmup_num_writes
 	},
 	{
 		\"name\": \"stats\"
@@ -216,7 +233,8 @@ load_all_run() (
 		\"name\": \"resetstats\"
 	},
 	{
-		\"name\": \"$benchmark\"
+		\"name\": \"$benchmark\",
+		\"writes\": $num_writes
 	},
 	{
 		\"name\": \"stats\"
@@ -226,56 +244,27 @@ load_all_run() (
 	"$(dirname $0)"/../helper/plot-rocksdb.sh "$output_dir"
 )
 
-dbbench_load_all() (
-	version=$1
-	shift
-	benchmark=$1
-	shift
-	key_size=$1
-	shift
-	value_size=$1
-	shift
-	unique_size=$1
-	shift
-	output_dir="../../data/$benchmark-key-$key_size-value-$value_size-unique-size-$unique_size$suffix/$version"
-	load_all_run "$output_dir" "$benchmark" "$key_size" "$value_size" "$unique_size" "$@"
-)
-
-with_compaction_limit_MB_s() (
-	compaction_MB_s=$1
-	shift
-	suffix="-compaction-${compaction_MB_s}MB-s$suffix" "$@" \
-		--rate_limiter_bytes_per_sec=$(($compaction_MB_s * 1000000))
-)
-
-with_max_running_background_jobs() (
-	max_running_bg_jobs=$1
-	shift
-	suffix="-max-running-bg-jobs-$max_running_bg_jobs$suffix" "$@" \
-		--max_background_jobs=100 \
-		--max_running_background_jobs=$max_running_bg_jobs
-)
-
 key_size=16
 value_size=1000
-write=100GB
-writes=$(($(humanfriendly --parse-size="$write") / (key_size + value_size)))
+unique_size=10GB
+warmup_write=70GB
+write=30GB
 compaction_MB_s=200
 for write_MB_s in 10 20 30 40 50 60; do
 	read_workload() {
 		seek_only with_nexts 50 "$@"
 	}
-	suffix="-write-$write" read_workload with_writes_per_writer "$writes" with_write_MB_s $write_MB_s with_compaction_limit_MB_s $compaction_MB_s with_memtable_size 8MiB with_policy_rocksdb_tuned dbbench_load_all rocksdb-tuned readwhilewriting $key_size $value_size 10GB
-	suffix="-write-$write" read_workload with_writes_per_writer "$writes" with_write_MB_s $write_MB_s with_compaction_limit_MB_s $compaction_MB_s with_memtable_size 8MiB with_policy_universal dbbench_load_all universal readwhilewriting $key_size $value_size 10GB
+	read_workload with_write_MB_s $write_MB_s with_compaction_limit_MB_s $compaction_MB_s with_memtable_size 8MiB with_policy_rocksdb_tuned load_all_warmup_run rocksdb-tuned readwhilewriting $key_size $value_size $unique_size $warmup_write $write
+	read_workload with_write_MB_s $write_MB_s with_compaction_limit_MB_s $compaction_MB_s with_memtable_size 8MiB with_policy_universal load_all_warmup_run universal readwhilewriting $key_size $value_size $unique_size $warmup_write $write
 
 	for ratio in 2 4 8; do
-		suffix="-write-$write" read_workload with_writes_per_writer "$writes" with_write_MB_s $write_MB_s with_compaction_limit_MB_s $compaction_MB_s with_max_running_background_jobs 1 with_memtable_size 8MiB with_policy_tiering $ratio dbbench_load_all tiering$ratio readwhilewriting $key_size $value_size 10GB
+		read_workload with_write_MB_s $write_MB_s with_compaction_limit_MB_s $compaction_MB_s with_max_running_background_jobs 1 with_memtable_size 8MiB with_policy_tiering $ratio load_all_warmup_run tiering$ratio readwhilewriting $key_size $value_size $unique_size $warmup_write $write
 	done
-	suffix="-write-$write" read_workload with_writes_per_writer "$writes" with_write_MB_s $write_MB_s with_compaction_limit_MB_s $compaction_MB_s with_max_running_background_jobs 1 with_memtable_size 8MiB with_policy_benefit_cost dbbench_load_all benefit-cost readwhilewriting $key_size $value_size 10GB
+	read_workload with_write_MB_s $write_MB_s with_compaction_limit_MB_s $compaction_MB_s with_max_running_background_jobs 1 with_memtable_size 8MiB with_policy_benefit_cost load_all_warmup_run benefit-cost readwhilewriting $key_size $value_size $unique_size $warmup_write $write
 
-	suffix="-write-$write" read_workload with_writes_per_writer "$writes" with_write_MB_s $write_MB_s with_compaction_limit_MB_s $compaction_MB_s with_max_running_background_jobs 1 with_memtable_size 8MiB with_policy_preempt_only_by_entropy 1 dbbench_load_all preempt-only-by-entropy-ke-1 readwhilewriting $key_size $value_size 10GB
-	suffix="-write-$write" read_workload with_writes_per_writer "$writes" with_write_MB_s $write_MB_s with_compaction_limit_MB_s $compaction_MB_s with_max_running_background_jobs 1 with_memtable_size 8MiB with_policy_preempt_only_by_num dbbench_load_all preempt-only-by-num readwhilewriting $key_size $value_size 10GB
-	suffix="-write-$write" read_workload with_writes_per_writer "$writes" with_write_MB_s $write_MB_s with_compaction_limit_MB_s $compaction_MB_s with_max_running_background_jobs 1 with_memtable_size 8MiB with_policy_no_sliding_window dbbench_load_all no-sliding-window readwhilewriting $key_size $value_size 10GB
+	read_workload with_write_MB_s $write_MB_s with_compaction_limit_MB_s $compaction_MB_s with_max_running_background_jobs 1 with_memtable_size 8MiB with_policy_preempt_only_by_entropy 1 load_all_warmup_run preempt-only-by-entropy-ke-1 readwhilewriting $key_size $value_size $unique_size $warmup_write $write
+	read_workload with_write_MB_s $write_MB_s with_compaction_limit_MB_s $compaction_MB_s with_max_running_background_jobs 1 with_memtable_size 8MiB with_policy_preempt_only_by_num load_all_warmup_run preempt-only-by-num readwhilewriting $key_size $value_size $unique_size $warmup_write $write
+	read_workload with_write_MB_s $write_MB_s with_compaction_limit_MB_s $compaction_MB_s with_max_running_background_jobs 1 with_memtable_size 8MiB with_policy_no_sliding_window load_all_warmup_run no-sliding-window readwhilewriting $key_size $value_size $unique_size $warmup_write $write
 done
 
 meituan_writer() (

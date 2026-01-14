@@ -8,6 +8,13 @@ dir = sys.argv[1]
 read_workload = 'nexts-50-seek-1'
 compaction = '200MB-s'
 
+def workload_path(max_running_bg_jobs):
+    workload = 'readwhilewriting-key-16-value-1000-unique-size-10GB-warmup-70GB-write-30GB-memtable-8MiB-'
+    if max_running_bg_jobs is not None:
+        workload += 'max-running-bg-jobs-1-'
+    workload += 'compaction-' + compaction + '-write-' + str(write_MB_s) + 'MB-s-' + read_workload
+    return workload
+
 import os
 import math
 import numpy as np
@@ -118,15 +125,14 @@ for version in versions:
     lat_avg = []
     lat_p99 = []
     for write_MB_s in vec_write_MB_s:
-        workload = 'readwhilewriting-key-16-value-1000-unique-size-10GB-memtable-8MiB-'
         if version['path'] in ['tiering2', 'tiering4', 'tiering8', 'benefit-cost']:
-            workload += 'max-running-bg-jobs-1-'
-        workload += 'compaction-' + compaction + '-write-' + str(write_MB_s) + 'MB-s-' + read_workload + '-write-100GB'
+            max_running_bg_jobs = 1
+        else:
+            max_running_bg_jobs = None
+        workload = workload_path(max_running_bg_jobs)
         data_dir = os.path.join(dir, workload, version['path'])
 
         report = pd.read_csv(os.path.join(data_dir, 'report.csv'))
-        # Use the last 30%
-        report = report.iloc[-math.ceil(len(report) * 0.3):]
         srs_avg.append(report['num-sorted-runs'].mean())
         srs_p99.append(np.percentile(report['num-sorted-runs'], 99))
 
@@ -207,11 +213,9 @@ for version in versions:
     srs_avg = []
     srs_p99 = []
     for write_MB_s in vec_write_MB_s:
-        workload = 'overwrite-key-16-value-1000-unique-size-10GB-memtable-8MiB-max-running-bg-jobs-1-compaction-' + compaction + '-write-' + str(write_MB_s) + 'MB-s-write-100GB'
+        workload = workload_path(1)
         data_dir = os.path.join(dir, workload, version['path'])
         report = pd.read_csv(os.path.join(data_dir, 'report.csv'))
-        # Use the last 30%
-        report = report.iloc[-math.ceil(len(report) * 0.3):]
         srs_avg.append(report['num-sorted-runs'].mean())
         srs_p99.append(np.percentile(report['num-sorted-runs'], 99))
     ax_srs_avg.plot(vec_write_MB_s, srs_avg, linewidth=1, color=version['color'], marker=version['marker'], markersize=version['markersize'], markerfacecolor=version['markerfacecolor'], markeredgewidth=0.8)
