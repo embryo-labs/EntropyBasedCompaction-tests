@@ -168,6 +168,13 @@ with_compaction_limit_MB_s() (
 	suffix="-compaction-${compaction_MB_s}MB-s$suffix" "$@" \
 		--rate_limiter_bytes_per_sec=$((compaction_MB_s * 1000000))
 )
+with_io_sa_limit_MB_s() (
+	io_sa_limit_MB_s=$1
+	shift
+	suffix="-io_sa-${io_sa_limit_MB_s}MB-s$suffix" "$@" \
+		--rate_limiter_bytes_per_sec_io_sa=$((io_sa_limit_MB_s * 1000000)) \
+		--prioritize_last_sorted_run_compaction=true
+)
 
 with_max_running_background_jobs() (
 	max_running_bg_jobs=$1
