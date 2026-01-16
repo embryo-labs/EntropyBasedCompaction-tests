@@ -7,12 +7,15 @@ dir = sys.argv[1]
 
 read_workload = 'nexts-50-seek-1'
 compaction = '200MB-s'
+io_sa = '30MB-s'
 
-def workload_path(max_running_bg_jobs):
-    workload = 'readwhilewriting-key-16-value-1000-unique-size-10GB-warmup-70GB-write-30GB-memtable-8MiB-'
+def workload_path(max_running_bg_jobs = None, has_io_sa = False):
+    workload = 'readwhilewriting-key-16-value-1000-unique-size-10GB-warmup-70GB-write-30GB-memtable-8MiB'
     if max_running_bg_jobs is not None:
-        workload += 'max-running-bg-jobs-1-'
-    workload += 'compaction-' + compaction + '-write-' + str(write_MB_s) + 'MB-s-' + read_workload
+        workload += '-max-running-bg-jobs-1'
+    if has_io_sa:
+        workload += '-io_sa-' + io_sa
+    workload += '-compaction-' + compaction + '-write-' + str(write_MB_s) + 'MB-s-' + read_workload
     return workload
 
 import os
@@ -83,8 +86,8 @@ for v in versions:
         v['markerfacecolor'] = v['color']
 version_names = [v['name'] for v in versions]
 
-fig_srs = plt.figure(dpi=300, figsize=(cm_to_inch(SINGLE_COL_WIDTH), cm_to_inch(10)), constrained_layout=True)
-gs = gridspec.GridSpec(2, 2, figure=fig_srs)
+fig_srs = plt.figure(dpi=300, figsize=(cm_to_inch(SINGLE_COL_WIDTH), cm_to_inch(12)), constrained_layout=True)
+gs = gridspec.GridSpec(3, 2, figure=fig_srs)
 
 plt.subplot(gs[0, 0])
 ax_srs_avg = plt.gca()
@@ -118,17 +121,34 @@ plt.ylabel('P99 read latency (ms)', fontsize=9)
 plt.ylim((0, 50))
 plt.yticks(fontsize=9)
 
+plt.subplot(gs[2, 0])
+ax_size_avg = plt.gca()
+plt.xlabel('Write rates (MB/s)', fontsize=9)
+plt.xticks(vec_write_MB_s, fontsize=9)
+plt.ylabel('Average size (GB)', fontsize=9)
+plt.ylim((0, 120))
+plt.yticks(fontsize=9)
+
+plt.subplot(gs[2, 1])
+ax_size_max = plt.gca()
+plt.xlabel('Write rates (MB/s)', fontsize=9)
+plt.xticks(vec_write_MB_s, fontsize=9)
+plt.ylabel('Max size (GB)', fontsize=9)
+plt.ylim((0, 120))
+
 for version in versions:
     srs_avg = []
     srs_p99 = []
     lat_avg = []
     lat_p99 = []
+    size_avg = []
+    size_max = []
     for write_MB_s in vec_write_MB_s:
         if version['path'] in ['tiering2', 'tiering4', 'tiering8', 'benefit-cost']:
             max_running_bg_jobs = 1
         else:
             max_running_bg_jobs = None
-        workload = workload_path(max_running_bg_jobs)
+        workload = workload_path(max_running_bg_jobs, version['path'] == 'benefit-cost')
         data_dir = os.path.join(dir, workload, version['path'])
 
         report = pd.read_csv(os.path.join(data_dir, 'report.csv'))
@@ -138,14 +158,20 @@ for version in versions:
         read_latency_us = json.load(open(os.path.join(data_dir, 'read-latency-us.json')))
         lat_avg.append(float(read_latency_us['Average'] / 1000))
         lat_p99.append(float(read_latency_us['99%']) / 1000)
+
+        size_avg.append(report['size'].mean() / 1e9)
+        size_max.append(report['size'].max() / 1e9)
     ax_srs_avg.plot(vec_write_MB_s, srs_avg, linewidth=1, color=version['color'], marker=version['marker'], markersize=version['markersize'], markerfacecolor=version['markerfacecolor'], markeredgewidth=0.8)
     ax_srs_p99.plot(vec_write_MB_s, srs_p99, linewidth=1, color=version['color'], marker=version['marker'], markersize=version['markersize'], markerfacecolor=version['markerfacecolor'], markeredgewidth=0.8)
 
     ax_lat_avg.plot(vec_write_MB_s, lat_avg, linewidth=1, color=version['color'], marker=version['marker'], markersize=version['markersize'], markerfacecolor=version['markerfacecolor'], markeredgewidth=0.8)
     ax_lat_p99.plot(vec_write_MB_s, lat_p99, linewidth=1, color=version['color'], marker=version['marker'], markersize=version['markersize'], markerfacecolor=version['markerfacecolor'], markeredgewidth=0.8)
 
+    ax_size_avg.plot(vec_write_MB_s, size_avg, linewidth=1, color=version['color'], marker=version['marker'], markersize=version['markersize'], markerfacecolor=version['markerfacecolor'], markeredgewidth=0.8)
+    ax_size_max.plot(vec_write_MB_s, size_max, linewidth=1, color=version['color'], marker=version['marker'], markersize=version['markersize'], markerfacecolor=version['markerfacecolor'], markeredgewidth=0.8)
+
 fig_srs.legend(version_names, fontsize=9, ncol=3, loc='center', bbox_to_anchor=(0.5, 1.1))
-pdf_path = os.path.join(dir, 'const-write-rates-' + compaction + '-' + read_workload + '.pdf')
+pdf_path = os.path.join(dir, 'const-write-rates-' + compaction + '-io_sa-' + io_sa + '-' + read_workload + '.pdf')
 fig_srs.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01, metadata={'CreationDate': None})
 print('Plot saved to ' + pdf_path)
 
