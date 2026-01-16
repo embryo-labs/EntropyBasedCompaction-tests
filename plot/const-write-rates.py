@@ -10,7 +10,7 @@ compaction = '200MB-s'
 io_sa = '30MB-s'
 
 def workload_path(max_running_bg_jobs = None, has_io_sa = False):
-    workload = 'readwhilewriting-key-16-value-1000-unique-size-10GB-warmup-70GB-write-30GB-memtable-8MiB'
+    workload = 'readwhilewriting-key-16-value-1000-unique-size-10GB-warmup-secs-1000-run-secs-500-memtable-8MiB'
     if max_running_bg_jobs is not None:
         workload += '-max-running-bg-jobs-1'
     if has_io_sa:

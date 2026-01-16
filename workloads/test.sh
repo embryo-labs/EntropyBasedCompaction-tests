@@ -195,21 +195,18 @@ load_all_warmup_run() (
 	shift
 	unique_size=$1
 	shift
-	warmup_write=$1
+	warmup_secs=$1
 	shift
-	write=$1
+	run_secs=$1
 	shift
-	output_dir="../../data/$benchmark-key-$key_size-value-$value_size-unique-size-$unique_size-warmup-$warmup_write-write-$write$suffix/$version"
+	output_dir="../../data/$benchmark-key-$key_size-value-$value_size-unique-size-$unique_size-warmup-secs-$warmup_secs-run-secs-$run_secs$suffix/$version"
 	num_unique_keys=$(($(humanfriendly --parse-size="$unique_size") / (key_size + value_size)))
-	warmup_num_writes=$(($(humanfriendly --parse-size="$warmup_write") / (key_size + value_size)))
-	num_writes=$(($(humanfriendly --parse-size="$write") / (key_size + value_size)))
 
 	"$(dirname $0)"/prepare.sh "$output_dir" || return $?
 	mkdir -p "$output_dir"/load
 	mkdir -p "$output_dir"/warmup
 	"$(dirname $0)"/dbbench.sh "$output_dir" "$num_unique_keys" "$key_size" \
 		--value_size="$value_size" \
-		--finish_after_writes=true \
 		--benchmarks_json="[
 	{
 		\"output_dir\": \"load\",
@@ -231,7 +228,7 @@ load_all_warmup_run() (
 	{
 		\"output_dir\": \"warmup\",
 		\"name\": \"$benchmark\",
-		\"writes\": $warmup_num_writes
+		\"duration\": $warmup_secs
 	},
 	{
 		\"name\": \"stats\"
@@ -241,7 +238,7 @@ load_all_warmup_run() (
 	},
 	{
 		\"name\": \"$benchmark\",
-		\"writes\": $num_writes
+		\"duration\": $run_secs
 	},
 	{
 		\"name\": \"stats\"
@@ -254,24 +251,24 @@ load_all_warmup_run() (
 key_size=16
 value_size=1000
 unique_size=10GB
-warmup_write=70GB
-write=30GB
+warmup_secs=1000
+run_secs=500
 compaction_MB_s=200
 for write_MB_s in 10 20 30 40 50 60; do
 	read_workload() {
 		seek_only with_nexts 50 "$@"
 	}
-	read_workload with_write_MB_s $write_MB_s with_compaction_limit_MB_s $compaction_MB_s with_memtable_size 8MiB with_policy_rocksdb_tuned load_all_warmup_run rocksdb-tuned readwhilewriting $key_size $value_size $unique_size $warmup_write $write
-	read_workload with_write_MB_s $write_MB_s with_compaction_limit_MB_s $compaction_MB_s with_memtable_size 8MiB with_policy_universal load_all_warmup_run universal readwhilewriting $key_size $value_size $unique_size $warmup_write $write
+	read_workload with_write_MB_s $write_MB_s with_compaction_limit_MB_s $compaction_MB_s with_memtable_size 8MiB with_policy_rocksdb_tuned load_all_warmup_run rocksdb-tuned readwhilewriting $key_size $value_size $unique_size $warmup_secs $run_secs
+	read_workload with_write_MB_s $write_MB_s with_compaction_limit_MB_s $compaction_MB_s with_memtable_size 8MiB with_policy_universal load_all_warmup_run universal readwhilewriting $key_size $value_size $unique_size $warmup_secs $run_secs
 
 	for ratio in 2 4 8; do
-		read_workload with_write_MB_s $write_MB_s with_compaction_limit_MB_s $compaction_MB_s with_max_running_background_jobs 1 with_memtable_size 8MiB with_policy_tiering $ratio load_all_warmup_run tiering$ratio readwhilewriting $key_size $value_size $unique_size $warmup_write $write
+		read_workload with_write_MB_s $write_MB_s with_compaction_limit_MB_s $compaction_MB_s with_max_running_background_jobs 1 with_memtable_size 8MiB with_policy_tiering $ratio load_all_warmup_run tiering$ratio readwhilewriting $key_size $value_size $unique_size $warmup_secs $run_secs
 	done
-	read_workload with_write_MB_s $write_MB_s with_compaction_limit_MB_s $compaction_MB_s with_max_running_background_jobs 1 with_memtable_size 8MiB with_policy_benefit_cost load_all_warmup_run benefit-cost readwhilewriting $key_size $value_size $unique_size $warmup_write $write
+	read_workload with_write_MB_s $write_MB_s with_compaction_limit_MB_s $compaction_MB_s with_max_running_background_jobs 1 with_memtable_size 8MiB with_policy_benefit_cost load_all_warmup_run benefit-cost readwhilewriting $key_size $value_size $unique_size $warmup_secs $run_secs
 
-	read_workload with_write_MB_s $write_MB_s with_compaction_limit_MB_s $compaction_MB_s with_max_running_background_jobs 1 with_memtable_size 8MiB with_policy_preempt_only_by_entropy 1 load_all_warmup_run preempt-only-by-entropy-ke-1 readwhilewriting $key_size $value_size $unique_size $warmup_write $write
-	read_workload with_write_MB_s $write_MB_s with_compaction_limit_MB_s $compaction_MB_s with_max_running_background_jobs 1 with_memtable_size 8MiB with_policy_preempt_only_by_num load_all_warmup_run preempt-only-by-num readwhilewriting $key_size $value_size $unique_size $warmup_write $write
-	read_workload with_write_MB_s $write_MB_s with_compaction_limit_MB_s $compaction_MB_s with_max_running_background_jobs 1 with_memtable_size 8MiB with_policy_no_sliding_window load_all_warmup_run no-sliding-window readwhilewriting $key_size $value_size $unique_size $warmup_write $write
+	read_workload with_write_MB_s $write_MB_s with_compaction_limit_MB_s $compaction_MB_s with_max_running_background_jobs 1 with_memtable_size 8MiB with_policy_preempt_only_by_entropy 1 load_all_warmup_run preempt-only-by-entropy-ke-1 readwhilewriting $key_size $value_size $unique_size $warmup_secs $run_secs
+	read_workload with_write_MB_s $write_MB_s with_compaction_limit_MB_s $compaction_MB_s with_max_running_background_jobs 1 with_memtable_size 8MiB with_policy_preempt_only_by_num load_all_warmup_run preempt-only-by-num readwhilewriting $key_size $value_size $unique_size $warmup_secs $run_secs
+	read_workload with_write_MB_s $write_MB_s with_compaction_limit_MB_s $compaction_MB_s with_max_running_background_jobs 1 with_memtable_size 8MiB with_policy_no_sliding_window load_all_warmup_run no-sliding-window readwhilewriting $key_size $value_size $unique_size $warmup_secs $run_secs
 done
 
 meituan_writer() (
