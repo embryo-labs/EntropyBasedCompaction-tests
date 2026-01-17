@@ -7,14 +7,14 @@ dir = sys.argv[1]
 
 read_workload = 'nexts-50-seek-1'
 compaction = '200MB-s'
-io_sa = '30MB-s'
+io_sa = '-io_sa-30MB-s'
 
 def workload_path(max_running_bg_jobs = None, has_io_sa = False):
     workload = 'readwhilewriting-key-16-value-1000-unique-size-10GB-warmup-secs-1000-run-secs-500-memtable-8MiB'
     if max_running_bg_jobs is not None:
         workload += '-max-running-bg-jobs-1'
     if has_io_sa:
-        workload += '-io_sa-' + io_sa
+        workload += io_sa
     workload += '-compaction-' + compaction + '-write-' + str(write_MB_s) + 'MB-s-' + read_workload
     return workload
 
@@ -171,7 +171,7 @@ for version in versions:
     ax_size_max.plot(vec_write_MB_s, size_max, linewidth=1, color=version['color'], marker=version['marker'], markersize=version['markersize'], markerfacecolor=version['markerfacecolor'], markeredgewidth=0.8)
 
 fig_srs.legend(version_names, fontsize=9, ncol=3, loc='center', bbox_to_anchor=(0.5, 1.1))
-pdf_path = os.path.join(dir, 'const-write-rates-' + compaction + '-io_sa-' + io_sa + '-' + read_workload + '.pdf')
+pdf_path = os.path.join(dir, 'const-write-rates-' + compaction + io_sa + '-' + read_workload + '.pdf')
 fig_srs.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01, metadata={'CreationDate': None})
 print('Plot saved to ' + pdf_path)
 
