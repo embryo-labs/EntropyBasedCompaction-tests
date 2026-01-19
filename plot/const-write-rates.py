@@ -97,47 +97,62 @@ ax_srs_avg = plt.gca()
 plt.xlabel('Write rates (MB/s)', fontsize=9)
 plt.xticks(vec_write_MB_s, fontsize=9)
 plt.ylabel('Average # of sorted runs', fontsize=9)
-plt.ylim((0, 100))
-plt.yticks(fontsize=9)
+plt.yscale('log')
+plt.ylim((4, 1000))
+yticks = [4, 10, 100, 1000]
+plt.yticks(yticks, labels=yticks, fontsize=9)
 
 plt.subplot(gs[0, 1])
 ax_srs_p99 = plt.gca()
 plt.xlabel('Write rates (MB/s)', fontsize=9)
 plt.xticks(vec_write_MB_s, fontsize=9)
 plt.ylabel('P99 # of sorted runs', fontsize=9)
-plt.ylim((0, 100))
-plt.yticks(fontsize=9)
+plt.yscale('log')
+plt.ylim((4, 1000))
+yticks = [4, 10, 100, 1000]
+plt.yticks(yticks, labels=yticks, fontsize=9)
 
 plt.subplot(gs[1, 0])
 ax_lat_avg = plt.gca()
 plt.xlabel('Write rates (MB/s)', fontsize=9)
 plt.xticks(vec_write_MB_s, fontsize=9)
 plt.ylabel('Average read latency (ms)', fontsize=9)
-plt.ylim((0, 20))
-plt.yticks(fontsize=9)
+plt.yscale('log')
+plt.ylim((0.7, 50))
+yticks = [1, 10, 50]
+plt.yticks(yticks, labels=yticks, fontsize=9)
 
 plt.subplot(gs[1, 1])
 ax_lat_p99 = plt.gca()
 plt.xlabel('Write rates (MB/s)', fontsize=9)
 plt.xticks(vec_write_MB_s, fontsize=9)
 plt.ylabel('P99 read latency (ms)', fontsize=9)
-plt.ylim((0, 40))
-plt.yticks(fontsize=9)
+plt.yscale('log')
+plt.ylim((1, 100))
+yticks = [1, 10, 100]
+plt.yticks(yticks, labels=yticks, fontsize=9)
 
 plt.subplot(gs[2, 0])
 ax_size_avg = plt.gca()
 plt.xlabel('Write rates (MB/s)', fontsize=9)
 plt.xticks(vec_write_MB_s, fontsize=9)
 plt.ylabel('Average size (GB)', fontsize=9)
-plt.ylim((0, 120))
-plt.yticks(fontsize=9)
+plt.yscale('log')
+plt.ylim((10, 100))
+yticks = [10, 100]
+plt.yticks(yticks, labels=yticks, fontsize=9)
+ax_size_avg.tick_params(axis='y', which='minor', labelleft=False)
 
 plt.subplot(gs[2, 1])
 ax_size_max = plt.gca()
 plt.xlabel('Write rates (MB/s)', fontsize=9)
 plt.xticks(vec_write_MB_s, fontsize=9)
 plt.ylabel('Max size (GB)', fontsize=9)
-plt.ylim((0, 100))
+plt.yscale('log')
+plt.ylim((10, 100))
+yticks = [10, 100]
+plt.yticks(yticks, labels=yticks, fontsize=9)
+ax_size_max.tick_params(axis='y', which='minor', labelleft=False)
 
 for version in versions:
     srs_avg = []
@@ -173,7 +188,7 @@ for version in versions:
     ax_size_avg.plot(vec_write_MB_s, size_avg, linewidth=1, color=version['color'], marker=version['marker'], markersize=version['markersize'], markerfacecolor=version['markerfacecolor'], markeredgewidth=0.8)
     ax_size_max.plot(vec_write_MB_s, size_max, linewidth=1, color=version['color'], marker=version['marker'], markersize=version['markersize'], markerfacecolor=version['markerfacecolor'], markeredgewidth=0.8)
 
-fig_srs.legend(version_names, fontsize=9, ncol=3, loc='center', bbox_to_anchor=(0.5, 1.05))
+fig_srs.legend(version_names, fontsize=9, ncol=3, loc='center', bbox_to_anchor=(0.5, 1.05), handlelength=1, handletextpad=0.5, frameon=False)
 pdf_path = os.path.join(dir, 'const-write-rates-' + compaction + '-warmup-' + str(warmup_secs) + '-run-' + str(run_secs) + io_sa + '-' + read_workload + '.pdf')
 fig_srs.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01, metadata={'CreationDate': None})
 print('Plot saved to ' + pdf_path)
