@@ -276,39 +276,72 @@ meituan_writer() (
 	workspace=$(realpath "$(dirname $0)"/../..)
 	version=$1
 	shift
+	type=$1
+	shift
 	period_secs=$1
 	shift
-	speedup=$1
+	num_shards=$1
 	shift
 	unique_size=$1
 	shift
 	key_size=16
-	value_size=503
-	repeat=1
+	value_size=603
 	writes_per_second_file=$(mktemp)
 	command="rm $writes_per_second_file"
 	trap "echo $command; $command" EXIT
-	awk "{print \$0 * $speedup}" "$workspace"/meituan/write.txt > $writes_per_second_file
-	workload_name="meituan-writer-period-secs-$period_secs-speedup-$speedup-repeat-$repeat-key-$key_size-value-$value_size-unique-size-$unique_size$suffix"
+	echo $writes_per_second_file
+	awk "{print \$0 / $num_shards}" "$workspace/tests/meituan/write-speed-$type-day" > $writes_per_second_file
+	workload_name="meituan-writer-$type-day-period-secs-$period_secs-num_shards-$num_shards-key-$key_size-value-$value_size-unique-size-$unique_size$suffix"
 	output_dir=../../data/$workload_name/$version
-	load_all_run "$output_dir" "customperiodic" "$key_size" "$value_size" "$unique_size" \
+
+	num_unique_keys=$(($(humanfriendly --parse-size="$unique_size") / (key_size + value_size)))
+	"$(dirname $0)"/prepare.sh "$output_dir" || return $?
+	"$(dirname $0)"/dbbench.sh "$output_dir" "$num_unique_keys" "$key_size" \
+		--value_size="$value_size" \
+		--benchmarks_json="[
+	{
+		\"name\": \"filluniquerandom\",
+		\"threads\": 1,
+		\"duration\": 0,
+		\"writes\": $num_unique_keys,
+		\"benchmark_write_rate_limit\": 0
+	},
+	{
+		\"name\": \"waitforcompaction\"
+	},
+	{
+		\"name\": \"stats\"
+	},
+	{
+		\"name\": \"resetstats\"
+	},
+	{
+		\"name\": \"customperiodic\"
+	},
+	{
+		\"name\": \"stats\"
+	}
+]" \
 		--period_secs="$period_secs" \
 		--writes_per_second_file="$writes_per_second_file" \
-		--scan_length_cdf_file="$workspace/meituan/scan-length.txt" \
-		--duration=$((period_secs * repeat)) \
+		--duration=$period_secs \
 		"$@"
+	"$(dirname $0)"/../helper/data-rocksdb.sh "$output_dir"
+	"$(dirname $0)"/../helper/plot-rocksdb.sh "$output_dir"
 )
+unique_size=10GB
 period_secs=$((3600 * 4))
-speedup=24
-get_ratio=0.87
-seek_ratio=0.13
-
+num_shards=5
 compaction_MB_s=200
-suffix="-get-$get_ratio-seek-$seek_ratio" with_compaction_limit_MB_s $compaction_MB_s with_memtable_size 8MiB with_policy_leveling 5 meituan_writer leveling5 $period_secs $speedup 10GB --mix_get_ratio=$get_ratio --mix_seek_ratio=$seek_ratio
-suffix="-get-$get_ratio-seek-$seek_ratio" with_compaction_limit_MB_s $compaction_MB_s with_memtable_size 8MiB with_policy_rocksdb_tuned meituan_writer rocksdb-tuned $period_secs $speedup 10GB --mix_get_ratio=$get_ratio --mix_seek_ratio=$seek_ratio
-suffix="-get-$get_ratio-seek-$seek_ratio" with_compaction_limit_MB_s $compaction_MB_s with_memtable_size 8MiB with_policy_universal meituan_writer universal $period_secs $speedup 10GB --mix_get_ratio=$get_ratio --mix_seek_ratio=$seek_ratio
+read_workload() {
+	seek_only with_nexts 50 "$@"
+}
+for type in peak normal; do
+	read_workload with_compaction_limit_MB_s $compaction_MB_s with_memtable_size 8MiB with_policy_rocksdb_tuned meituan_writer rocksdb-tuned $type $period_secs $num_shards $unique_size
+	read_workload with_compaction_limit_MB_s $compaction_MB_s with_memtable_size 8MiB with_policy_universal meituan_writer universal $type $period_secs $num_shards $unique_size
 
-for ratio in 2 4 8; do
-	suffix="-get-$get_ratio-seek-$seek_ratio" with_compaction_limit_MB_s $compaction_MB_s with_max_running_background_jobs 1 with_memtable_size 8MiB with_policy_tiering $ratio meituan_writer tiering$ratio $period_secs $speedup 10GB --mix_get_ratio=$get_ratio --mix_seek_ratio=$seek_ratio
+	for ratio in 2 4 8; do
+		read_workload with_compaction_limit_MB_s $compaction_MB_s with_max_running_background_jobs 1 with_memtable_size 8MiB with_policy_tiering $ratio meituan_writer tiering$ratio $type $period_secs $num_shards $unique_size
+	done
+	read_workload with_compaction_limit_MB_s $compaction_MB_s with_max_running_background_jobs 1 with_memtable_size 8MiB with_policy_benefit_cost meituan_writer benefit-cost $type $period_secs $num_shards $unique_size
 done
-suffix="-get-$get_ratio-seek-$seek_ratio" with_compaction_limit_MB_s $compaction_MB_s with_max_running_background_jobs 1 with_memtable_size 8MiB with_policy_benefit_cost meituan_writer benefit-cost $period_secs $speedup 10GB --mix_get_ratio=$get_ratio --mix_seek_ratio=$seek_ratio
