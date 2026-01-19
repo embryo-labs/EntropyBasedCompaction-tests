@@ -7,10 +7,13 @@ dir = sys.argv[1]
 
 read_workload = 'nexts-50-seek-1'
 compaction = '200MB-s'
-io_sa = '-io_sa-30MB-s'
+warmup_secs = 1500
+run_secs = 500
+
+io_sa = ''
 
 def workload_path(max_running_bg_jobs = None, has_io_sa = False):
-    workload = 'readwhilewriting-key-16-value-1000-unique-size-10GB-warmup-secs-1000-run-secs-500-memtable-8MiB'
+    workload = 'readwhilewriting-key-16-value-1000-unique-size-10GB-warmup-secs-' + str(warmup_secs) + '-run-secs-' + str(run_secs) + '-memtable-8MiB'
     if max_running_bg_jobs is not None:
         workload += '-max-running-bg-jobs-1'
     if has_io_sa:
@@ -118,7 +121,7 @@ ax_lat_p99 = plt.gca()
 plt.xlabel('Write rates (MB/s)', fontsize=9)
 plt.xticks(vec_write_MB_s, fontsize=9)
 plt.ylabel('P99 read latency (ms)', fontsize=9)
-plt.ylim((0, 50))
+plt.ylim((0, 40))
 plt.yticks(fontsize=9)
 
 plt.subplot(gs[2, 0])
@@ -134,7 +137,7 @@ ax_size_max = plt.gca()
 plt.xlabel('Write rates (MB/s)', fontsize=9)
 plt.xticks(vec_write_MB_s, fontsize=9)
 plt.ylabel('Max size (GB)', fontsize=9)
-plt.ylim((0, 120))
+plt.ylim((0, 100))
 
 for version in versions:
     srs_avg = []
@@ -170,8 +173,8 @@ for version in versions:
     ax_size_avg.plot(vec_write_MB_s, size_avg, linewidth=1, color=version['color'], marker=version['marker'], markersize=version['markersize'], markerfacecolor=version['markerfacecolor'], markeredgewidth=0.8)
     ax_size_max.plot(vec_write_MB_s, size_max, linewidth=1, color=version['color'], marker=version['marker'], markersize=version['markersize'], markerfacecolor=version['markerfacecolor'], markeredgewidth=0.8)
 
-fig_srs.legend(version_names, fontsize=9, ncol=3, loc='center', bbox_to_anchor=(0.5, 1.1))
-pdf_path = os.path.join(dir, 'const-write-rates-' + compaction + io_sa + '-' + read_workload + '.pdf')
+fig_srs.legend(version_names, fontsize=9, ncol=3, loc='center', bbox_to_anchor=(0.5, 1.05))
+pdf_path = os.path.join(dir, 'const-write-rates-' + compaction + '-warmup-' + str(warmup_secs) + '-run-' + str(run_secs) + io_sa + '-' + read_workload + '.pdf')
 fig_srs.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01, metadata={'CreationDate': None})
 print('Plot saved to ' + pdf_path)
 
