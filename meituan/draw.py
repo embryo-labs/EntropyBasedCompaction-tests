@@ -9,7 +9,6 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 from matplotlib import gridspec
 from matplotlib.ticker import ScalarFormatter
-from matplotlib import gridspec
 
 # Paper specific settings
 SINGLE_COL_WIDTH = 8.5
