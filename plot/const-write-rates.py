@@ -211,8 +211,8 @@ versions = [
 ]
 version_names = [v['name'] for v in versions]
 
-fig_srs = plt.figure(dpi=300, figsize=(cm_to_inch(SINGLE_COL_WIDTH), cm_to_inch(5)), constrained_layout=True)
-gs = gridspec.GridSpec(1, 2, figure=fig_srs)
+fig_srs = plt.figure(dpi=300, figsize=(cm_to_inch(SINGLE_COL_WIDTH), cm_to_inch(10)), constrained_layout=True)
+gs = gridspec.GridSpec(2, 2, figure=fig_srs)
 plt.subplot(gs[0, 0])
 ax_srs_avg = plt.gca()
 plt.xlabel('Write rates (MB/s)', fontsize=9)
@@ -229,19 +229,44 @@ plt.ylabel('P99 # of sorted runs', fontsize=9)
 plt.ylim((0, 100))
 plt.yticks(fontsize=9)
 
+plt.subplot(gs[1, 0])
+ax_lat_avg = plt.gca()
+plt.xlabel('Write rates (MB/s)', fontsize=9)
+plt.xticks(vec_write_MB_s, fontsize=9)
+plt.ylabel('Average read latency (ms)', fontsize=9)
+plt.ylim((0, 50))
+plt.yticks(fontsize=9)
+
+plt.subplot(gs[1, 1])
+ax_lat_p99 = plt.gca()
+plt.xlabel('Write rates (MB/s)', fontsize=9)
+plt.xticks(vec_write_MB_s, fontsize=9)
+plt.ylabel('P99 read latency (ms)', fontsize=9)
+plt.ylim((0, 200))
+plt.yticks(fontsize=9)
+
 for version in versions:
     srs_avg = []
     srs_p99 = []
+    lat_avg = []
+    lat_p99 = []
     for write_MB_s in vec_write_MB_s:
         workload = workload_path(1)
         data_dir = os.path.join(dir, workload, version['path'])
         report = pd.read_csv(os.path.join(data_dir, 'report.csv'))
         srs_avg.append(report['num-sorted-runs'].mean())
         srs_p99.append(np.percentile(report['num-sorted-runs'], 99))
+
+        read_latency_us = json.load(open(os.path.join(data_dir, 'read-latency-us.json')))
+        lat_avg.append(float(read_latency_us['Average'] / 1000))
+        lat_p99.append(float(read_latency_us['99%']) / 1000)
     ax_srs_avg.plot(vec_write_MB_s, srs_avg, linewidth=1, color=version['color'], marker=version['marker'], markersize=version['markersize'], markerfacecolor=version['markerfacecolor'], markeredgewidth=0.8)
     ax_srs_p99.plot(vec_write_MB_s, srs_p99, linewidth=1, color=version['color'], marker=version['marker'], markersize=version['markersize'], markerfacecolor=version['markerfacecolor'], markeredgewidth=0.8)
 
+    ax_lat_avg.plot(vec_write_MB_s, lat_avg, linewidth=1, color=version['color'], marker=version['marker'], markersize=version['markersize'], markerfacecolor=version['markerfacecolor'], markeredgewidth=0.8)
+    ax_lat_p99.plot(vec_write_MB_s, lat_p99, linewidth=1, color=version['color'], marker=version['marker'], markersize=version['markersize'], markerfacecolor=version['markerfacecolor'], markeredgewidth=0.8)
+
 fig_srs.legend(version_names, fontsize=9, ncol=2, loc='center', bbox_to_anchor=(0.5, 1.1))
-pdf_path = os.path.join(dir, 'write-rates-num-srs-ablation-study-' + compaction + '-' + read_workload + '.pdf')
+pdf_path = os.path.join(dir, 'const-write-rates-ablation-study-' + compaction + io_sa + '-' + read_workload + '.pdf')
 fig_srs.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01, metadata={'CreationDate': None})
 print('Plot saved to ' + pdf_path)
