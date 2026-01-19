@@ -1,6 +1,6 @@
 #!/usr/bin/env sh
 workspace=$(realpath "$(dirname $0)"/../..)
-../helper/build.sh
+nice ../helper/build.sh
 
 with_memtable_size() (
 	arg_memtable_size=$1
