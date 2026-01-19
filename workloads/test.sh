@@ -48,6 +48,12 @@ with_policy_benefit_cost() {
 		--compaction_style=5 \
 		--num_levels=1
 }
+with_entropy_threshold() (
+	entropy_threshold=$1
+	shift
+	suffix="-entropy-threshold-$entropy_threshold$suffix" "$@" \
+		--entropy_threshold=$entropy_threshold
+)
 with_policy_no_sliding_window() {
 	"$@" \
 		--compaction_style=5 \
