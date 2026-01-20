@@ -19,10 +19,11 @@ import math
 from dataclasses import dataclass
 from typing import Optional
 import numpy as np
-from scipy.optimize import root_scalar
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 from matplotlib import gridspec
+
+import common
 
 def get_pdf_path(prefix):
     pdf_path = prefix
@@ -74,41 +75,14 @@ def benefit_cost(C, k_n):
         if S is None:
             wa_theory = math.log2(N) / entropy_threshold
         else:
-            wa_theory = math.log2(S * math.e) / entropy_threshold
+            wa_theory = common.bound_wa(S, entropy_threshold)
         result.vec_wa_theory.append(wa_theory)
         result.vec_wa.append(wa)
         result.vec_avg_num_srs.append(avg_num_srs)
         result.vec_max_num_srs.append(max_num_srs)
 
-        def f(k, n):
-            return math.log2(k+n-1) - k * math.log2(k) / (k+n-1)
-        n = math.ceil(2**entropy_threshold)
-        # Make sure that k0 > 1
-        while f(1, n) < entropy_threshold + 1e-6:
-            n += 1
-        best = math.inf
-        while n <= best:
-            k_upper = 2
-            while f(k_upper, n) >= entropy_threshold:
-                k_upper *= 2
-            sol = root_scalar(lambda k: f(k, n) - entropy_threshold, bracket=[1, k_upper])
-            assert sol.converged
-            k0 = sol.root
-            assert k0 > 1
-            estimation = (math.floor(math.log(S) / math.log(k0)) + 1) * (n-1)
-            best = min(best, estimation)
-            n += 1
-        result.vec_num_srs_estimation.append(best)
-
-        def f(i, x):
-            if x > 1/i - 1e-6:
-                return -math.log2(i)
-            return (1 - i * x) * math.log2(1 - i * x) + i * x * math.log2(x)
-        i = math.ceil(2**entropy_threshold - 1)
-        sol = root_scalar(lambda x: f(i, x) + entropy_threshold, bracket=[1 / (i+1), 1 / i])
-        assert sol.converged
-        x = sol.root
-        result.vec_space_amp_estimation.append(1 / sol.root)
+        result.vec_num_srs_estimation.append(common.bound_ra(S, entropy_threshold))
+        result.vec_space_amp_estimation.append(common.bound_sa(entropy_threshold))
 
         if S is not None:
             result.vec_space_amp.append(max_size / S)
