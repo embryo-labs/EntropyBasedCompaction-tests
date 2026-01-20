@@ -1,2 +1,5 @@
 #!/usr/bin/env sh
-pip3 install pandas matplotlib
+pip3 install \
+	matplotlib \
+	pandas \
+	scipy
