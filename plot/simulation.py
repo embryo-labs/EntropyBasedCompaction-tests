@@ -1,16 +1,20 @@
 #!/usr/bin/env python3
 import argparse
 parser = argparse.ArgumentParser()
-parser.add_argument('-S', type=int)
-parser.add_argument('-N', type=int, required=True)
-parser.add_argument('--entropy_threshold_begin', type=float, required=True)
+parser.add_argument('-S', type=int, default=1000)
+parser.add_argument('-N', type=int, default=10000)
+parser.add_argument('--entropy_threshold_begin', type=float, default=0.5)
 parser.add_argument('--entropy_threshold_step', type=float, default=0.01)
 parser.add_argument('--verbose', action='store_true')
 args = parser.parse_args()
 S = args.S
 N = args.N
 
+import sys
 import os
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'simulations'))
+import Bc_inf
+
 import math
 from dataclasses import dataclass
 from typing import Optional
@@ -19,8 +23,6 @@ from scipy.optimize import root_scalar
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 from matplotlib import gridspec
-
-import Bc_inf
 
 def get_pdf_path(prefix):
     pdf_path = prefix
