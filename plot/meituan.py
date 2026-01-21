@@ -78,7 +78,7 @@ linewidth = 1
 markevery = len(versions)
 offset = 1
 
-for day_type in ['peak', 'normal']:
+def draw(day_type, num_srs_yticks, latency_ylim, latency_yticks, sa_yticks):
     fig = plt.figure(dpi = 300, figsize = (cm_to_inch(SINGLE_COL_WIDTH), cm_to_inch(12)), constrained_layout=True)
     gs = gridspec.GridSpec(3, 1, figure=fig)
 
@@ -95,9 +95,9 @@ for day_type in ['peak', 'normal']:
     plt.xticks(fontsize=9)
     plt.ylabel('# of sorted runs', fontsize=9)
     plt.yscale('log')
-    plt.ylim(3, 80)
-    yticks = [3, 10, 100]
-    plt.yticks(yticks, labels=yticks, fontsize=9)
+    plt.ylim((min(num_srs_yticks), max(num_srs_yticks)))
+    plt.yticks(num_srs_yticks, labels=num_srs_yticks, fontsize=9)
+    ax_num_srs.tick_params(axis='y', which='minor', labelleft=False)
 
     plt.subplot(gs[1, 0])
     ax_latency = plt.gca()
@@ -105,9 +105,9 @@ for day_type in ['peak', 'normal']:
     plt.xticks(fontsize=9)
     plt.ylabel('Read latency (ms)', fontsize=9)
     plt.yscale('log')
-    plt.ylim((0.4, 20))
-    yticks = [0.4, 1, 10]
-    plt.yticks(yticks, labels=yticks, fontsize=9)
+    plt.ylim(latency_ylim)
+    plt.yticks(latency_yticks, labels=latency_yticks, fontsize=9)
+    ax_latency.tick_params(axis='y', which='minor', labelleft=False)
 
     plt.subplot(gs[2, 0])
     ax_sa = plt.gca()
@@ -115,9 +115,8 @@ for day_type in ['peak', 'normal']:
     plt.xticks(fontsize=9)
     plt.ylabel('Space amplification', fontsize=9)
     plt.yscale('log')
-    plt.ylim((1, 10))
-    yticks = [1, 10]
-    plt.yticks(yticks, labels=yticks, fontsize=9)
+    plt.ylim((min(sa_yticks), max(sa_yticks)))
+    plt.yticks(sa_yticks, labels=sa_yticks, fontsize=9)
     ax_sa.tick_params(axis='y', which='minor', labelleft=False)
 
     for i in range(len(versions)):
@@ -149,3 +148,6 @@ for day_type in ['peak', 'normal']:
     print('Plot saved to ' + pdf_path)
     if 'DISPLAY' in os.environ:
         plt.show()
+
+draw('peak', [3, 10, 100], (0.4, 10), [0.4, 1, 10], [1, 10])
+draw('normal', [3, 10, 30], (0.4, 4), [0.4, 1, 4], [1, 5])
