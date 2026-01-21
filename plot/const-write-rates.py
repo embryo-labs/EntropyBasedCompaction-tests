@@ -89,8 +89,8 @@ for v in versions:
         v['markerfacecolor'] = v['color']
 version_names = [v['name'] for v in versions]
 
-fig_srs = plt.figure(dpi=300, figsize=(cm_to_inch(SINGLE_COL_WIDTH), cm_to_inch(12)), constrained_layout=True)
-gs = gridspec.GridSpec(3, 2, figure=fig_srs)
+fig = plt.figure(dpi=300, figsize=(cm_to_inch(SINGLE_COL_WIDTH), cm_to_inch(12)), constrained_layout=True)
+gs = gridspec.GridSpec(3, 2, figure=fig)
 
 plt.subplot(gs[0, 0])
 ax_srs_avg = plt.gca()
@@ -188,9 +188,9 @@ for version in versions:
     ax_size_avg.plot(vec_write_MB_s, size_avg, linewidth=1, color=version['color'], marker=version['marker'], markersize=version['markersize'], markerfacecolor=version['markerfacecolor'], markeredgewidth=0.8)
     ax_size_max.plot(vec_write_MB_s, size_max, linewidth=1, color=version['color'], marker=version['marker'], markersize=version['markersize'], markerfacecolor=version['markerfacecolor'], markeredgewidth=0.8)
 
-fig_srs.legend(version_names, fontsize=9, ncol=3, loc='center', bbox_to_anchor=(0.5, 1.05), handlelength=1, handletextpad=0.5, frameon=False)
+fig.legend(version_names, fontsize=9, ncol=3, loc='center', bbox_to_anchor=(0.5, 1.05), handlelength=1, handletextpad=0.5, frameon=False)
 pdf_path = os.path.join(dir, 'const-write-rates-' + compaction + '-warmup-' + str(warmup_secs) + '-run-' + str(run_secs) + io_sa + '-' + read_workload + '.pdf')
-fig_srs.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01, metadata={'CreationDate': None})
+fig.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01, metadata={'CreationDate': None})
 print('Plot saved to ' + pdf_path)
 
 versions = [
@@ -229,8 +229,8 @@ versions = [
 ]
 version_names = [v['name'] for v in versions]
 
-fig_srs = plt.figure(dpi=300, figsize=(cm_to_inch(SINGLE_COL_WIDTH), cm_to_inch(10)), constrained_layout=True)
-gs = gridspec.GridSpec(2, 2, figure=fig_srs)
+fig = plt.figure(dpi=300, figsize=(cm_to_inch(SINGLE_COL_WIDTH), cm_to_inch(10)), constrained_layout=True)
+gs = gridspec.GridSpec(2, 2, figure=fig)
 plt.subplot(gs[0, 0])
 ax_srs_avg = plt.gca()
 plt.xlabel('Write rates (MB/s)', fontsize=9)
@@ -284,7 +284,7 @@ for version in versions:
     ax_lat_avg.plot(vec_write_MB_s, lat_avg, linewidth=1, color=version['color'], marker=version['marker'], markersize=version['markersize'], markerfacecolor=version['markerfacecolor'], markeredgewidth=0.8)
     ax_lat_p99.plot(vec_write_MB_s, lat_p99, linewidth=1, color=version['color'], marker=version['marker'], markersize=version['markersize'], markerfacecolor=version['markerfacecolor'], markeredgewidth=0.8)
 
-fig_srs.legend(version_names, fontsize=9, ncol=2, loc='center', bbox_to_anchor=(0.5, 1.1))
+fig.legend(version_names, fontsize=9, ncol=2, loc='center', bbox_to_anchor=(0.5, 1.1))
 pdf_path = os.path.join(dir, 'const-write-rates-ablation-study-' + compaction + io_sa + '-' + read_workload + '.pdf')
-fig_srs.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01, metadata={'CreationDate': None})
+fig.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01, metadata={'CreationDate': None})
 print('Plot saved to ' + pdf_path)
