@@ -39,7 +39,7 @@ import matplotlib.pyplot as plt
 
 versions = {
     'rocksdb-tuned': {
-        'name': 'Leveling5',
+        'name': 'RocksDB-Tuned',
         'color': plt.cm.tab10(0),
     },
     'tiering2': {
