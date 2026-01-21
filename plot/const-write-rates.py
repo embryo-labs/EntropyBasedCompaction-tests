@@ -12,7 +12,7 @@ run_secs = 500
 
 io_sa = ''
 
-def workload_path(max_running_bg_jobs = None, has_io_sa = False):
+def workload_path(write_MB_s, max_running_bg_jobs = None, has_io_sa = False):
     workload = 'readwhilewriting-key-16-value-1000-unique-size-10GB-warmup-secs-' + str(warmup_secs) + '-run-secs-' + str(run_secs) + '-memtable-8MiB'
     if max_running_bg_jobs is not None:
         workload += '-max-running-bg-jobs-1'
@@ -197,40 +197,52 @@ versions = [
     {
         'path': 'preempt-only-by-entropy-ke-1',
         'name': 'Only-by-entropy',
-        'marker': 'v',
-        'markersize': 4,
+        'max-running-bg-jobs': 1,
+        'marker': 's',
+        'markersize': 3,
         'color': plt.cm.tab10(1),
-        'markerfacecolor': 'none',
     },
     {
+        'workload': workload_path(1),
         'path': 'preempt-only-by-num',
         'name': 'Only-by-num',
-        'marker': '^',
-        'markersize': 4,
+        'max-running-bg-jobs': 1,
+        'marker': 'v',
+        'markersize': 3,
         'color': plt.cm.tab10(3),
-        'markerfacecolor': 'none',
     },
     {
+        'workload': workload_path(1),
         'path': 'no-sliding-window',
         'name': 'No-sliding-window',
+        'max-running-bg-jobs': 1,
         'marker': '>',
-        'markersize': 4,
+        'markersize': 3,
         'color': plt.cm.tab10(4),
-        'markerfacecolor': 'none',
     },
     {
+        'workload': workload_path(None),
         'path': 'benefit-cost',
+        'name': 'No-running-jobs-limit',
+        'max-running-bg-jobs': None,
+        'marker': 'o',
+        'markersize': 3,
+        'color': plt.cm.tab10(5),
+    },
+    {
+        'workload': workload_path(1),
+        'path': 'benefit-cost',
+        'max-running-bg-jobs': 1,
         'marker': 'D',
-        'markersize': 2,
+        'markersize': 3,
         'name': common.versions['benefit-cost']['name'],
         'color': common.versions['benefit-cost']['color'],
-        'markerfacecolor': common.versions['benefit-cost']['color'],
     },
 ]
 version_names = [v['name'] for v in versions]
 
-fig = plt.figure(dpi=300, figsize=(cm_to_inch(SINGLE_COL_WIDTH), cm_to_inch(10)), constrained_layout=True)
-gs = gridspec.GridSpec(2, 2, figure=fig)
+fig = plt.figure(dpi=300, figsize=(cm_to_inch(SINGLE_COL_WIDTH), cm_to_inch(4.5)), constrained_layout=True)
+gs = gridspec.GridSpec(1, 2, figure=fig)
 plt.subplot(gs[0, 0])
 ax_srs_avg = plt.gca()
 plt.xlabel('Write rates (MB/s)', fontsize=9)
@@ -238,6 +250,7 @@ plt.xticks(vec_write_MB_s, fontsize=9)
 plt.ylabel('Average # of sorted runs', fontsize=9)
 plt.ylim((0, 100))
 plt.yticks(fontsize=9)
+ax_srs_avg.grid(axis='y')
 
 plt.subplot(gs[0, 1])
 ax_srs_p99 = plt.gca()
@@ -246,45 +259,23 @@ plt.xticks(vec_write_MB_s, fontsize=9)
 plt.ylabel('P99 # of sorted runs', fontsize=9)
 plt.ylim((0, 100))
 plt.yticks(fontsize=9)
-
-plt.subplot(gs[1, 0])
-ax_lat_avg = plt.gca()
-plt.xlabel('Write rates (MB/s)', fontsize=9)
-plt.xticks(vec_write_MB_s, fontsize=9)
-plt.ylabel('Average read latency (ms)', fontsize=9)
-plt.ylim((0, 50))
-plt.yticks(fontsize=9)
-
-plt.subplot(gs[1, 1])
-ax_lat_p99 = plt.gca()
-plt.xlabel('Write rates (MB/s)', fontsize=9)
-plt.xticks(vec_write_MB_s, fontsize=9)
-plt.ylabel('P99 read latency (ms)', fontsize=9)
-plt.ylim((0, 200))
-plt.yticks(fontsize=9)
+ax_srs_p99.grid(axis='y')
 
 for version in versions:
     srs_avg = []
     srs_p99 = []
-    lat_avg = []
-    lat_p99 = []
     for write_MB_s in vec_write_MB_s:
-        workload = workload_path(1)
+        workload = workload_path(write_MB_s, version['max-running-bg-jobs'])
         data_dir = os.path.join(dir, workload, version['path'])
         report = pd.read_csv(os.path.join(data_dir, 'report.csv'))
         srs_avg.append(report['num-sorted-runs'].mean())
         srs_p99.append(np.percentile(report['num-sorted-runs'], 99))
 
         read_latency_us = json.load(open(os.path.join(data_dir, 'read-latency-us.json')))
-        lat_avg.append(float(read_latency_us['Average'] / 1000))
-        lat_p99.append(float(read_latency_us['99%']) / 1000)
-    ax_srs_avg.plot(vec_write_MB_s, srs_avg, linewidth=1, color=version['color'], marker=version['marker'], markersize=version['markersize'], markerfacecolor=version['markerfacecolor'], markeredgewidth=0.8)
-    ax_srs_p99.plot(vec_write_MB_s, srs_p99, linewidth=1, color=version['color'], marker=version['marker'], markersize=version['markersize'], markerfacecolor=version['markerfacecolor'], markeredgewidth=0.8)
+    ax_srs_avg.plot(vec_write_MB_s, srs_avg, linewidth=1, color=version['color'], marker=version['marker'], markersize=version['markersize'], markeredgewidth=0.8)
+    ax_srs_p99.plot(vec_write_MB_s, srs_p99, linewidth=1, color=version['color'], marker=version['marker'], markersize=version['markersize'], markeredgewidth=0.8)
 
-    ax_lat_avg.plot(vec_write_MB_s, lat_avg, linewidth=1, color=version['color'], marker=version['marker'], markersize=version['markersize'], markerfacecolor=version['markerfacecolor'], markeredgewidth=0.8)
-    ax_lat_p99.plot(vec_write_MB_s, lat_p99, linewidth=1, color=version['color'], marker=version['marker'], markersize=version['markersize'], markerfacecolor=version['markerfacecolor'], markeredgewidth=0.8)
-
-fig.legend(version_names, fontsize=9, ncol=2, loc='center', bbox_to_anchor=(0.5, 1.1))
+fig.legend(version_names, fontsize=9, ncol=2, loc='center', bbox_to_anchor=(0.5, 1.15), frameon=False)
 pdf_path = os.path.join(dir, 'const-write-rates-ablation-study-' + compaction + io_sa + '-' + read_workload + '.pdf')
 fig.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01, metadata={'CreationDate': None})
 print('Plot saved to ' + pdf_path)
