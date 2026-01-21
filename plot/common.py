@@ -40,26 +40,32 @@ import matplotlib.pyplot as plt
 versions = {
     'rocksdb-tuned': {
         'name': 'RocksDB-Tuned',
-        'color': plt.cm.tab10(0),
+        'color': 'C0',
+        'hatch': 'XX',
     },
     'tiering2': {
         'name': 'Tiering2',
-        'color': plt.cm.tab10(1),
+        'color': 'C1',
+        'hatch': '--//',
     },
     'tiering4': {
         'name': 'Tiering4',
-        'color': plt.cm.tab10(3),
+        'color': 'C3',
+        'hatch': '---',
     },
     'tiering8': {
         'name': 'Tiering8',
-        'color': plt.cm.tab10(4),
+        'color': 'C4',
+        'hatch': '--\\\\',
     },
     'universal': {
         'name': 'Universal',
-        'color': plt.cm.tab10(5),
+        'color': 'C5',
+        'hatch': '\\\\\\',
     },
     'benefit-cost': {
-        'name': 'Entropy-based',
-        'color': plt.cm.tab10(2),
+        'name': 'EUC',
+        'color': 'C2',
+        'hatch': '///',
     },
 }
