@@ -39,47 +39,52 @@ plt.rcParams['axes.unicode_minus'] = False
 versions = [
     {
         'path': 'rocksdb-tuned',
-        'name': 'Leveling5',
-        'color': plt.cm.tab10(0),
+        'marker': 'o',
+        'markersize': 3,
     },
     {
         'path': 'tiering2',
-        'name': 'Tiering2',
-        'color': plt.cm.tab10(1),
+        'marker': 'v',
+        'markersize': 3,
     },
     {
         'path': 'tiering4',
-        'name': 'Tiering4',
-        'color': plt.cm.tab10(2),
+        'marker': '^',
+        'markersize': 3,
     },
     {
         'path': 'tiering8',
-        'name': 'Tiering8',
-        'color': plt.cm.tab10(3),
+        'marker': '>',
+        'markersize': 3,
     },
     {
         'path': 'universal',
-        'name': 'Universal',
-        'color': plt.cm.tab10(4),
+        'marker': 's',
+        'markersize': 3,
     },
     {
         'path': 'benefit-cost',
-        'name': 'Entropy-Based',
-        'color': plt.cm.tab10(5),
+        'marker': 'D',
+        'markersize': 3,
     },
 ]
+import common
+for v in versions:
+    v['name'] = common.versions[v['path']]['name']
+    v['color'] = common.versions[v['path']]['color']
+version_names = [v['name'] for v in versions]
+
 linewidth = 1
-handles = []
-for version in versions:
-    handles.append(mpl.lines.Line2D([], [], linewidth=linewidth, color=version['color'], linestyle=None, label=version['name']))
+markevery = len(versions)
+offset = 1
 
 for day_type in ['peak', 'normal']:
-    fig = plt.figure(dpi = 300, figsize = (cm_to_inch(DOUBLE_COL_WIDTH), cm_to_inch(5)), constrained_layout=True)
-    gs = gridspec.GridSpec(1, 3, figure=fig)
+    fig = plt.figure(dpi = 300, figsize = (cm_to_inch(SINGLE_COL_WIDTH), cm_to_inch(12)), constrained_layout=True)
+    gs = gridspec.GridSpec(3, 1, figure=fig)
 
     def find_data_dir(version_path):
         workload = 'meituan-writer-' + day_type + '-day-period-secs-' + str(period_secs) + '-num_shards-' + str(num_shards) + '-key-16-value-603-unique-size-' + unique_size + '-memtable-8MiB'
-        if version_path in ['tiering2', 'tiering4', 'tiering8', 'tiering2-auto', 'benefit-cost']:
+        if version_path in ['tiering2', 'tiering4', 'tiering8', 'benefit-cost']:
             workload += '-max-running-bg-jobs-1'
         workload += '-compaction-200MB-s-' + read_workload
         return os.path.join(dir, workload, version_path)
@@ -89,32 +94,40 @@ for day_type in ['peak', 'normal']:
     plt.xlabel('Time (hours)', fontsize=9)
     plt.xticks(fontsize=9)
     plt.ylabel('# of sorted runs', fontsize=9)
-    plt.ylim(0, 100)
-    plt.yticks(fontsize=9)
+    plt.yscale('log')
+    plt.ylim(3, 80)
+    yticks = [3, 10, 100]
+    plt.yticks(yticks, labels=yticks, fontsize=9)
 
-    plt.subplot(gs[0, 1])
+    plt.subplot(gs[1, 0])
     ax_latency = plt.gca()
     plt.xlabel('Time (hours)', fontsize=9)
     plt.xticks(fontsize=9)
-    plt.ylabel('Read latency (us)', fontsize=9)
-    plt.ylim((0, 10000))
-    plt.yticks(fontsize=9)
+    plt.ylabel('Read latency (ms)', fontsize=9)
+    plt.yscale('log')
+    plt.ylim((0.4, 20))
+    yticks = [0.4, 1, 10]
+    plt.yticks(yticks, labels=yticks, fontsize=9)
 
-    plt.subplot(gs[0, 2])
-    ax_space = plt.gca()
+    plt.subplot(gs[2, 0])
+    ax_sa = plt.gca()
     plt.xlabel('Time (hours)', fontsize=9)
     plt.xticks(fontsize=9)
     plt.ylabel('Space amplification', fontsize=9)
-    plt.ylim((1, 5))
-    plt.yticks(fontsize=9)
+    plt.yscale('log')
+    plt.ylim((1, 10))
+    yticks = [1, 10]
+    plt.yticks(yticks, labels=yticks, fontsize=9)
+    ax_sa.tick_params(axis='y', which='minor', labelleft=False)
 
-    for version in versions:
+    for i in range(len(versions)):
+        version = versions[i]
         data_dir = find_data_dir(version['path'])
         report = pd.read_csv(os.path.join(data_dir, 'report.csv'))
         report = report[['secs_elapsed', 'num-sorted-runs', 'size']]
         report = report.groupby(report.index // mean_step_secs).mean()
-        ax_num_srs.plot(report['secs_elapsed'] / 3600, report['num-sorted-runs'], linewidth=linewidth, color=version['color'])
-        ax_space.plot(report['secs_elapsed'] / 3600, report['size'] / unique_size_bytes, linewidth=linewidth, color=version['color'])
+        ax_num_srs.plot(report['secs_elapsed'] / 3600, report['num-sorted-runs'], linewidth=linewidth, color=version['color'], marker=version['marker'], markersize=version['markersize'], markeredgewidth=0.8, markevery=(i * offset, markevery))
+        ax_sa.plot(report['secs_elapsed'] / 3600, report['size'] / unique_size_bytes, linewidth=linewidth, color=version['color'], marker=version['marker'], markersize=version['markersize'], markeredgewidth=0.8, markevery=(i * offset, markevery))
 
         read_count_time = pd.read_csv(os.path.join(data_dir, 'read-count-time.csv'))
 
@@ -125,11 +138,12 @@ for day_type in ['peak', 'normal']:
         count = read_count_time['count']
         read_latency = micros.groupby(micros.index // mean_step_secs).sum() / count.groupby(count.index // mean_step_secs).sum()
 
-        ax_latency.plot(time / 3600, read_latency, linewidth=linewidth, color=version['color'])
+        ax_latency.plot(time / 3600, read_latency / 1000, linewidth=linewidth, color=version['color'], marker=version['marker'], markersize=version['markersize'], markeredgewidth=0.8, markevery=(i * offset, markevery))
     ax_num_srs.grid(axis='y')
     ax_latency.grid(axis='y')
+    ax_sa.grid(axis='y')
 
-    fig.legend(handles=handles, fontsize=9, ncol=4, loc='center', bbox_to_anchor=(0.5, 1.1), handlelength=1, handletextpad=0.5, columnspacing=1.5, frameon=False)
+    fig.legend(version_names, fontsize=9, ncol=3, loc='center', bbox_to_anchor=(0.5, 1.05), handlelength=1, handletextpad=0.5, columnspacing=1.5, frameon=False)
     pdf_path = os.path.join(dir, 'meituan-' + day_type + '-day-num_shards-' + str(num_shards) + '-unique_size-' + unique_size + '-period_secs-' + str(period_secs) + '-' + read_workload + '-mean_step_secs-' + str(mean_step_secs) + '.pdf')
     plt.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01)
     print('Plot saved to ' + pdf_path)
