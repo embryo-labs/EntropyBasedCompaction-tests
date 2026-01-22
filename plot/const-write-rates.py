@@ -166,7 +166,7 @@ for version in versions:
             max_running_bg_jobs = 1
         else:
             max_running_bg_jobs = None
-        workload = workload_path(max_running_bg_jobs, version['path'] == 'benefit-cost')
+        workload = workload_path(write_MB_s, max_running_bg_jobs, version['path'] == 'benefit-cost')
         data_dir = os.path.join(dir, workload, version['path'])
 
         report = pd.read_csv(os.path.join(data_dir, 'report.csv'))
