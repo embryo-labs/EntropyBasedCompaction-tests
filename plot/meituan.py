@@ -153,38 +153,38 @@ def draw(day_type, num_srs_yticks, latency_ylim, latency_yticks, sa_yticks):
 draw('peak', [3, 10, 100], (0.4, 10), [0.4, 1, 10], [1, 10])
 draw('normal', [3, 10, 30], (0.4, 4), [0.4, 1, 4], [1, 5])
 
-day_type = 'normal'
-fig = plt.figure(dpi = 300, figsize = (cm_to_inch(SINGLE_COL_WIDTH), cm_to_inch(4)), constrained_layout=True)
-gs = gridspec.GridSpec(1, 2, figure=fig)
+for day_type in ['peak', 'normal']:
+    fig = plt.figure(dpi = 300, figsize = (cm_to_inch(SINGLE_COL_WIDTH), cm_to_inch(4)), constrained_layout=True)
+    gs = gridspec.GridSpec(1, 2, figure=fig)
 
-plt.subplot(gs[0, 0])
-ax_p99 = plt.gca()
-plt.xlabel('(a) 99%', fontsize=9)
-plt.xticks([])
-plt.ylabel('Read latency (ms)', fontsize=9)
-plt.yticks(fontsize=9)
-ax_p99.set_axisbelow(True)
-ax_p99.grid(axis='y')
+    plt.subplot(gs[0, 0])
+    ax_p99 = plt.gca()
+    plt.xlabel('(a) 99%', fontsize=9)
+    plt.xticks([])
+    plt.ylabel('Read latency (ms)', fontsize=9)
+    plt.yticks(fontsize=9)
+    ax_p99.set_axisbelow(True)
+    ax_p99.grid(axis='y')
 
-plt.subplot(gs[0, 1])
-ax_p999 = plt.gca()
-plt.xlabel('(b) 99.9%', fontsize=9)
-plt.xticks([])
-plt.ylabel('Read latency (ms)', fontsize=9)
-plt.yticks(fontsize=9)
-ax_p999.set_axisbelow(True)
-ax_p999.grid(axis='y')
+    plt.subplot(gs[0, 1])
+    ax_p999 = plt.gca()
+    plt.xlabel('(b) 99.9%', fontsize=9)
+    plt.xticks([])
+    plt.ylabel('Read latency (ms)', fontsize=9)
+    plt.yticks(fontsize=9)
+    ax_p999.set_axisbelow(True)
+    ax_p999.grid(axis='y')
 
-vec_x = []
-for version_idx in range(len(versions)):
-    x = -cluster_width / 2 + bar_width / 2 + version_idx * bar_width
-    vec_x.append(x)
-    version = versions[version_idx]
-    data_dir = find_data_dir(day_type, version['path'])
-    read_latency_us = json.load(open(os.path.join(data_dir, 'read-latency-us.json')))
-    ax_p99.bar(x, read_latency_us['99%'] / 1000, width=bar_width, edgecolor='black', linewidth=0.5, color=version['color'], hatch=version['hatch'])
-    ax_p999.bar(x, read_latency_us['99.9%'] / 1000, width=bar_width, edgecolor='black', linewidth=0.5, color=version['color'], hatch=version['hatch'])
-fig.legend(version_names, fontsize=9, ncol=3, loc='center', bbox_to_anchor=(0.5, 1.1), handlelength=1, handletextpad=0.5, columnspacing=1.5, frameon=False)
-pdf_path = os.path.join(dir, 'meituan-latency-' + day_type + '-day-num_shards-' + str(num_shards) + '-unique_size-' + unique_size + '-period_secs-' + str(period_secs) + '-' + read_workload + '.pdf')
-plt.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01)
-print('Plot saved to ' + pdf_path)
+    vec_x = []
+    for version_idx in range(len(versions)):
+        x = -cluster_width / 2 + bar_width / 2 + version_idx * bar_width
+        vec_x.append(x)
+        version = versions[version_idx]
+        data_dir = find_data_dir(day_type, version['path'])
+        read_latency_us = json.load(open(os.path.join(data_dir, 'read-latency-us.json')))
+        ax_p99.bar(x, read_latency_us['99%'] / 1000, width=bar_width, edgecolor='black', linewidth=0.5, color=version['color'], hatch=version['hatch'])
+        ax_p999.bar(x, read_latency_us['99.9%'] / 1000, width=bar_width, edgecolor='black', linewidth=0.5, color=version['color'], hatch=version['hatch'])
+    fig.legend(version_names, fontsize=9, ncol=3, loc='center', bbox_to_anchor=(0.5, 1.1), handlelength=1, handletextpad=0.5, columnspacing=1.5, frameon=False)
+    pdf_path = os.path.join(dir, 'meituan-latency-' + day_type + '-day-num_shards-' + str(num_shards) + '-unique_size-' + unique_size + '-period_secs-' + str(period_secs) + '-' + read_workload + '.pdf')
+    plt.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01)
+    print('Plot saved to ' + pdf_path)
