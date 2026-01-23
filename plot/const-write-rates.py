@@ -5,11 +5,11 @@ if len(sys.argv) != 2:
 	exit()
 dir = sys.argv[1]
 
-value = '-value-1000'
+value = '-value-603'
 compaction = '-compaction-200MB-s'
 warmup_secs = 1500
 run_secs = 500
-read_workload = '-nexts-50-seek-1'
+read_workload = '-get-0.87-seek-0.13-nexts-48'
 
 unique_size = '10GB'
 
@@ -87,47 +87,81 @@ for i, write_MB_s in enumerate(vec_write_MB_s):
         workload += compaction + '-write-' + str(write_MB_s) + 'MB-s' + read_workload
         data_dir = os.path.join(dir, workload, version['path'])
         report = pd.read_csv(os.path.join(data_dir, 'report.csv'))
-        latency = json.load(open(os.path.join(data_dir, 'read-latency-us.json')))
-        data_cache[i][version_idx] = {'report': report, 'latency': latency}
+        data_cache[i][version_idx] = {
+            'report': report,
+            'scan': json.load(open(os.path.join(data_dir, 'seek-latency-us.json'))),
+            'get': json.load(open(os.path.join(data_dir, 'get-latency-us.json'))),
+            'read': json.load(open(os.path.join(data_dir, 'read-latency-us.json'))),
+        }
 
 panels = [
     {
         "title": "(a) Number of sorted runs (average)",
         "ylabel": "Avg # of sorted runs",
         "getter": lambda d: d['report']['num-sorted-runs'].mean(),
-        "ylims": [None, (1, 200), (1, 2000)],
+        "ylims": [None, (1, 300), (1, 3000)],
         "log_scale": [False, True, True]
     },
     {
         "title": "(b) Number of sorted runs (99th percentile)",
         "ylabel": "P99 # of sorted runs",
         "getter": lambda d: np.percentile(d['report']['num-sorted-runs'], 99),
-        "ylims": [None, (1, 200), (1, 2000)],
+        "ylims": [None, (1, 300), (1, 3000)],
         "log_scale": [False, True, True]
     },
     {
-        "title": "(c) Read latency (average)",
+        "title": "(c) Scan latency (average)",
+        "ylabel": "Avg scan latency (ms)",
+        "getter": lambda d: float(d['scan']['Average'] / 1000),
+        "ylims": [None, (1, 30), (1, 1000)],
+        "log_scale": [False, True, True],
+    },
+    {
+        "title": "(d) Scan latency (99th percentile)",
+        "ylabel": "P99 scan latency (ms)",
+        "getter": lambda d: float(d['scan']['99%'] / 1000),
+        'ylims': [None, (1, 100), (1, 1000)],
+        'log_scale': [False, True, True],
+    },
+    {
+        'title': '(e) Get latency (average)',
+        'ylabel': 'Avg get latency (ms)',
+        'getter': lambda d: float(d['get']['Average'] / 1000),
+        'ylims': [None, None, (0.1, 1)],
+        'yticks': [[0, 0.1], None, None],
+        'log_scale': [False, False, True],
+    },
+    {
+        'title': '(f) Get latency (99th percentile)',
+        'ylabel': 'P99 get latency (ms)',
+        'getter': lambda d: float(d['get']['99%'] / 1000),
+        'ylims': [None, (0, 1), (0.1, 10)],
+        'yticks': [None, [0, 0.5, 1], None],
+        'log_scale': [False, False, True],
+    },
+    {
+        "title": "(g) Read latency (average)",
         "ylabel": "Avg read latency (ms)",
-        "getter": lambda d: float(d['latency']['Average'] / 1000),
-        "ylims": [None, (1, 20), (1, 300)],
+        "getter": lambda d: float(d['read']['Average'] / 1000),
+        "ylims": [None, (0.1, 4), (0.1, 40)],
         "log_scale": [False, True, True]
     },
     {
-        "title": "(d) Read latency (99th percentile)",
+        "title": "(h) Read latency (99th percentile)",
         "ylabel": "P99 read latency (ms)",
-        "getter": lambda d: float(d['latency']['99%'] / 1000),
-        "ylims": [None, (1, 40), (1, 300)],
+        "getter": lambda d: float(d['read']['99%'] / 1000),
+        "ylims": [None, (1, 40), (1, 1000)],
         "log_scale": [False, True, True]
     },
     {
-        "title": "(e) Space amplification (average)",
+        "title": "(i) Space amplification (average)",
         "ylabel": "Average space amp",
         "getter": lambda d: d['report']['size'].mean() / unique_size_bytes,
         "ylims": [(0, 3), (0, 7.5), (0, 12)],
         "log_scale": [False, False, False]
     },
     {
-        "title": "(f) Space amplification (max)",
+        "title": "(j) Space amplification (max)",
         "ylabel": "Max space amp",
         "getter": lambda d: d['report']['size'].max() / unique_size_bytes,
         "ylims": [(0, 3), (0, 7.5), (0, 12)],
@@ -135,10 +169,9 @@ panels = [
     }
 ]
 
-fig_height_cm = 12
-fig = plt.figure(dpi=300, figsize=(cm_to_inch(DOUBLE_COL_WIDTH), cm_to_inch(fig_height_cm)))
+fig = plt.figure(dpi=300, figsize=(cm_to_inch(DOUBLE_COL_WIDTH), cm_to_inch(20)))
 
-outer_grid = gridspec.GridSpec(3, 2, figure=fig, hspace=0.37, wspace=0.2, 
+outer_grid = gridspec.GridSpec(5, 2, figure=fig, hspace=0.37, wspace=0.2, 
                                left=0.08, right=0.99, top=0.92, bottom=0.06) 
 
 for p_idx, panel in enumerate(panels):
@@ -158,6 +191,9 @@ for p_idx, panel in enumerate(panels):
             ax.tick_params(axis='y', pad=1)
         if panel['ylims'][i] is not None:
             ax.set_ylim(panel['ylims'][i])
+        if 'yticks' in panel and panel['yticks'][i] is not None:
+            ax.set_yticks(panel['yticks'][i])
+        ax.tick_params(axis='y', which='minor', labelleft=False)
         ax.set_axisbelow(True)
         ax.grid(axis='y')
 
@@ -168,7 +204,7 @@ for p_idx, panel in enumerate(panels):
             ax.bar(x, val, width=bar_width, edgecolor='black', linewidth=0.5, 
                    color=version['color'], hatch=version['hatch'])
     bbox = outer_grid[row, col].get_position(fig)
-    fig.text(bbox.x0 + bbox.width/2, bbox.y0 - 0.045, panel['title'], ha='center', va='top')
+    fig.text(bbox.x0 + bbox.width/2, bbox.y0 - 0.025, panel['title'], ha='center', va='top')
 
 handles = [mpl.patches.Patch(facecolor=v['color'], hatch=v['hatch'], 
                              edgecolor='black', linewidth=0.5) for v in versions]
