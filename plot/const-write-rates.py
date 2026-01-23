@@ -5,21 +5,18 @@ if len(sys.argv) != 2:
 	exit()
 dir = sys.argv[1]
 
-read_workload = 'nexts-50-seek-1'
-compaction = '200MB-s'
+value = '-value-1000'
+compaction = '-compaction-200MB-s'
 warmup_secs = 1500
 run_secs = 500
+read_workload = '-nexts-50-seek-1'
 
-io_sa = ''
+unique_size = '10GB'
 
-def workload_path(write_MB_s, max_running_bg_jobs = None, has_io_sa = False):
-    workload = 'readwhilewriting-key-16-value-1000-unique-size-10GB-warmup-secs-' + str(warmup_secs) + '-run-secs-' + str(run_secs) + '-memtable-8MiB'
-    if max_running_bg_jobs is not None:
-        workload += '-max-running-bg-jobs-1'
-    if has_io_sa:
-        workload += io_sa
-    workload += '-compaction-' + compaction + '-write-' + str(write_MB_s) + 'MB-s-' + read_workload
-    return workload
+# The humanfriendly module requires Python <= 3.12
+import subprocess
+unique_size_bytes = subprocess.run(['humanfriendly', '--parse-size', unique_size], stdout=subprocess.PIPE, text=True).stdout
+unique_size_bytes = int(unique_size_bytes)
 
 import os
 import math
@@ -43,7 +40,7 @@ mpl.rcParams.update({
 })
 plt.rcParams['axes.unicode_minus'] = False
 
-vec_write_MB_s = [10, 20, 30, 40, 50, 60]
+vec_write_MB_s = [10, 30, 50]
 
 versions = [
     {
@@ -83,199 +80,162 @@ versions = [
 ]
 import common
 for v in versions:
-    v['name'] = common.versions[v['path']]['name']
-    v['color'] = common.versions[v['path']]['color']
-    if 'markerfacecolor' not in v:
-        v['markerfacecolor'] = v['color']
+    v.update(common.versions[v['path']])
 version_names = [v['name'] for v in versions]
 
-fig = plt.figure(dpi=300, figsize=(cm_to_inch(SINGLE_COL_WIDTH), cm_to_inch(12)), constrained_layout=True)
-gs = gridspec.GridSpec(3, 2, figure=fig)
+bar_width = 1 / (len(versions) + 1)
+cluster_width = bar_width * len(versions)
 
-plt.subplot(gs[0, 0])
-ax_srs_avg = plt.gca()
-plt.xlabel('Write rates (MB/s)', fontsize=9)
-plt.xticks(vec_write_MB_s, fontsize=9)
-plt.ylabel('Average # of sorted runs', fontsize=9)
-plt.yscale('log')
-plt.ylim((4, 1000))
-yticks = [4, 10, 100, 1000]
-plt.yticks(yticks, labels=yticks, fontsize=9)
-
-plt.subplot(gs[0, 1])
-ax_srs_p99 = plt.gca()
-plt.xlabel('Write rates (MB/s)', fontsize=9)
-plt.xticks(vec_write_MB_s, fontsize=9)
-plt.ylabel('P99 # of sorted runs', fontsize=9)
-plt.yscale('log')
-plt.ylim((4, 1000))
-yticks = [4, 10, 100, 1000]
-plt.yticks(yticks, labels=yticks, fontsize=9)
-
-plt.subplot(gs[1, 0])
-ax_lat_avg = plt.gca()
-plt.xlabel('Write rates (MB/s)', fontsize=9)
-plt.xticks(vec_write_MB_s, fontsize=9)
-plt.ylabel('Average read latency (ms)', fontsize=9)
-plt.yscale('log')
-plt.ylim((0.7, 50))
-yticks = [1, 10, 50]
-plt.yticks(yticks, labels=yticks, fontsize=9)
-
-plt.subplot(gs[1, 1])
-ax_lat_p99 = plt.gca()
-plt.xlabel('Write rates (MB/s)', fontsize=9)
-plt.xticks(vec_write_MB_s, fontsize=9)
-plt.ylabel('P99 read latency (ms)', fontsize=9)
-plt.yscale('log')
-plt.ylim((1, 100))
-yticks = [1, 10, 100]
-plt.yticks(yticks, labels=yticks, fontsize=9)
-
-plt.subplot(gs[2, 0])
-ax_size_avg = plt.gca()
-plt.xlabel('Write rates (MB/s)', fontsize=9)
-plt.xticks(vec_write_MB_s, fontsize=9)
-plt.ylabel('Average size (GB)', fontsize=9)
-plt.yscale('log')
-plt.ylim((10, 100))
-yticks = [10, 100]
-plt.yticks(yticks, labels=yticks, fontsize=9)
-ax_size_avg.tick_params(axis='y', which='minor', labelleft=False)
-
-plt.subplot(gs[2, 1])
-ax_size_max = plt.gca()
-plt.xlabel('Write rates (MB/s)', fontsize=9)
-plt.xticks(vec_write_MB_s, fontsize=9)
-plt.ylabel('Max size (GB)', fontsize=9)
-plt.yscale('log')
-plt.ylim((10, 100))
-yticks = [10, 100]
-plt.yticks(yticks, labels=yticks, fontsize=9)
-ax_size_max.tick_params(axis='y', which='minor', labelleft=False)
-
+fig = plt.figure(dpi=300, figsize=(cm_to_inch(DOUBLE_COL_WIDTH), cm_to_inch(1)), constrained_layout=True)
+handles = []
 for version in versions:
-    srs_avg = []
-    srs_p99 = []
-    lat_avg = []
-    lat_p99 = []
-    size_avg = []
-    size_max = []
-    for write_MB_s in vec_write_MB_s:
+    handles.append(mpl.patches.Patch(facecolor=version['color'], hatch=version['hatch'], edgecolor='black', linewidth=0.5))
+fig.legend(handles=handles, labels=version_names, fontsize=9, ncol=len(versions), loc='center', bbox_to_anchor=(0.5, 1.05), handlelength=1, handletextpad=0.5, frameon=False)
+pdf_path = os.path.join(dir, 'const-write-rates-legend.pdf')
+fig.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01, metadata={'CreationDate': None})
+print('Plot saved to ' + pdf_path)
+
+subfig_height = 3.5
+fig_srs_avg = plt.figure(dpi=300, figsize=(cm_to_inch(SINGLE_COL_WIDTH), cm_to_inch(subfig_height)), constrained_layout=True)
+gs = gridspec.GridSpec(1, 3, figure=fig_srs_avg)
+vec_ax_srs_avg = []
+for i in range(0, len(vec_write_MB_s)):
+    plt.subplot(gs[0, i])
+    plt.xlabel(str(vec_write_MB_s[i]) + 'MB/s', fontsize=9)
+    plt.xticks([])
+    if i == 0:
+        plt.ylabel('Avg # of sorted runs', fontsize=9)
+    if i == 1:
+        plt.yscale('log')
+        plt.ylim((1, 200))
+    elif i == 2:
+        plt.yscale('log')
+        plt.ylim((1, 2000))
+    ax = plt.gca()
+    ax.set_axisbelow(True)
+    ax.grid(axis='y')
+    vec_ax_srs_avg.append(plt.gca())
+
+fig_srs_p99 = plt.figure(dpi=300, figsize=(cm_to_inch(SINGLE_COL_WIDTH), cm_to_inch(subfig_height)), constrained_layout=True)
+gs = gridspec.GridSpec(1, 3, figure=fig_srs_p99)
+vec_ax_srs_p99 = []
+for i in range(0, len(vec_write_MB_s)):
+    plt.subplot(gs[0, i])
+    plt.xlabel(str(vec_write_MB_s[i]) + 'MB/s', fontsize=9)
+    plt.xticks([])
+    if i == 0:
+        plt.ylabel('P99 # of sorted runs', fontsize=9)
+    if i == 1:
+        plt.yscale('log')
+        plt.ylim((1, 200))
+    elif i == 2:
+        plt.yscale('log')
+        plt.ylim((1, 2000))
+    ax = plt.gca()
+    ax.set_axisbelow(True)
+    ax.grid(axis='y')
+    vec_ax_srs_p99.append(ax)
+
+fig_lat_avg = plt.figure(dpi=300, figsize=(cm_to_inch(SINGLE_COL_WIDTH), cm_to_inch(subfig_height)), constrained_layout=True)
+gs = gridspec.GridSpec(1, 3, figure=fig_lat_avg)
+vec_ax_lat_avg = []
+for i in range(0, len(vec_write_MB_s)):
+    plt.subplot(gs[0, i])
+    plt.xlabel(str(vec_write_MB_s[i]) + 'MB/s', fontsize=9)
+    plt.xticks([])
+    if i == 0:
+        plt.ylabel('Avg read latency (ms)', fontsize=9)
+    if i == 1:
+        plt.yscale('log')
+        plt.ylim((1, 20))
+    elif i == 2:
+        plt.yscale('log')
+        plt.ylim((1, 200))
+    ax = plt.gca()
+    ax.set_axisbelow(True)
+    ax.grid(axis='y')
+    vec_ax_lat_avg.append(ax)
+
+fig_lat_p99 = plt.figure(dpi=300, figsize=(cm_to_inch(SINGLE_COL_WIDTH), cm_to_inch(subfig_height)), constrained_layout=True)
+gs = gridspec.GridSpec(1, 3, figure=fig_lat_p99)
+vec_ax_lat_p99 = []
+for i in range(0, len(vec_write_MB_s)):
+    plt.subplot(gs[0, i])
+    plt.xlabel(str(vec_write_MB_s[i]) + 'MB/s', fontsize=9)
+    plt.xticks([])
+    if i == 0:
+        plt.ylabel('P99 read latency (ms)', fontsize=9)
+    if i == 1:
+        plt.yscale('log')
+        plt.ylim((1, 40))
+    elif i == 2:
+        plt.yscale('log')
+        plt.ylim((1, 300))
+    ax = plt.gca()
+    ax.set_axisbelow(True)
+    ax.grid(axis='y')
+    vec_ax_lat_p99.append(ax)
+
+fig_sa_avg = plt.figure(dpi=300, figsize=(cm_to_inch(SINGLE_COL_WIDTH), cm_to_inch(subfig_height)), constrained_layout=True)
+gs = gridspec.GridSpec(1, 3, figure=fig_sa_avg)
+vec_ax_sa_avg = []
+for i in range(0, len(vec_write_MB_s)):
+    plt.subplot(gs[0, i])
+    plt.xlabel(str(vec_write_MB_s[i]) + 'MB/s', fontsize=9)
+    plt.xticks([])
+    if i == 0:
+        plt.ylabel('Average space amp', fontsize=9)
+    ax = plt.gca()
+    ax.set_axisbelow(True)
+    ax.grid(axis='y')
+    vec_ax_sa_avg.append(ax)
+
+fig_sa_max = plt.figure(dpi=300, figsize=(cm_to_inch(SINGLE_COL_WIDTH), cm_to_inch(subfig_height)), constrained_layout=True)
+gs = gridspec.GridSpec(1, 3, figure=fig_sa_max)
+vec_ax_sa_max = []
+for i in range(0, len(vec_write_MB_s)):
+    plt.subplot(gs[0, i])
+    plt.xlabel(str(vec_write_MB_s[i]) + 'MB/s', fontsize=9)
+    plt.xticks([])
+    if i == 0:
+        plt.ylabel('Max space amp', fontsize=9)
+    ax = plt.gca()
+    ax.set_axisbelow(True)
+    ax.grid(axis='y')
+    vec_ax_sa_max.append(ax)
+
+for i in range(len(vec_write_MB_s)):
+    write_MB_s = vec_write_MB_s[i]
+    for version_idx in range(len(versions)):
+        version = versions[version_idx]
+        x = -cluster_width / 2 + bar_width / 2 + version_idx * bar_width
+
+        workload = 'readwhilewriting-key-16' + value + '-unique-size-10GB-warmup-secs-' + str(warmup_secs) + '-run-secs-' + str(run_secs) + '-memtable-8MiB'
         if version['path'] in ['tiering2', 'tiering4', 'tiering8', 'benefit-cost']:
-            max_running_bg_jobs = 1
-        else:
-            max_running_bg_jobs = None
-        workload = workload_path(write_MB_s, max_running_bg_jobs, version['path'] == 'benefit-cost')
+            workload += '-max-running-bg-jobs-1'
+        workload += compaction + '-write-' + str(write_MB_s) + 'MB-s' + read_workload
+
         data_dir = os.path.join(dir, workload, version['path'])
 
         report = pd.read_csv(os.path.join(data_dir, 'report.csv'))
-        srs_avg.append(report['num-sorted-runs'].mean())
-        srs_p99.append(np.percentile(report['num-sorted-runs'], 99))
+        vec_ax_srs_avg[i].bar(x, report['num-sorted-runs'].mean(), width=bar_width, edgecolor='black', linewidth=0.5, color=version['color'], hatch=version['hatch'])
+        vec_ax_srs_p99[i].bar(x, np.percentile(report['num-sorted-runs'], 99), width=bar_width, edgecolor='black', linewidth=0.5, color=version['color'], hatch=version['hatch'])
 
         read_latency_us = json.load(open(os.path.join(data_dir, 'read-latency-us.json')))
-        lat_avg.append(float(read_latency_us['Average'] / 1000))
-        lat_p99.append(float(read_latency_us['99%']) / 1000)
+        vec_ax_lat_avg[i].bar(x, float(read_latency_us['Average'] / 1000), width=bar_width, edgecolor='black', linewidth=0.5, color=version['color'], hatch=version['hatch'])
+        vec_ax_lat_p99[i].bar(x, float(read_latency_us['99%']) / 1000, width=bar_width, edgecolor='black', linewidth=0.5, color=version['color'], hatch=version['hatch'])
 
-        size_avg.append(report['size'].mean() / 1e9)
-        size_max.append(report['size'].max() / 1e9)
-    ax_srs_avg.plot(vec_write_MB_s, srs_avg, linewidth=1, color=version['color'], marker=version['marker'], markersize=version['markersize'], markerfacecolor=version['markerfacecolor'], markeredgewidth=0.8)
-    ax_srs_p99.plot(vec_write_MB_s, srs_p99, linewidth=1, color=version['color'], marker=version['marker'], markersize=version['markersize'], markerfacecolor=version['markerfacecolor'], markeredgewidth=0.8)
+        vec_ax_sa_avg[i].bar(x, report['size'].mean() / unique_size_bytes, width=bar_width, edgecolor='black', linewidth=0.5, color=version['color'], hatch=version['hatch'])
+        vec_ax_sa_max[i].bar(x, report['size'].max() / unique_size_bytes, width=bar_width, edgecolor='black', linewidth=0.5, color=version['color'], hatch=version['hatch'])
 
-    ax_lat_avg.plot(vec_write_MB_s, lat_avg, linewidth=1, color=version['color'], marker=version['marker'], markersize=version['markersize'], markerfacecolor=version['markerfacecolor'], markeredgewidth=0.8)
-    ax_lat_p99.plot(vec_write_MB_s, lat_p99, linewidth=1, color=version['color'], marker=version['marker'], markersize=version['markersize'], markerfacecolor=version['markerfacecolor'], markeredgewidth=0.8)
+def savefig(fig, name):
+    pdf_path = os.path.join(dir, 'const-write-rates-' + name + value + compaction + '-warmup-' + str(warmup_secs) + '-run-' + str(run_secs) + read_workload + '.pdf')
+    fig.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01, metadata={'CreationDate': None})
+    print('Plot saved to ' + pdf_path)
 
-    ax_size_avg.plot(vec_write_MB_s, size_avg, linewidth=1, color=version['color'], marker=version['marker'], markersize=version['markersize'], markerfacecolor=version['markerfacecolor'], markeredgewidth=0.8)
-    ax_size_max.plot(vec_write_MB_s, size_max, linewidth=1, color=version['color'], marker=version['marker'], markersize=version['markersize'], markerfacecolor=version['markerfacecolor'], markeredgewidth=0.8)
-
-fig.legend(version_names, fontsize=9, ncol=3, loc='center', bbox_to_anchor=(0.5, 1.05), handlelength=1, handletextpad=0.5, frameon=False)
-pdf_path = os.path.join(dir, 'const-write-rates-' + compaction + '-warmup-' + str(warmup_secs) + '-run-' + str(run_secs) + io_sa + '-' + read_workload + '.pdf')
-fig.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01, metadata={'CreationDate': None})
-print('Plot saved to ' + pdf_path)
-
-versions = [
-    {
-        'path': 'preempt-only-by-entropy-ke-1',
-        'name': 'Only-by-entropy',
-        'max-running-bg-jobs': 1,
-        'marker': 's',
-        'markersize': 3,
-        'color': plt.cm.tab10(1),
-    },
-    {
-        'workload': workload_path(1),
-        'path': 'preempt-only-by-num',
-        'name': 'Only-by-num',
-        'max-running-bg-jobs': 1,
-        'marker': 'v',
-        'markersize': 3,
-        'color': plt.cm.tab10(3),
-    },
-    {
-        'workload': workload_path(1),
-        'path': 'no-sliding-window',
-        'name': 'No-sliding-window',
-        'max-running-bg-jobs': 1,
-        'marker': '>',
-        'markersize': 3,
-        'color': plt.cm.tab10(4),
-    },
-    {
-        'workload': workload_path(None),
-        'path': 'benefit-cost',
-        'name': 'No-running-jobs-limit',
-        'max-running-bg-jobs': None,
-        'marker': 'o',
-        'markersize': 3,
-        'color': plt.cm.tab10(5),
-    },
-    {
-        'workload': workload_path(1),
-        'path': 'benefit-cost',
-        'max-running-bg-jobs': 1,
-        'marker': 'D',
-        'markersize': 3,
-        'name': common.versions['benefit-cost']['name'],
-        'color': common.versions['benefit-cost']['color'],
-    },
-]
-version_names = [v['name'] for v in versions]
-
-fig = plt.figure(dpi=300, figsize=(cm_to_inch(SINGLE_COL_WIDTH), cm_to_inch(4.5)), constrained_layout=True)
-gs = gridspec.GridSpec(1, 2, figure=fig)
-plt.subplot(gs[0, 0])
-ax_srs_avg = plt.gca()
-plt.xlabel('Write rates (MB/s)', fontsize=9)
-plt.xticks(vec_write_MB_s, fontsize=9)
-plt.ylabel('Average # of sorted runs', fontsize=9)
-plt.ylim((0, 100))
-plt.yticks(fontsize=9)
-ax_srs_avg.grid(axis='y')
-
-plt.subplot(gs[0, 1])
-ax_srs_p99 = plt.gca()
-plt.xlabel('Write rates (MB/s)', fontsize=9)
-plt.xticks(vec_write_MB_s, fontsize=9)
-plt.ylabel('P99 # of sorted runs', fontsize=9)
-plt.ylim((0, 100))
-plt.yticks(fontsize=9)
-ax_srs_p99.grid(axis='y')
-
-for version in versions:
-    srs_avg = []
-    srs_p99 = []
-    for write_MB_s in vec_write_MB_s:
-        workload = workload_path(write_MB_s, version['max-running-bg-jobs'])
-        data_dir = os.path.join(dir, workload, version['path'])
-        report = pd.read_csv(os.path.join(data_dir, 'report.csv'))
-        srs_avg.append(report['num-sorted-runs'].mean())
-        srs_p99.append(np.percentile(report['num-sorted-runs'], 99))
-
-        read_latency_us = json.load(open(os.path.join(data_dir, 'read-latency-us.json')))
-    ax_srs_avg.plot(vec_write_MB_s, srs_avg, linewidth=1, color=version['color'], marker=version['marker'], markersize=version['markersize'], markeredgewidth=0.8)
-    ax_srs_p99.plot(vec_write_MB_s, srs_p99, linewidth=1, color=version['color'], marker=version['marker'], markersize=version['markersize'], markeredgewidth=0.8)
-
-fig.legend(version_names, fontsize=9, ncol=2, loc='center', bbox_to_anchor=(0.5, 1.15), frameon=False)
-pdf_path = os.path.join(dir, 'const-write-rates-ablation-study-' + compaction + io_sa + '-' + read_workload + '.pdf')
-fig.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01, metadata={'CreationDate': None})
-print('Plot saved to ' + pdf_path)
+savefig(fig_srs_avg, 'num-srs-avg')
+savefig(fig_srs_p99, 'num-srs-p99')
+savefig(fig_lat_avg, 'latency-avg')
+savefig(fig_lat_p99, 'latency-p99')
+savefig(fig_sa_avg, 'sa-avg')
+savefig(fig_sa_max, 'sa-max')
