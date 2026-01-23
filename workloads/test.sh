@@ -264,13 +264,16 @@ compaction_MB_s=200
 read_workload() {
 	seek_only with_nexts 50 "$@"
 }
-for write_MB_s in 10 20 30 40 50 60; do
+for write_MB_s in 10 30 50; do
 	read_workload with_write_MB_s $write_MB_s with_compaction_limit_MB_s $compaction_MB_s with_memtable_size 8MiB with_policy_rocksdb_tuned load_all_warmup_run rocksdb-tuned readwhilewriting $key_size $value_size $unique_size $warmup_secs $run_secs
 	read_workload with_write_MB_s $write_MB_s with_compaction_limit_MB_s $compaction_MB_s with_memtable_size 8MiB with_policy_universal load_all_warmup_run universal readwhilewriting $key_size $value_size $unique_size $warmup_secs $run_secs
 
 	for ratio in 2 4 8; do
 		read_workload with_write_MB_s $write_MB_s with_compaction_limit_MB_s $compaction_MB_s with_max_running_background_jobs 1 with_memtable_size 8MiB with_policy_tiering $ratio load_all_warmup_run tiering$ratio readwhilewriting $key_size $value_size $unique_size $warmup_secs $run_secs
 	done
+done
+
+for write_MB_s in 10 20 30 40 50 60; do
 	read_workload with_write_MB_s $write_MB_s with_compaction_limit_MB_s $compaction_MB_s with_max_running_background_jobs 1 with_memtable_size 8MiB with_policy_benefit_cost load_all_warmup_run benefit-cost readwhilewriting $key_size $value_size $unique_size $warmup_secs $run_secs
 
 	read_workload with_write_MB_s $write_MB_s with_compaction_limit_MB_s $compaction_MB_s with_memtable_size 8MiB with_policy_benefit_cost load_all_warmup_run benefit-cost readwhilewriting $key_size $value_size $unique_size $warmup_secs $run_secs
