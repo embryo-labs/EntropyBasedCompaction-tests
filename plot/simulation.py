@@ -106,6 +106,8 @@ ax.plot(result_benefit_cost.vec_entropy_threshold, result_benefit_cost.vec_wa, l
 ax.set_ylim(bottom=0)
 plt.xticks(fontsize=9)
 plt.yticks(fontsize=9)
+ax.set_axisbelow(True)
+ax.grid(axis='y')
 lines, labels = ax.get_legend_handles_labels()
 ax.legend(lines, labels, fontsize=9, handlelength=1, handletextpad=0.5, columnspacing=1.5)
 
@@ -119,6 +121,8 @@ ax.plot(result_benefit_cost.vec_entropy_threshold, result_benefit_cost.vec_avg_n
 ax.set_ylim(bottom=0)
 plt.xticks(fontsize=9)
 plt.yticks(fontsize=9)
+ax.set_axisbelow(True)
+ax.grid(axis='y')
 lines, labels = ax.get_legend_handles_labels()
 ax.legend(lines, labels, fontsize=9, handlelength=1, handletextpad=0.5, columnspacing=1.5, frameon=False, borderaxespad=0, labelspacing=0.4)
 
