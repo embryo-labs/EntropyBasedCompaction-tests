@@ -105,7 +105,7 @@ for version in versions:
         names.append(common.versions['benefit-cost']['name'] + ' (' + str(k_n) + ')')
     else:
         names.append(str(k_n))
-fig.legend(names, fontsize=9, ncol=4, loc='center', bbox_to_anchor=(0.5, 1.09), frameon=False, handlelength=1.5, handletextpad=0.5)
+fig.legend(names, fontsize=9, ncol=4, loc='center', bbox_to_anchor=(0.5, 1.1), frameon=False, handlelength=1.5, handletextpad=0.5)
 pdf_path = os.path.join(dir, f'sensitivity-k_n{value}{compaction}-warmup-{warmup_secs}-run-{run_secs}{read_workload}.pdf')
 fig.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01, metadata={'CreationDate': None})
 print('Plot saved to ' + pdf_path)
