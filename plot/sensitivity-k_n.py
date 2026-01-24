@@ -38,7 +38,7 @@ versions = [
     },
     {
         'k_n': 1.7,
-        'color': common.versions['benefit-cost']['color'],
+        'color': common.versions['benefit-cost']['facecolor'],
         'hatch': common.versions['benefit-cost']['hatch'],
     },
     {

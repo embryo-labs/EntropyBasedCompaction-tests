@@ -69,7 +69,8 @@ versions = {
     },
     'benefit-cost': {
         'name': 'EUC',
-        'color': plt.get_cmap('Set2')(0),
+        'color': 'C2',
+        'facecolor': plt.get_cmap('Set2')(0),
         'hatch': '///',
     },
 }
