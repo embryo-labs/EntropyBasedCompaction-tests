@@ -258,7 +258,7 @@ load_all_warmup_run() (
 key_size=16
 value_size=1000
 unique_size=10GB
-warmup_secs=1000
+warmup_secs=1500
 run_secs=500
 compaction_MB_s=200
 read_workload() {
