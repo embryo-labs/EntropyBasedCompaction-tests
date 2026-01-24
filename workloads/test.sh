@@ -153,16 +153,12 @@ with_perf_level() (
 		--perf_level=$perf_level
 )
 
-with_meituan_scan_len() {
-	suffix="-scan-len-meituan$suffix" "$@" --scan_length_cdf_file="$workspace/meituan/scan-length.txt"
-}
-with_meituan_read() (
+with_meituan_ratio() (
 	get_ratio=0.87
 	seek_ratio=0.13
-	suffix="-get-$get_ratio-seek-$seek_ratio$suffix" \
-		with_meituan_scan_len "$@" \
-			--mix_get_ratio=$get_ratio \
-			--mix_seek_ratio=$seek_ratio
+	suffix="-get-$get_ratio-seek-$seek_ratio$suffix" "$@" \
+		--mix_get_ratio=$get_ratio \
+		--mix_seek_ratio=$seek_ratio
 )
 seek_only() {
 	suffix="-seek-1$suffix" "$@" --mix_get_ratio=0 --mix_seek_ratio=1
