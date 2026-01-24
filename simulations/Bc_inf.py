@@ -172,18 +172,21 @@ class BenefitCost:
         del self.s[picked.first:picked.last]
         return written
 
-    def print_status(self):
-        print('[', end='')
+    def as_string(self):
+        s = '['
         i = 0
         while i < len(self.s):
-            print(self.s[i].size, end='')
+            s += str(self.s[i].size)
             if self.s[i].compact_to_last:
-                print(' to last', end='')
+                s += ' to last'
             if i == len(self.s) - 1:
-                print(']')
+                s += ']'
             else:
-                print(', ', end='')
+                s += ', '
             i += 1
+        return s
+    def print_status(self):
+        print(self.as_string())
 
 class Tiering:
     @dataclass
