@@ -1,3 +1,7 @@
+# Paper specific settings
+single_col_inch = 3.4
+double_col_inch = 7
+
 import math
 from scipy.optimize import root_scalar
 
@@ -65,7 +69,7 @@ versions = {
     },
     'benefit-cost': {
         'name': 'EUC',
-        'color': 'C2',
+        'color': plt.get_cmap('Set2')(0),
         'hatch': '///',
     },
 }

@@ -54,6 +54,11 @@ with_entropy_threshold() (
 	suffix="-entropy-threshold-$entropy_threshold$suffix" "$@" \
 		--entropy_threshold=$entropy_threshold
 )
+with_k_n() (
+	k_n=$1
+	shift
+	suffix="-k_n-$k_n$suffix" "$@" --k_n=$k_n
+)
 with_policy_no_sliding_window() {
 	"$@" \
 		--compaction_style=5 \
@@ -281,6 +286,12 @@ done
 for t_e in 0 0.5 1 2 3; do
 	for write_MB_s in 10 20 30 40 50 60; do
 		read_workload with_write_MB_s $write_MB_s with_compaction_limit_MB_s $compaction_MB_s with_max_running_background_jobs 1 with_memtable_size 8MiB with_entropy_threshold $t_e with_policy_benefit_cost load_all_warmup_run benefit-cost readwhilewriting $key_size $value_size $unique_size $warmup_secs $run_secs
+	done
+done
+
+for k_n in 1.4 2 4 8 16 32 64; do
+	for write_MB_s in 10 50; do
+		read_workload with_write_MB_s $write_MB_s with_compaction_limit_MB_s $compaction_MB_s with_max_running_background_jobs 1 with_memtable_size 8MiB with_k_n $k_n with_policy_benefit_cost load_all_warmup_run benefit-cost readwhilewriting $key_size $value_size $unique_size $warmup_secs $run_secs
 	done
 done
 
