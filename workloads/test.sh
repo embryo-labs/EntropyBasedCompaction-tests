@@ -180,8 +180,7 @@ with_io_sa_limit_MB_s() (
 	shift
 	suffix="-io_sa-${io_sa_limit_MB_s}MB-s$suffix" "$@" \
 		--rate_limiter_bytes_per_sec_io_sa=$((io_sa_limit_MB_s * 1000000)) \
-		--last_compaction_io_sa=true \
-		--prioritize_last_sorted_run_compaction=true
+		--last_compaction_io_sa=true
 )
 
 with_max_running_background_jobs() (
