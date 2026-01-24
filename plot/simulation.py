@@ -42,8 +42,9 @@ mpl.rcParams.update({
     'hatch.linewidth': 0.5,
     'font.family': 'sans-serif',
     'font.sans-serif': ['Linux Libertine O'],
+    'axes.unicode_minus': False,
+    'font.size': 9,
 })
-plt.rcParams['axes.unicode_minus'] = False
 
 @dataclass
 class BenefitCostResult:
@@ -95,50 +96,51 @@ markersize = 3
 num_marks = 5
 markevery = len(result_benefit_cost.vec_wa) // num_marks
 
-fig = plt.figure(dpi = 300, figsize = (cm_to_inch(DOUBLE_COL_WIDTH), cm_to_inch(4)), constrained_layout=True)
-gs = gridspec.GridSpec(1, 3, figure=fig)
+if S is None:
+    fig = plt.figure(dpi = 300, figsize = (cm_to_inch(DOUBLE_COL_WIDTH) / 3 * 2, cm_to_inch(4)), constrained_layout=True)
+    gs = gridspec.GridSpec(1, 2, figure=fig)
+else:
+    fig = plt.figure(dpi = 300, figsize = (cm_to_inch(DOUBLE_COL_WIDTH), cm_to_inch(4)), constrained_layout=True)
+    gs = gridspec.GridSpec(1, 3, figure=fig)
+
 subfig = plt.subplot(gs[0, 0])
 ax = plt.gca()
-ax.set_xlabel('Entropy threshold', fontsize=9)
-ax.set_ylabel('Write amplification', fontsize=9)
+ax.set_xlabel('Entropy threshold')
+ax.set_ylabel('Write amplification')
 ax.plot(result_benefit_cost.vec_entropy_threshold, result_benefit_cost.vec_wa_theory, linewidth=linewidth, marker='s', markevery=markevery, markersize=markersize, label='Theoretical bound')
 ax.plot(result_benefit_cost.vec_entropy_threshold, result_benefit_cost.vec_wa, linewidth=linewidth, marker='o', markevery=markevery, markersize=markersize, label='Simulated')
 ax.set_ylim(bottom=0)
-plt.xticks(fontsize=9)
-plt.yticks(fontsize=9)
 ax.set_axisbelow(True)
 ax.grid(axis='y')
 lines, labels = ax.get_legend_handles_labels()
-ax.legend(lines, labels, fontsize=9, handlelength=1, handletextpad=0.5, columnspacing=1.5)
+ax.legend(lines, labels, handlelength=1, handletextpad=0.5, columnspacing=1.5)
 
 subfig = plt.subplot(gs[0, 1])
 ax = plt.gca()
-ax.set_xlabel('Entropy threshold', fontsize=9)
-ax.set_ylabel('# of sorted runs', fontsize=9)
+ax.set_xlabel('Entropy threshold')
+ax.set_ylabel('# of sorted runs')
 ax.plot(result_benefit_cost.vec_entropy_threshold, result_benefit_cost.vec_num_srs_estimation, linewidth=linewidth, marker='s', markevery=markevery, markersize=markersize, label='Theoretical bound')
 ax.plot(result_benefit_cost.vec_entropy_threshold, result_benefit_cost.vec_max_num_srs, linewidth=linewidth, marker='o', markevery=markevery, markersize=markersize, label='Simulated max')
 ax.plot(result_benefit_cost.vec_entropy_threshold, result_benefit_cost.vec_avg_num_srs, linewidth=linewidth, marker='D', markevery=markevery, markersize=markersize, label='Simulated avg')
 ax.set_ylim(bottom=0)
-plt.xticks(fontsize=9)
-plt.yticks(fontsize=9)
 ax.set_axisbelow(True)
 ax.grid(axis='y')
 lines, labels = ax.get_legend_handles_labels()
-ax.legend(lines, labels, fontsize=9, handlelength=1, handletextpad=0.5, columnspacing=1.5, frameon=False, borderaxespad=0, labelspacing=0.4)
+ax.legend(lines, labels, handlelength=1, handletextpad=0.5, columnspacing=1.5, frameon=False, borderaxespad=0, labelspacing=0.4)
 
-subfig = plt.subplot(gs[0, 2])
-ax = plt.gca()
-ax.set_xlabel('Entropy threshold', fontsize=9)
-ax.set_ylabel('Space amplification', fontsize=9)
-ax.plot(result_benefit_cost.vec_entropy_threshold, result_benefit_cost.vec_space_amp_estimation, linewidth=linewidth, marker='s', markevery=markevery, markersize=markersize, label='Theoretical bound')
-ax.plot(result_benefit_cost.vec_entropy_threshold, result_benefit_cost.vec_space_amp, linewidth=linewidth, marker='s', markevery=markevery, markersize=markersize, label='Simulated')
-plt.xticks(fontsize=9)
-ymax = math.ceil(max(result_benefit_cost.vec_space_amp_estimation))
-ax.set_ylim((1, ymax))
-plt.yticks(list(range(1, ymax + 1)), fontsize=9)
-ax.grid()
-lines, labels = ax.get_legend_handles_labels()
-ax.legend(lines, labels, fontsize=9, handlelength=1, handletextpad=0.5, columnspacing=1.5)
+if S is not None:
+    subfig = plt.subplot(gs[0, 2])
+    ax = plt.gca()
+    ax.set_xlabel('Entropy threshold')
+    ax.set_ylabel('Space amplification')
+    ax.plot(result_benefit_cost.vec_entropy_threshold, result_benefit_cost.vec_space_amp_estimation, linewidth=linewidth, marker='s', markevery=markevery, markersize=markersize, label='Theoretical bound')
+    ax.plot(result_benefit_cost.vec_entropy_threshold, result_benefit_cost.vec_space_amp, linewidth=linewidth, marker='s', markevery=markevery, markersize=markersize, label='Simulated')
+    ymax = math.ceil(max(result_benefit_cost.vec_space_amp_estimation))
+    ax.set_ylim((1, ymax))
+    plt.yticks(list(range(1, ymax + 1)))
+    ax.grid()
+    lines, labels = ax.get_legend_handles_labels()
+    ax.legend(lines, labels, handlelength=1, handletextpad=0.5, columnspacing=1.5)
 
 pdf_path = get_pdf_path('simulation')
 plt.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01, metadata={'CreationDate': None})
