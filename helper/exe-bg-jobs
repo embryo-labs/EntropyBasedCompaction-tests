@@ -23,8 +23,9 @@ pid = subprocess.Popen([os.path.join(mydir, 'bg-jobs', 'du.sh'), output_dir]).pi
 pid_signal[pid] = signal.SIGTERM
 pid = subprocess.Popen([os.path.join(mydir, 'bg-jobs', 'iostat.sh'), output_dir]).pid
 pid_signal[pid] = signal.SIGTERM
+
 if int(os.getenv('with_perf', '0')) != 0:
-    pid = subprocess.Popen([os.path.join(mydir, 'bg-jobs', 'perf.sh'), output_dir, main_pid]).pid
+    pid = subprocess.Popen(['perf', 'record', '--pid', str(main_pid), '--call-graph=fp', '--aio', '-z', '-o', os.path.join(output_dir, 'perf.data')]).pid
     pid_signal[pid] = signal.SIGTERM
 
 if int(os.getenv('with_offcputime', '0')) != 0:
