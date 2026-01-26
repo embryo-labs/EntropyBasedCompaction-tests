@@ -32,11 +32,6 @@ if len(sys.argv) != 2:
     exit()
 dir = sys.argv[1]
 
-SINGLE_COL_WIDTH = 8.5
-DOUBLE_COL_WIDTH = 17.8 
-def cm_to_inch(value):
-    return value/2.54
-
 mpl.rcParams.update({
     'hatch.linewidth': 0.5,
     'font.family': 'sans-serif',
@@ -94,7 +89,52 @@ for i, write_MB_s in enumerate(vec_write_MB_s):
             'read': json.load(open(os.path.join(data_dir, 'read-latency-us.json'))),
         }
 
-panels = [
+def draw(fig, outer_grid, panels):
+    for p_idx, panel in enumerate(panels):
+        row, col = divmod(p_idx, 2)
+        inner_grid = gridspec.GridSpecFromSubplotSpec(1, 3, subplot_spec=outer_grid[row, col], wspace=0.4)
+        for i in range(len(vec_write_MB_s)):
+            ax = plt.Subplot(fig, inner_grid[i])
+            fig.add_subplot(ax)
+
+            ax.set_xlabel(f"{vec_write_MB_s[i]}MB/s")
+            ax.set_xticks([])
+
+            if i == 0:
+                ax.set_ylabel(panel['ylabel'])
+            if panel['log_scale'][i]:
+                ax.set_yscale('log')
+                ax.tick_params(axis='y', pad=1)
+            if panel['ylims'][i] is not None:
+                ax.set_ylim(panel['ylims'][i])
+            if 'yticks' in panel and panel['yticks'][i] is not None:
+                ax.set_yticks(panel['yticks'][i])
+            ax.tick_params(axis='y', which='minor', labelleft=False)
+            ax.set_axisbelow(True)
+            ax.grid(axis='y')
+
+            for version_idx, version in enumerate(versions):
+                x = -cluster_width / 2 + bar_width / 2 + version_idx * bar_width
+                dataset = data_cache[i][version_idx]
+                val = panel['getter'](dataset)
+                ax.bar(x, val, width=bar_width, edgecolor='black', linewidth=0.5, 
+                    facecolor=version['facecolor'], hatch=version['hatch'])
+        bbox = outer_grid[row, col].get_position(fig)
+        fig.text(bbox.x0 + bbox.width/2, bbox.y0 - 0.045, panel['title'], ha='center', va='top')
+
+    handles = [mpl.patches.Patch(facecolor=v['facecolor'], hatch=v['hatch'], 
+                                edgecolor='black', linewidth=0.5) for v in versions]
+    fig.legend(handles=handles, labels=version_names, ncol=len(versions), 
+            loc='upper center', bbox_to_anchor=(0.5, 0.99), frameon=False, 
+            handlelength=1.5, handletextpad=0.5, columnspacing=1.0)
+
+    renderer = fig.canvas.get_renderer()
+    tight_bbox = fig.get_tightbbox(renderer)
+    print(f'width: {tight_bbox.width}, height: {tight_bbox.height}')
+
+fig = plt.figure(dpi=300, figsize=(common.double_col_inch, 4.5))
+outer_grid = gridspec.GridSpec(3, 2, figure=fig, hspace=0.4, wspace=0.2, left=0, right=0.93, bottom=0, top=0.92)
+draw(fig, outer_grid, [
     {
         "title": "(a) Number of sorted runs (average)",
         "ylabel": "Avg # of sorted runs",
@@ -110,21 +150,58 @@ panels = [
         "log_scale": [False, True, True]
     },
     {
-        "title": "(c) Scan latency (average)",
+        "title": "(c) Read latency (average)",
+        "ylabel": "Avg read latency (ms)",
+        "getter": lambda d: float(d['read']['Average'] / 1000),
+        "ylims": [None, (0.1, 4), (0.1, 40)],
+        "log_scale": [False, True, True]
+    },
+    {
+        "title": "(d) Read latency (99th percentile)",
+        "ylabel": "P99 read latency (ms)",
+        "getter": lambda d: float(d['read']['99%'] / 1000),
+        "ylims": [None, (1, 40), (1, 1000)],
+        "log_scale": [False, True, True]
+    },
+    {
+        "title": "(e) Space amplification (average)",
+        "ylabel": "Average space amp",
+        "getter": lambda d: d['report']['size'].mean() / unique_size_bytes,
+        "ylims": [(0, 3), (0, 7.5), (0, 12)],
+        "log_scale": [False, False, False]
+    },
+    {
+        "title": "(f) Space amplification (max)",
+        "ylabel": "Max space amp",
+        "getter": lambda d: d['report']['size'].max() / unique_size_bytes,
+        "ylims": [(0, 3), (0, 7.5), (0, 12)],
+        "log_scale": [False, False, False]
+    }
+])
+pdf_path = os.path.join(dir, f'const-write-rates{value}{compaction}-warmup-{warmup_secs}-run-{run_secs}{read_workload}.pdf')
+plt.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01, metadata={'CreationDate': None})
+print(f'Plot saved to {pdf_path}')
+
+fig = plt.figure(dpi=300, figsize=(common.double_col_inch, 4.5))
+outer_grid = gridspec.GridSpec(3, 2, figure=fig, hspace=0.4, wspace=0.2, 
+                            left=0, right=0.93, bottom=0, top=0.92)
+draw(fig, outer_grid, [
+    {
+        "title": "(a) Scan latency (average)",
         "ylabel": "Avg scan latency (ms)",
         "getter": lambda d: float(d['scan']['Average'] / 1000),
         "ylims": [None, (1, 30), (1, 1000)],
         "log_scale": [False, True, True],
     },
     {
-        "title": "(d) Scan latency (99th percentile)",
+        "title": "(b) Scan latency (99th percentile)",
         "ylabel": "P99 scan latency (ms)",
         "getter": lambda d: float(d['scan']['99%'] / 1000),
         'ylims': [None, (1, 100), (1, 1000)],
         'log_scale': [False, True, True],
     },
     {
-        'title': '(e) Get latency (average)',
+        'title': '(c) Get latency (average)',
         'ylabel': 'Avg get latency (ms)',
         'getter': lambda d: float(d['get']['Average'] / 1000),
         'ylims': [None, None, (0.1, 1)],
@@ -132,86 +209,14 @@ panels = [
         'log_scale': [False, False, True],
     },
     {
-        'title': '(f) Get latency (99th percentile)',
+        'title': '(d) Get latency (99th percentile)',
         'ylabel': 'P99 get latency (ms)',
         'getter': lambda d: float(d['get']['99%'] / 1000),
         'ylims': [None, (0, 1), (0.1, 10)],
         'yticks': [None, [0, 0.5, 1], None],
         'log_scale': [False, False, True],
     },
-    {
-        "title": "(g) Read latency (average)",
-        "ylabel": "Avg read latency (ms)",
-        "getter": lambda d: float(d['read']['Average'] / 1000),
-        "ylims": [None, (0.1, 4), (0.1, 40)],
-        "log_scale": [False, True, True]
-    },
-    {
-        "title": "(h) Read latency (99th percentile)",
-        "ylabel": "P99 read latency (ms)",
-        "getter": lambda d: float(d['read']['99%'] / 1000),
-        "ylims": [None, (1, 40), (1, 1000)],
-        "log_scale": [False, True, True]
-    },
-    {
-        "title": "(i) Space amplification (average)",
-        "ylabel": "Average space amp",
-        "getter": lambda d: d['report']['size'].mean() / unique_size_bytes,
-        "ylims": [(0, 3), (0, 7.5), (0, 12)],
-        "log_scale": [False, False, False]
-    },
-    {
-        "title": "(j) Space amplification (max)",
-        "ylabel": "Max space amp",
-        "getter": lambda d: d['report']['size'].max() / unique_size_bytes,
-        "ylims": [(0, 3), (0, 7.5), (0, 12)],
-        "log_scale": [False, False, False]
-    }
-]
-
-fig = plt.figure(dpi=300, figsize=(cm_to_inch(DOUBLE_COL_WIDTH), cm_to_inch(20)))
-
-outer_grid = gridspec.GridSpec(5, 2, figure=fig, hspace=0.37, wspace=0.2, 
-                               left=0.08, right=0.99, top=0.92, bottom=0.06) 
-
-for p_idx, panel in enumerate(panels):
-    row, col = divmod(p_idx, 2)
-    inner_grid = gridspec.GridSpecFromSubplotSpec(1, 3, subplot_spec=outer_grid[row, col], wspace=0.4)
-    for i in range(len(vec_write_MB_s)):
-        ax = plt.Subplot(fig, inner_grid[i])
-        fig.add_subplot(ax)
-
-        ax.set_xlabel(f"{vec_write_MB_s[i]}MB/s")
-        ax.set_xticks([])
-
-        if i == 0:
-            ax.set_ylabel(panel['ylabel'])
-        if panel['log_scale'][i]:
-            ax.set_yscale('log')
-            ax.tick_params(axis='y', pad=1)
-        if panel['ylims'][i] is not None:
-            ax.set_ylim(panel['ylims'][i])
-        if 'yticks' in panel and panel['yticks'][i] is not None:
-            ax.set_yticks(panel['yticks'][i])
-        ax.tick_params(axis='y', which='minor', labelleft=False)
-        ax.set_axisbelow(True)
-        ax.grid(axis='y')
-
-        for version_idx, version in enumerate(versions):
-            x = -cluster_width / 2 + bar_width / 2 + version_idx * bar_width
-            dataset = data_cache[i][version_idx]
-            val = panel['getter'](dataset)
-            ax.bar(x, val, width=bar_width, edgecolor='black', linewidth=0.5, 
-                   color=version['color'], hatch=version['hatch'])
-    bbox = outer_grid[row, col].get_position(fig)
-    fig.text(bbox.x0 + bbox.width/2, bbox.y0 - 0.025, panel['title'], ha='center', va='top')
-
-handles = [mpl.patches.Patch(facecolor=v['color'], hatch=v['hatch'], 
-                             edgecolor='black', linewidth=0.5) for v in versions]
-fig.legend(handles=handles, labels=version_names, ncol=len(versions), 
-           loc='upper center', bbox_to_anchor=(0.5, 0.99), frameon=False, 
-           handlelength=1.5, handletextpad=0.5, columnspacing=1.0)
-
-pdf_path = os.path.join(dir, f'const-write-rates{value}{compaction}-warmup-{warmup_secs}-run-{run_secs}{read_workload}.pdf')
+])
+pdf_path = os.path.join(dir, f'const-write-rates-read-latency{value}{compaction}-warmup-{warmup_secs}-run-{run_secs}{read_workload}.pdf')
 plt.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01, metadata={'CreationDate': None})
 print(f'Plot saved to {pdf_path}')

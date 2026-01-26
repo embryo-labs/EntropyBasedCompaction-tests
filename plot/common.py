@@ -45,26 +45,31 @@ versions = {
     'rocksdb-tuned': {
         'name': 'RocksDB-Tuned',
         'color': 'C0',
+        'facecolor': plt.get_cmap('tab20c')(1),
         'hatch': 'XX',
     },
     'tiering2': {
         'name': 'Tiering2',
         'color': 'C1',
+        'facecolor': plt.get_cmap('tab20c')(6),
         'hatch': '--//',
     },
     'tiering4': {
         'name': 'Tiering4',
         'color': 'C3',
+        'facecolor': '#ff7070',
         'hatch': '---',
     },
     'tiering8': {
         'name': 'Tiering8',
         'color': 'C4',
+        'facecolor': plt.get_cmap('tab20c')(13),
         'hatch': '--\\\\',
     },
     'universal': {
         'name': 'Universal',
         'color': 'C5',
+        'facecolor': plt.get_cmap('tab20')(11),
         'hatch': '\\\\\\',
     },
     'benefit-cost': {
