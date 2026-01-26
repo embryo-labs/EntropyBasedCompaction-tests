@@ -352,7 +352,7 @@ meituan_writer() (
 	"$(dirname $0)"/../helper/plot-rocksdb.sh "$output_dir"
 )
 unique_size=10GB
-period_secs=$((3600 * 4))
+period_secs=$((3600 * 3))
 num_shards=5
 compaction_MB_s=200
 read_workload() {
