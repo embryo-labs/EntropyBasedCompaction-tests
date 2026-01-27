@@ -262,7 +262,7 @@ warmup_secs=1500
 run_secs=500
 compaction_MB_s=200
 read_workload() {
-	seek_only with_nexts 48 "$@"
+	with_nexts 48 with_meituan_ratio "$@"
 }
 for write_MB_s in 10 30 50; do
 	read_workload with_write_MB_s $write_MB_s with_compaction_limit_MB_s $compaction_MB_s with_memtable_size 8MiB with_policy_rocksdb_tuned load_all_warmup_run rocksdb-tuned readwhilewriting $key_size $value_size $unique_size $warmup_secs $run_secs
@@ -362,7 +362,7 @@ period_secs=$((3600 * 3))
 num_shards=5
 compaction_MB_s=200
 read_workload() {
-	seek_only with_nexts 50 "$@"
+	with_nexts 48 with_meituan_ratio "$@"
 }
 for type in peak normal; do
 	read_workload with_compaction_limit_MB_s $compaction_MB_s with_memtable_size 8MiB with_policy_rocksdb_tuned meituan_writer rocksdb-tuned $type $period_secs $num_shards $unique_size
