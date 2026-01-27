@@ -41,41 +41,76 @@ def bound_sa(entropy_threshold):
 
 import matplotlib.pyplot as plt
 
+colors = [
+    {
+        'dark': 'C0',
+        'light': plt.get_cmap('tab20c')(1),
+    },
+    {
+        'dark': 'C1',
+        'light': plt.get_cmap('tab20c')(6),
+    },
+    {
+        'dark': 'C2',
+        'light': plt.get_cmap('Set2')(0),
+    },
+    {
+        'dark': 'C3',
+        'light': '#ff7070',
+    },
+    {
+        'dark': 'C4',
+        'light': plt.get_cmap('tab20c')(13),
+    },
+    {
+        'dark': 'C5',
+        'light': plt.get_cmap('tab20')(11),
+    },
+    {
+        'dark': 'C6',
+        'light': 'C6',
+    },
+    {
+        'dark': 'C7',
+        'light': plt.get_cmap('tab20c')(17),
+    },
+]
+
 versions = {
     'rocksdb-tuned': {
         'name': 'RocksDB-Tuned',
-        'color': 'C0',
-        'facecolor': plt.get_cmap('tab20c')(1),
+        'color': colors[0]['dark'],
+        'facecolor': colors[0]['light'],
         'hatch': 'XX',
     },
     'tiering2': {
         'name': 'Tiering2',
-        'color': 'C1',
-        'facecolor': plt.get_cmap('tab20c')(6),
+        'color': colors[1]['dark'],
+        'facecolor': colors[1]['light'],
         'hatch': '--//',
     },
     'tiering4': {
         'name': 'Tiering4',
-        'color': 'C3',
-        'facecolor': '#ff7070',
+        'color': colors[3]['dark'],
+        'facecolor': colors[3]['light'],
         'hatch': '---',
     },
     'tiering8': {
         'name': 'Tiering8',
-        'color': 'C4',
-        'facecolor': plt.get_cmap('tab20c')(13),
+        'color': colors[4]['dark'],
+        'facecolor': colors[4]['light'],
         'hatch': '--\\\\',
     },
     'universal': {
         'name': 'Universal',
-        'color': 'C5',
-        'facecolor': plt.get_cmap('tab20')(11),
+        'color': colors[5]['dark'],
+        'facecolor': colors[5]['light'],
         'hatch': '\\\\\\',
     },
     'benefit-cost': {
         'name': 'EUC',
-        'color': 'C2',
-        'facecolor': plt.get_cmap('Set2')(0),
+        'color': colors[2]['dark'],
+        'facecolor': colors[2]['light'],
         'hatch': '///',
     },
 }
