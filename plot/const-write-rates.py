@@ -25,12 +25,6 @@ import json
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 from matplotlib import gridspec
-from matplotlib.ticker import LogLocator, NullFormatter
-
-if len(sys.argv) != 2:
-    print('Usage: ' + sys.argv[0] + ' dir')
-    exit()
-dir = sys.argv[1]
 
 mpl.rcParams.update({
     'hatch.linewidth': 0.5,
