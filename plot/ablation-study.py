@@ -9,7 +9,7 @@ value = '-value-603'
 compaction = '-compaction-200MB-s'
 warmup_secs = 1500
 run_secs = 500
-read_workload = '-nexts-48-seek-1'
+read_workload = '-get-0.87-seek-0.13-nexts-48'
 
 import os
 import numpy as np
@@ -75,7 +75,7 @@ versions = [
 ]
 version_names = [v['name'] for v in versions]
 
-fig = plt.figure(dpi=300, figsize=(common.single_col_inch, 2), constrained_layout=True)
+fig = plt.figure(dpi=300, figsize=(common.single_col_inch, 1.7), constrained_layout=True)
 gs = gridspec.GridSpec(1, 2, figure=fig)
 plt.subplot(gs[0, 0])
 ax_srs_avg = plt.gca()
