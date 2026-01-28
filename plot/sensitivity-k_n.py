@@ -7,9 +7,9 @@ dir = sys.argv[1]
 
 value = '-value-603'
 warmup_secs = 1500
-run_secs = 1000
+run_secs = 500
 compaction = '-compaction-200MB-s'
-read_workload = '-nexts-48-seek-1'
+read_workload = '-get-0.87-seek-0.13-nexts-48'
 
 import os
 import numpy as np
