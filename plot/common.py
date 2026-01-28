@@ -8,7 +8,7 @@ from scipy.optimize import root_scalar
 def bound_wa(S, entropy_threshold):
     return math.log2(S * math.e) / entropy_threshold
 
-def bound_ra(S, entropy_threshold):
+def bound_ra_v1(S, entropy_threshold):
     def f(k, n):
         return math.log2(k+n-1) - k * math.log2(k) / (k+n-1)
     n = math.ceil(2**entropy_threshold)
@@ -29,7 +29,21 @@ def bound_ra(S, entropy_threshold):
         n += 1
     return best
 
-def bound_sa(entropy_threshold):
+def bound_ra(max_size, entropy_threshold):
+    def f(x): return x*math.log2(x)
+    def g(x): return (-f(x)-f(1-x))/(1-x)
+    def sol_a(t_e):
+        # solve the equation g(x)=a
+        a = 0
+        for i in range(1, 30):
+            add = 2 ** -i
+            if g(a + add) < t_e: 
+                a += add
+        return a
+    a = sol_a(entropy_threshold)
+    return math.ceil(math.log2(2**entropy_threshold / max_size) / math.log2(a)) + math.floor(2**entropy_threshold + 1)
+
+def bound_sa_v1(entropy_threshold):
     def f(i, x):
         if x > 1/i - 1e-6:
             return -math.log2(i)
@@ -38,6 +52,9 @@ def bound_sa(entropy_threshold):
     sol = root_scalar(lambda x: f(i, x) + entropy_threshold, bracket=[1 / (i+1), 1 / i])
     assert sol.converged
     return 1 / sol.root
+
+def bound_sa(entropy_threshold):
+    return 2**entropy_threshold
 
 import matplotlib.pyplot as plt
 

@@ -82,7 +82,7 @@ def benefit_cost(C, k_n):
         result.vec_avg_num_srs.append(avg_num_srs)
         result.vec_max_num_srs.append(max_num_srs)
 
-        result.vec_num_srs_estimation.append(common.bound_ra(S, entropy_threshold))
+        result.vec_num_srs_estimation.append(common.bound_ra(max_size, entropy_threshold))
         result.vec_space_amp_estimation.append(common.bound_sa(entropy_threshold))
 
         if S is not None:
