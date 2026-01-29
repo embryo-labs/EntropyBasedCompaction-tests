@@ -8,7 +8,7 @@ dir = sys.argv[1]
 value = '-value-603'
 compaction = '-compaction-200MB-s'
 warmup_secs = 1500
-run_secs = 500
+run_secs = 1000
 read_workload = '-get-0.87-seek-0.13-nexts-48'
 
 unique_size = '10GB'
