@@ -258,8 +258,8 @@ load_all_warmup_run() (
 key_size=16
 value_size=603
 unique_size=10GB
-warmup_secs=1500
-run_secs=500
+warmup_secs=1200
+run_secs=1200
 compaction_MB_s=200
 read_workload() {
 	with_nexts 48 with_meituan_ratio "$@"
