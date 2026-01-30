@@ -58,11 +58,11 @@ versions = [
     },
     {
         'path': 'benefit-cost',
-        'name': 'No-running-jobs-limit',
+        'name': 'Soft-preemption',
         'max-running-bg-jobs': None,
         'marker': 'o',
         'markersize': 3,
-        'color': common.colors[5]['dark'],
+        'color': common.colors[4]['dark'],
     },
     {
         'path': 'benefit-cost',
