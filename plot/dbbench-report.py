@@ -22,8 +22,9 @@ mpl.rcParams.update({
     'hatch.linewidth': 0.5,
     'font.family': 'sans-serif',
     'font.sans-serif': ['Linux Libertine O'],
+    'axes.unicode_minus': False,
+    'font.size': 9,
 })
-plt.rcParams['axes.unicode_minus'] = False
 
 plot_dir = data_dir + '/plot'
 if not os.path.exists(plot_dir):
@@ -33,54 +34,41 @@ report = pd.read_table(os.path.join(data_dir, 'report.csv'), sep=',')
 # It seems that the ops of the first several seconds is not limited.
 report = report.iloc[20:]
 
-fig = plt.figure(dpi = 300, figsize = (cm_to_inch(SINGLE_COL_WIDTH), cm_to_inch(5)), constrained_layout=True)
-ax = plt.gca()
-formatter = ScalarFormatter(useMathText=True)
-formatter.set_powerlimits((-3, 4))
-ax.yaxis.set_major_formatter(formatter)
-ax.yaxis.get_offset_text().set_fontsize(8)
-plt.plot(report['secs_elapsed'], report['interval_qps'], linewidth=0.5)
-plt.xticks(fontsize=8)
-plt.yticks(fontsize=8)
-ax.set_ylim(bottom=0)
-plt.xlabel('Time (Seconds)', fontsize=8)
-plt.ylabel('Operation per second', fontsize=8)
-pdf_path = plot_dir + '/ops.pdf'
-plt.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01)
-print('Plot saved to ' + pdf_path)
-if 'DISPLAY' in os.environ:
-    plt.show(block=False)
-
-def draw(name, ylabel):
-    fig = plt.figure(dpi = 300, figsize = (cm_to_inch(SINGLE_COL_WIDTH), cm_to_inch(5)), constrained_layout=True)
+def draw(ylabel, col_name, pdf_name=None):
+    if pdf_name is None:
+        pdf_name = col_name
+    plt.figure(dpi = 300, figsize = (cm_to_inch(SINGLE_COL_WIDTH), cm_to_inch(5)), constrained_layout=True)
     ax = plt.gca()
-    plt.plot(report['secs_elapsed'], report[name])
-    plt.xticks(fontsize=8)
-    plt.yticks(fontsize=8)
+    formatter = ScalarFormatter(useMathText=True)
+    formatter.set_powerlimits((-3, 4))
+    ax.yaxis.set_major_formatter(formatter)
+    plt.plot(report['secs_elapsed'], report[col_name])
     ax.set_ylim(bottom=0)
-    plt.xlabel('Time (Seconds)', fontsize=8)
-    plt.ylabel(ylabel, fontsize=8)
-    pdf_path = os.path.join(plot_dir, name + '.pdf')
+    plt.xlabel('Time (Seconds)')
+    plt.ylabel(ylabel)
+    pdf_path = os.path.join(plot_dir, pdf_name + '.pdf')
     plt.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01)
     print('Plot saved to ' + pdf_path)
-    if 'DISPLAY' in os.environ:
-        plt.show(block=False)
-draw('wait-for-last-level-compaction', 'Number of wait for LLC')
-draw('size', 'Size')
+draw('Operation per second', 'interval_qps', 'ops')
+draw('Number of wait for LLC', 'wait-for-last-level-compaction')
+draw('Size', 'size')
+draw('Size of buffer level', 'rocksdb.buffer-level-size')
+if 'rate-limit' in report:
+    draw('Rate limit', 'rate-limit')
+if 'size-ratio' in report:
+    draw('Size ratio', 'size-ratio')
 
 def draw_num_sorted_runs(report, fname, yscale=None):
     fig = plt.figure(dpi = 300, figsize = (cm_to_inch(SINGLE_COL_WIDTH), cm_to_inch(5)), constrained_layout=True)
     ax = plt.gca()
     plt.plot(report['secs_elapsed'], report['num-sorted-runs'])
     plt.plot(report['secs_elapsed'], report['rocksdb.num-merging-main-level-sorted-runs'])
-    plt.xticks(fontsize=8)
-    plt.yticks(fontsize=8)
     if yscale is not None:
         plt.yscale(yscale)
     ax.set_ylim(bottom=1)
-    plt.xlabel('Time (Seconds)', fontsize=8)
-    plt.ylabel('# of sorted runs', fontsize=8)
-    plt.legend(['Total', 'Merging'], fontsize=8)
+    plt.xlabel('Time (Seconds)')
+    plt.ylabel('# of sorted runs')
+    plt.legend(['Total', 'Merging'])
     pdf_path = os.path.join(plot_dir, fname)
     plt.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01)
     print('Plot saved to ' + pdf_path)
@@ -101,10 +89,10 @@ y_log = -np.log10(1 - y)
 plt.plot(x, y_log)
 ticks = np.array([0, 0.5, 0.9, 0.99, 0.999, 0.9999])
 ticks_log = -np.log10(1 - ticks)
-plt.yticks(ticks_log, labels=ticks, fontsize=8)
+plt.yticks(ticks_log, labels=ticks)
 ax.grid(axis='y')
-plt.xlabel('# of sorted runs', fontsize=8)
-plt.ylabel('CDF', fontsize=8)
+plt.xlabel('# of sorted runs')
+plt.ylabel('CDF')
 pdf_path = os.path.join(plot_dir, 'num-sorted-runs-cdf.pdf')
 plt.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01)
 print('Plot saved to ' + pdf_path)
@@ -116,58 +104,12 @@ ax = plt.gca()
 plt.plot(report['secs_elapsed'], report['num-flushes'] + report['num-compactions'])
 if 'num-running-bg-jobs' in report:
     plt.plot(report['secs_elapsed'], report['num-running-bg-jobs'])
-    plt.legend(['Total', 'Running'], fontsize=8)
-plt.xticks(fontsize=8)
-plt.yticks(fontsize=8)
-plt.xlabel('Time (Seconds)', fontsize=8)
-plt.ylabel('Num bg jobs', fontsize=8)
+    plt.legend(['Total', 'Running'])
+plt.xlabel('Time (Seconds)')
+plt.ylabel('Num bg jobs')
 ax.set_ylim(bottom=0)
 pdf_path = os.path.join(plot_dir, 'num-bg-jobs.pdf')
 plt.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01)
 print('Plot saved to ' + pdf_path)
 if 'DISPLAY' in os.environ:
     plt.show(block=False)
-
-fig = plt.figure(dpi = 300, figsize = (cm_to_inch(SINGLE_COL_WIDTH), cm_to_inch(5)), constrained_layout=True)
-ax = plt.gca()
-plt.plot(report['secs_elapsed'], report['rocksdb.buffer-level-size'])
-plt.xticks(fontsize=8)
-plt.yticks(fontsize=8)
-ax.set_ylim(bottom=0)
-plt.xlabel('Time (Seconds)', fontsize=8)
-plt.ylabel('Size of buffer level', fontsize=8)
-pdf_path = os.path.join(plot_dir, 'buffer-level-size.pdf')
-plt.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01)
-print('Plot saved to ' + pdf_path)
-if 'DISPLAY' in os.environ:
-    plt.show()
-
-if 'rate-limit' in report:
-    fig = plt.figure(dpi = 300, figsize = (cm_to_inch(SINGLE_COL_WIDTH), cm_to_inch(5)), constrained_layout=True)
-    ax = plt.gca()
-    formatter = ScalarFormatter(useMathText=True)
-    formatter.set_powerlimits((-3, 4))
-    ax.yaxis.set_major_formatter(formatter)
-    ax.yaxis.get_offset_text().set_fontsize(8)
-    plt.plot(report['secs_elapsed'], report['rate-limit'])
-    plt.xticks(fontsize=8)
-    plt.yticks(fontsize=8)
-    ax.set_ylim(bottom=0)
-    plt.xlabel('Time (Seconds)', fontsize=8)
-    plt.ylabel('Rate limit', fontsize=8)
-    pdf_path = os.path.join(plot_dir, 'rate-limit.pdf')
-    plt.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01)
-    print('Plot saved to ' + pdf_path)
-
-if 'size-ratio' in report:
-    fig = plt.figure(dpi = 300, figsize = (cm_to_inch(SINGLE_COL_WIDTH), cm_to_inch(5)), constrained_layout=True)
-    ax = plt.gca()
-    plt.plot(report['secs_elapsed'], report['size-ratio'])
-    plt.xticks(fontsize=8)
-    plt.yticks(fontsize=8)
-    ax.set_ylim(bottom=0)
-    plt.xlabel('Time (Seconds)', fontsize=8)
-    plt.ylabel('Size ratio', fontsize=8)
-    pdf_path = os.path.join(plot_dir, 'size-ratio.pdf')
-    plt.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01)
-    print('Plot saved to ' + pdf_path)
