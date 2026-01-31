@@ -132,7 +132,7 @@ def draw(config):
     ax_get = plt.gca()
     plt.xlabel('Time (hours)')
     plt.ylabel('Get latency (ms)')
-    plt.ylim((0, 0.3))
+    plt.ylim((0, 0.2))
     ax_get.tick_params(axis='y', which='minor', labelleft=False)
     ax_get.grid(axis='y')
 
