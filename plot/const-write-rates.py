@@ -7,8 +7,8 @@ dir = sys.argv[1]
 
 value = '-value-603'
 compaction = '-compaction-200MB-s'
-warmup_secs = 1500
-run_secs = 500
+warmup_secs = 1200
+run_secs = 1200
 read_workload = '-get-0.87-seek-0.13-nexts-48'
 
 unique_size = '10GB'
@@ -154,21 +154,22 @@ draw(fig, outer_grid, [
         "title": "(d) Read latency (99th percentile)",
         "ylabel": "P99 read latency (ms)",
         "getter": lambda d: float(d['read']['99%'] / 1000),
-        "ylims": [None, (1, 40), (1, 1000)],
+        "ylims": [None, (1, 40), (1, 400)],
         "log_scale": [False, True, True]
     },
     {
         "title": "(e) Space amplification (average)",
         "ylabel": "Average space amp",
         "getter": lambda d: d['report']['size'].mean() / unique_size_bytes,
-        "ylims": [(0, 3), (0, 7.5), (0, 12)],
+        "ylims": [None, None, None],
         "log_scale": [False, False, False]
     },
     {
         "title": "(f) Space amplification (max)",
         "ylabel": "Max space amp",
         "getter": lambda d: d['report']['size'].max() / unique_size_bytes,
-        "ylims": [(0, 3), (0, 7.5), (0, 12)],
+        "ylims": [None, None, None],
+        'yticks': [None, [0, 2, 4, 6, 8, 10], None],
         "log_scale": [False, False, False]
     }
 ])
@@ -184,7 +185,7 @@ draw(fig, outer_grid, [
         "title": "(a) Scan latency (average)",
         "ylabel": "Avg scan latency (ms)",
         "getter": lambda d: float(d['scan']['Average'] / 1000),
-        "ylims": [None, (1, 30), (1, 1000)],
+        "ylims": [None, (1, 30), (1, 300)],
         "log_scale": [False, True, True],
     },
     {
@@ -198,17 +199,17 @@ draw(fig, outer_grid, [
         'title': '(c) Get latency (average)',
         'ylabel': 'Avg get latency (ms)',
         'getter': lambda d: float(d['get']['Average'] / 1000),
-        'ylims': [None, None, (0.1, 1)],
-        'yticks': [[0, 0.1], None, None],
-        'log_scale': [False, False, True],
+        'ylims': [None, None, None],
+        'yticks': [[0, 0.1], [0, 0.1], None],
+        'log_scale': [False, False, False],
     },
     {
         'title': '(d) Get latency (99th percentile)',
         'ylabel': 'P99 get latency (ms)',
         'getter': lambda d: float(d['get']['99%'] / 1000),
-        'ylims': [None, (0, 1), (0.1, 10)],
-        'yticks': [None, [0, 0.5, 1], None],
-        'log_scale': [False, False, True],
+        'ylims': [None, None, None],
+        'yticks': [None, None, None],
+        'log_scale': [False, False, False],
     },
 ])
 pdf_path = os.path.join(dir, f'const-write-rates-read-latency{value}{compaction}-warmup-{warmup_secs}-run-{run_secs}{read_workload}.pdf')
