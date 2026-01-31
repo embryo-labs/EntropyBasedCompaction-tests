@@ -31,6 +31,7 @@ cd "$output_dir"
 	--unordered_write=true \
 	--auto_readahead_size=true \
 	--db="$workspace/testdb" \
+	--json_log_file="$output_dir/log.json" \
 	--num=$num_unique_keys \
 	--level0_slowdown_writes_trigger=100000 \
 	--level0_stop_writes_trigger=100000 \
