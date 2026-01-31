@@ -6,8 +6,8 @@ if len(sys.argv) != 2:
 dir = sys.argv[1]
 
 value = '-value-603'
-warmup_secs = 1500
-run_secs = 500
+warmup_secs = 1200
+run_secs = 1200
 compaction = '-compaction-200MB-s'
 read_workload = '-get-0.87-seek-0.13-nexts-48'
 
@@ -32,9 +32,14 @@ mpl.rcParams.update({
 vec_write_MB_s = [10, 50]
 versions = [
     {
-        'k_n': 1.4,
-        'color': plt.get_cmap('tab20c')(1),
+        'k_n': 1.1,
+        'color': common.colors[0]['light'],
         'hatch': '---',
+    },
+    {
+        'k_n': 1.4,
+        'color': common.colors[1]['light'],
+        'hatch': '\\\\\\',
     },
     {
         'k_n': 1.7,
@@ -43,34 +48,29 @@ versions = [
     },
     {
         'k_n': 2,
-        'color': plt.get_cmap('tab20c')(6),
-        'hatch': '\\\\\\',
-    },
-    {
-        'k_n': 4,
-        'color': '#ff6060',
-        'hatch': '--//',
-    },
-    {
-        'k_n': 8,
-        'color': plt.get_cmap('tab20c')(13),
-        'hatch': 'XX',
-    },
-    {
-        'k_n': 16,
-        'color': plt.get_cmap('tab20')(11),
+        'color': common.colors[3]['light'],
         'hatch': '--\\\\',
     },
     {
-        'k_n': 32,
-        'color': 'C6',
+        'k_n': 4,
+        'color': common.colors[4]['light'],
+        'hatch': 'XX',
+    },
+    {
+        'k_n': 8,
+        'color': common.colors[5]['light'],
+        'hatch': '--//',
+    },
+    {
+        'k_n': 16,
+        'color': common.colors[6]['light'],
         'hatch': '--XX',
     },
     {
-        'k_n': 64,
-        'color': plt.get_cmap('tab20c')(17),
+        'k_n': 32,
+        'color': common.colors[7]['light'],
         'hatch': 'XXXX',
-    }
+    },
 ]
 
 bar_width = 1 / (len(versions) + 1)
