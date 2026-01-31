@@ -12,11 +12,7 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 from matplotlib.ticker import ScalarFormatter
 
-# Paper specific settings
-SINGLE_COL_WIDTH = 8.5
-DOUBLE_COL_WIDTH = 17.8
-def cm_to_inch(value):
-    return value/2.54
+import common
 
 mpl.rcParams.update({
     'hatch.linewidth': 0.5,
@@ -37,7 +33,7 @@ report = report.iloc[20:]
 def draw(ylabel, col_name, pdf_name=None):
     if pdf_name is None:
         pdf_name = col_name
-    plt.figure(dpi = 300, figsize = (cm_to_inch(SINGLE_COL_WIDTH), cm_to_inch(5)), constrained_layout=True)
+    plt.figure(dpi = 300, figsize = (common.single_col_inch, 2), constrained_layout=True)
     ax = plt.gca()
     formatter = ScalarFormatter(useMathText=True)
     formatter.set_powerlimits((-3, 4))
@@ -59,7 +55,7 @@ if 'size-ratio' in report:
     draw('Size ratio', 'size-ratio')
 
 def draw_num_sorted_runs(report, fname, yscale=None):
-    fig = plt.figure(dpi = 300, figsize = (cm_to_inch(SINGLE_COL_WIDTH), cm_to_inch(5)), constrained_layout=True)
+    fig = plt.figure(dpi = 300, figsize = (common.single_col_inch, 2), constrained_layout=True)
     ax = plt.gca()
     plt.plot(report['secs_elapsed'], report['num-sorted-runs'])
     plt.plot(report['secs_elapsed'], report['rocksdb.num-merging-main-level-sorted-runs'])
@@ -80,7 +76,7 @@ if len(report) >= 200:
     mean_step = len(report) // 100
     draw_num_sorted_runs(report[['secs_elapsed', 'num-sorted-runs', 'rocksdb.num-merging-main-level-sorted-runs']].groupby(report.index // mean_step).mean(), 'num-sorted-runs-mean-every-1p.pdf')
 
-fig = plt.figure(dpi = 300, figsize = (cm_to_inch(SINGLE_COL_WIDTH), cm_to_inch(5)), constrained_layout=True)
+fig = plt.figure(dpi = 300, figsize = (common.single_col_inch, 2), constrained_layout=True)
 ax = plt.gca()
 x = sorted(report['num-sorted-runs'])
 plt.ylim(0, 4)
@@ -99,7 +95,7 @@ print('Plot saved to ' + pdf_path)
 if 'DISPLAY' in os.environ:
     plt.show(block=False)
 
-fig = plt.figure(dpi = 300, figsize = (cm_to_inch(SINGLE_COL_WIDTH), cm_to_inch(5)), constrained_layout=True)
+fig = plt.figure(dpi = 300, figsize = (common.single_col_inch, 2), constrained_layout=True)
 ax = plt.gca()
 plt.plot(report['secs_elapsed'], report['num-flushes'] + report['num-compactions'])
 if 'num-running-bg-jobs' in report:
@@ -114,7 +110,7 @@ print('Plot saved to ' + pdf_path)
 if 'DISPLAY' in os.environ:
     plt.show(block=False)
 
-plt.figure(dpi = 300, figsize = (cm_to_inch(SINGLE_COL_WIDTH), cm_to_inch(5)), constrained_layout=True)
+plt.figure(dpi = 300, figsize = (common.single_col_inch, 2), constrained_layout=True)
 ax = plt.gca()
 formatter = ScalarFormatter(useMathText=True)
 formatter.set_powerlimits((-3, 4))
