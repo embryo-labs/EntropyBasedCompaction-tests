@@ -5,10 +5,11 @@ if len(sys.argv) != 2:
 	exit()
 dir = sys.argv[1]
 
-read_workload = 'nexts-50-seek-1'
-compaction = '200MB-s'
-warmup_secs = 1500
-run_secs = 500
+value = '-value-603'
+compaction = '-compaction-200MB-s'
+warmup_secs = 1200
+run_secs = 1200
+read_workload = '-get-0.87-seek-0.13-nexts-48'
 
 import os
 import numpy as np
@@ -63,13 +64,13 @@ versions = [
     {
         't_e': 0,
         'marker': 'o',
-        'markersize': 5.5,
+        'markersize': 7,
         'markerfacecolor': 'none',
     },
     {
         't_e': 0.5,
         'marker': 's',
-        'markersize': 3,
+        'markersize': 4,
         'markerfacecolor': 'none',
     },
     {
@@ -98,16 +99,16 @@ versions = [
     },
 ]
 linewidth=0.7
-entropy_thresholds = [version['t_e'] for version in versions]
 
 for version in versions:
     srs_avg = []
     srs_p99 = []
     for write_MB_s in vec_write_MB_s:
-        if version['t_e'] != 0.78:
-            workload = 'readwhilewriting-key-16-value-1000-unique-size-10GB-warmup-secs-' + str(warmup_secs) + '-run-secs-' + str(run_secs) + '-entropy-threshold-' + str(version['t_e']) + '-memtable-8MiB-max-running-bg-jobs-1-compaction-' + compaction + '-write-' + str(write_MB_s) + 'MB-s-' + read_workload
+        entropy_threshold = version['t_e']
+        if entropy_threshold != 0.78:
+            workload = f'readwhilewriting-key-16{value}-unique-size-10GB-warmup-secs-{warmup_secs}-run-secs-{run_secs}-entropy-threshold-{entropy_threshold}-memtable-8MiB-max-running-bg-jobs-1{compaction}-write-{write_MB_s}MB-s{read_workload}'
         else:
-            workload = 'readwhilewriting-key-16-value-1000-unique-size-10GB-warmup-secs-' + str(warmup_secs) + '-run-secs-' + str(run_secs) + '-memtable-8MiB-max-running-bg-jobs-1-compaction-' + compaction + '-write-' + str(write_MB_s) + 'MB-s-' + read_workload
+            workload = f'readwhilewriting-key-16{value}-unique-size-10GB-warmup-secs-{warmup_secs}-run-secs-{run_secs}-memtable-8MiB-max-running-bg-jobs-1{compaction}-write-{write_MB_s}MB-s{read_workload}'
         data_dir = os.path.join(dir, workload, 'benefit-cost')
 
         report = pd.read_csv(os.path.join(data_dir, 'report.csv'))
@@ -116,7 +117,14 @@ for version in versions:
     ax_srs_avg.plot(vec_write_MB_s, srs_avg, linewidth=linewidth, marker=version['marker'], markersize=version['markersize'], markerfacecolor=version['markerfacecolor'], markeredgewidth=linewidth)
     ax_srs_p99.plot(vec_write_MB_s, srs_p99, linewidth=linewidth, marker=version['marker'], markersize=version['markersize'], markerfacecolor=version['markerfacecolor'], markeredgewidth=linewidth)
 
-fig.legend(entropy_thresholds, fontsize=9, ncol=3, loc='center', bbox_to_anchor=(0.5, 1.07), frameon=False)
-pdf_path = os.path.join(dir, 'entropy-thresholds-comparison-' + compaction + '-' + read_workload + '.pdf')
+names = []
+for version in versions:
+    t_e = version['t_e']
+    if t_e == 0.78:
+        names.append(str(t_e) + ' (EUC)')
+    else:
+        names.append(str(t_e))
+fig.legend(names, fontsize=9, ncol=3, loc='center', bbox_to_anchor=(0.5, 1.07), frameon=False)
+pdf_path = os.path.join(dir, f'entropy-thresholds{value}{compaction}-warmup-{warmup_secs}-run-{run_secs}{read_workload}.pdf')
 fig.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01, metadata={'CreationDate': None})
 print('Plot saved to ' + pdf_path)
