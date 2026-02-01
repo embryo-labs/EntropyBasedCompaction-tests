@@ -68,13 +68,16 @@ with_policy_no_sliding_window() {
 with_policy_preempt_only_by_entropy() (
 	k_e=$1
 	shift
+	b_e=$1
+	shift
 	"$@" \
 		--compaction_style=5 \
 		--num_levels=1 \
 		--sliding_window=false \
 		--preempt_by_entropy=true \
 		--preempt_by_num=false \
-		--k_e="$k_e"
+		--k_e="$k_e" \
+		--b_e="$b_e"
 )
 with_policy_preempt_only_by_num() {
 	"$@" \
