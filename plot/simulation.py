@@ -32,12 +32,6 @@ def get_pdf_path(prefix):
     pdf_path += '-N-' + str(N) + '-entropy_threshold_begin-' + str(args.entropy_threshold_begin) + '.pdf'
     return pdf_path
 
-# Paper specific settings
-SINGLE_COL_WIDTH = 8.5
-DOUBLE_COL_WIDTH = 17.8
-def cm_to_inch(value):
-    return value/2.54
-
 mpl.rcParams.update({
     'hatch.linewidth': 0.5,
     'font.family': 'sans-serif',
@@ -53,7 +47,7 @@ class BenefitCostResult:
     vec_wa: list
     vec_avg_num_srs: list
     vec_max_num_srs: list
-    vec_num_srs_estimation: list
+    vec_num_srs_theory: list
     vec_space_amp_estimation: list
     vec_space_amp: Optional[list]
     def __init__(self):
@@ -62,7 +56,7 @@ class BenefitCostResult:
         self.vec_wa = []
         self.vec_avg_num_srs = []
         self.vec_max_num_srs = []
-        self.vec_num_srs_estimation = []
+        self.vec_num_srs_theory = []
         self.vec_space_amp_estimation = []
 def benefit_cost(C, k_n):
     result = BenefitCostResult()
@@ -82,7 +76,7 @@ def benefit_cost(C, k_n):
         result.vec_avg_num_srs.append(avg_num_srs)
         result.vec_max_num_srs.append(max_num_srs)
 
-        result.vec_num_srs_estimation.append(common.bound_ra(max_size, entropy_threshold))
+        result.vec_num_srs_theory.append(common.bound_ra(max_size, entropy_threshold))
         result.vec_space_amp_estimation.append(common.bound_sa(entropy_threshold))
 
         if S is not None:
@@ -97,10 +91,10 @@ num_marks = 5
 markevery = len(result_benefit_cost.vec_wa) // num_marks
 
 if S is None:
-    fig = plt.figure(dpi = 300, figsize = (cm_to_inch(DOUBLE_COL_WIDTH) / 3 * 2, cm_to_inch(4)), constrained_layout=True)
+    fig = plt.figure(dpi = 300, figsize = (common.double_col_inch / 3 * 2, 1.6), constrained_layout=True)
     gs = gridspec.GridSpec(1, 2, figure=fig)
 else:
-    fig = plt.figure(dpi = 300, figsize = (cm_to_inch(DOUBLE_COL_WIDTH), cm_to_inch(4)), constrained_layout=True)
+    fig = plt.figure(dpi = 300, figsize = (common.double_col_inch, 1.6), constrained_layout=True)
     gs = gridspec.GridSpec(1, 3, figure=fig)
 
 subfig = plt.subplot(gs[0, 0])
@@ -119,7 +113,7 @@ subfig = plt.subplot(gs[0, 1])
 ax = plt.gca()
 ax.set_xlabel('Entropy threshold')
 ax.set_ylabel('# of sorted runs')
-ax.plot(result_benefit_cost.vec_entropy_threshold, result_benefit_cost.vec_num_srs_estimation, linewidth=linewidth, marker='s', markevery=markevery, markersize=markersize, label='Theoretical bound')
+ax.plot(result_benefit_cost.vec_entropy_threshold, result_benefit_cost.vec_num_srs_theory, linewidth=linewidth, marker='s', markevery=markevery, markersize=markersize, label='Theoretical bound')
 ax.plot(result_benefit_cost.vec_entropy_threshold, result_benefit_cost.vec_max_num_srs, linewidth=linewidth, marker='o', markevery=markevery, markersize=markersize, label='Simulated max')
 ax.plot(result_benefit_cost.vec_entropy_threshold, result_benefit_cost.vec_avg_num_srs, linewidth=linewidth, marker='D', markevery=markevery, markersize=markersize, label='Simulated avg')
 ax.set_ylim(bottom=0)
@@ -134,7 +128,7 @@ if S is not None:
     ax.set_xlabel('Entropy threshold')
     ax.set_ylabel('Space amplification')
     ax.plot(result_benefit_cost.vec_entropy_threshold, result_benefit_cost.vec_space_amp_estimation, linewidth=linewidth, marker='s', markevery=markevery, markersize=markersize, label='Theoretical bound')
-    ax.plot(result_benefit_cost.vec_entropy_threshold, result_benefit_cost.vec_space_amp, linewidth=linewidth, marker='s', markevery=markevery, markersize=markersize, label='Simulated')
+    ax.plot(result_benefit_cost.vec_entropy_threshold, result_benefit_cost.vec_space_amp, linewidth=linewidth, marker='o', markevery=markevery, markersize=markersize, label='Simulated')
     ymax = math.ceil(max(result_benefit_cost.vec_space_amp_estimation))
     ax.set_ylim((1, ymax))
     plt.yticks(list(range(1, ymax + 1)))
