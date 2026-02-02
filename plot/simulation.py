@@ -141,3 +141,80 @@ plt.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01, metadata={'CreationD
 print('Plot saved to ' + pdf_path)
 if 'DISPLAY' in os.environ:
     plt.show()
+
+
+@dataclass
+class Result:
+    vec_wa_theory: list
+    vec_wa: list
+    vec_num_srs_theory: list
+    vec_avg_num_srs: list
+    vec_max_num_srs: list
+    def __init__(self):
+        self.vec_wa_theory = []
+        self.vec_wa = []
+        self.vec_num_srs_theory = []
+        self.vec_avg_num_srs = []
+        self.vec_max_num_srs = []
+result_leveling = Result()
+for T in range(3, 11):
+    (wa, avg_num_srs, max_num_srs, max_size) = Bc_inf.leveling(N, T, S)
+    L = math.log(S, T)
+    result_leveling.vec_wa_theory.append(T * L / 2)
+    result_leveling.vec_wa.append(wa)
+    result_leveling.vec_num_srs_theory.append(L)
+    result_leveling.vec_avg_num_srs.append(avg_num_srs)
+    result_leveling.vec_max_num_srs.append(max_num_srs)
+
+result_tiering = Result()
+for T in range(2, 11):
+    (wa, avg_num_srs, max_num_srs, max_size) = Bc_inf.tiering(N, T, S)
+    L = math.log(S, T)
+    result_tiering.vec_wa_theory.append(L)
+    result_tiering.vec_wa.append(wa)
+    result_tiering.vec_num_srs_theory.append((T-1) * L)
+    result_tiering.vec_avg_num_srs.append(avg_num_srs)
+    result_tiering.vec_max_num_srs.append(max_num_srs)
+
+fig = plt.figure(dpi = 300, figsize = (common.double_col_inch, 1.6), constrained_layout=True)
+gs = gridspec.GridSpec(1, 3, figure=fig)
+
+subfig = plt.subplot(gs[0, 0])
+ax = plt.gca()
+plt.xlabel('Write amplification')
+plt.ylabel('Avg # of sorted runs')
+ax.set_axisbelow(True)
+ax.grid(axis='y')
+ax.plot(result_leveling.vec_wa, result_leveling.vec_avg_num_srs, color=common.colors[0]['dark'], linewidth=linewidth, marker='s', markersize=markersize)
+ax.plot(result_tiering.vec_wa, result_tiering.vec_avg_num_srs, color=common.colors[1]['dark'], linewidth=linewidth, marker='o', markersize=markersize)
+ax.plot(result_benefit_cost.vec_wa, result_benefit_cost.vec_avg_num_srs, color=common.versions['benefit-cost']['color'], linewidth=linewidth, marker='D', markevery=markevery, markersize=markersize)
+ax.set_ylim(bottom=0)
+
+subfig = plt.subplot(gs[0, 1])
+ax = plt.gca()
+plt.xlabel('Write amplification')
+plt.ylabel('Max # of sorted runs')
+ax.set_axisbelow(True)
+ax.grid(axis='y')
+ax.plot(result_leveling.vec_wa, result_leveling.vec_max_num_srs, color=common.colors[0]['dark'], linewidth=linewidth, marker='s', markersize=markersize)
+ax.plot(result_tiering.vec_wa, result_tiering.vec_max_num_srs, color=common.colors[1]['dark'], linewidth=linewidth, marker='o', markersize=markersize)
+ax.plot(result_benefit_cost.vec_wa, result_benefit_cost.vec_max_num_srs, color=common.versions['benefit-cost']['color'], linewidth=linewidth, marker='D', markevery=markevery, markersize=markersize)
+ax.set_ylim(bottom=0)
+
+subfig = plt.subplot(gs[0, 2])
+ax = plt.gca()
+plt.xlabel('Bound on write amplification')
+plt.ylabel('Bound on # of sorted runs')
+ax.set_axisbelow(True)
+ax.grid(axis='y')
+ax.plot(result_leveling.vec_wa_theory, result_leveling.vec_num_srs_theory, color=common.colors[0]['dark'], linewidth=linewidth, marker='s', markersize=markersize)
+ax.plot(result_tiering.vec_wa_theory, result_tiering.vec_num_srs_theory, color=common.colors[1]['dark'], linewidth=linewidth, marker='o', markersize=markersize)
+ax.plot(result_benefit_cost.vec_wa_theory, result_benefit_cost.vec_num_srs_theory, color=common.versions['benefit-cost']['color'], linewidth=linewidth, marker='D', markevery=markevery, markersize=markersize)
+ax.set_ylim(bottom=0)
+
+fig.legend(['Leveling', 'Tiering', 'Entropy-based'], ncol=3, loc='upper center', bbox_to_anchor=(0.5, 1.14), frameon=False, borderaxespad=0,)
+pdf_path = get_pdf_path('simulation-srs')
+fig.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01, metadata={'CreationDate': None})
+print('Plot saved to ' + pdf_path)
+if 'DISPLAY' in os.environ:
+    plt.show()
