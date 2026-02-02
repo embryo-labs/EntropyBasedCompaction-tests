@@ -7,7 +7,10 @@ parser.add_argument('--entropy_threshold_begin', type=float, default=0.5)
 parser.add_argument('--entropy_threshold_step', type=float, default=0.01)
 parser.add_argument('--verbose', action='store_true')
 args = parser.parse_args()
-S = args.S
+if args.S == 0:
+    S = None
+else:
+    S = args.S
 N = args.N
 
 import sys
@@ -159,7 +162,10 @@ class Result:
 result_leveling = Result()
 for T in range(3, 11):
     (wa, avg_num_srs, max_num_srs, max_size) = Bc_inf.leveling(N, T, S)
-    L = math.log(S, T)
+    if S is None:
+        L = math.log(N, T)
+    else:
+        L = math.log(S, T)
     result_leveling.vec_wa_theory.append(T * L / 2)
     result_leveling.vec_wa.append(wa)
     result_leveling.vec_num_srs_theory.append(L)
@@ -169,7 +175,7 @@ for T in range(3, 11):
 result_tiering = Result()
 for T in range(2, 11):
     (wa, avg_num_srs, max_num_srs, max_size) = Bc_inf.tiering(N, T, S)
-    L = math.log(S, T)
+    L = math.log(N, T)
     result_tiering.vec_wa_theory.append(L)
     result_tiering.vec_wa.append(wa)
     result_tiering.vec_num_srs_theory.append((T-1) * L)
