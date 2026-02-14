@@ -260,6 +260,48 @@ class Tiering:
                 print(', ', end='')
             i += 1
 
+class Universal:
+    compaction_trigger: int
+    merge: Callable[[list], Any]
+    s: list
+    def __init__(self, compaction_trigger, merge=None):
+        self.compaction_trigger = compaction_trigger
+        if merge is None:
+            self.merge = lambda s: sum(s)
+        else:
+            self.merge = merge
+        self.s = []
+    def num_sorted_runs(self):
+        return len(self.s)
+    def size(self):
+        return sum(self.s)
+    def flush(self):
+        self.s.insert(0, 1)
+    def pick_and_do_compaction(self):
+        assert self.compaction_trigger >= 2
+        if len(self.s) < self.compaction_trigger:
+            return None
+        i = 0
+        while i < len(self.s) - 1:
+            sum = self.s[i]
+            j = i + 1
+            while j < len(self.s) and self.s[j] <= sum:
+                sum += self.s[j]
+                j += 1
+            j -= 1
+            if j > i:
+                break
+            i += 1
+        if i == len(self.s) - 1:
+            return None
+        assert i < j
+        written = self.merge(self.s[i:j+1])
+        del self.s[i:j]
+        self.s[i] = written
+        return written
+    def print_status(self):
+        print(self.s)
+
 class Merger:
     S: int
     def __init__(self, S):
@@ -284,6 +326,13 @@ def tiering(N, T, S=None, print_status=False):
         merge = Merger(S).merge
     return simulate(N, Tiering(T, merge), print_status)
 
+def universal(N, compaction_trigger, S=None, print_status=False):
+    if S is None:
+        merge = None
+    else:
+        merge = Merger(S).merge
+    return simulate(N, Universal(compaction_trigger, merge), print_status)
+
 def benefit_cost(N, entropy_threshold, S=None, C=None, k_n=None, print_status=False):
     if S is None:
         merge = None
@@ -296,11 +345,12 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-S', type=int)
     parser.add_argument('-N', type=int, required=True)
-    parser.add_argument('--policy', choices=['leveling', 'tiering', 'benefit-cost'], required=True)
+    parser.add_argument('--policy', choices=['leveling', 'tiering', 'universal', 'benefit-cost'], required=True)
     parser.add_argument('--entropy_threshold', type=float)
     parser.add_argument('-C', type=float)
     parser.add_argument('--k_n', type=float)
     parser.add_argument('-T', type=int)
+    parser.add_argument('--universal_compaction_trigger', type=int)
     args = parser.parse_args()
     print_status = True
 
@@ -309,6 +359,8 @@ if __name__ == '__main__':
         res = leveling(args.N, args.T, args.S, print_status)
     elif policy == 'tiering':
         res = tiering(args.N, args.T, args.S, print_status)
+    elif policy == 'universal':
+        res = universal(args.N, args.universal_compaction_trigger, args.S, print_status)
     elif policy == 'benefit-cost':
         res = benefit_cost(args.N, args.entropy_threshold, args.S, args.C, args.k_n, print_status)
     else:

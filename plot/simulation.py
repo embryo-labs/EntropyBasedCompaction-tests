@@ -25,6 +25,7 @@ import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 from matplotlib import gridspec
+from matplotlib.lines import Line2D
 
 import common
 
@@ -182,6 +183,39 @@ for T in range(2, 11):
     result_tiering.vec_avg_num_srs.append(avg_num_srs)
     result_tiering.vec_max_num_srs.append(max_num_srs)
 
+result_universal = Result()
+for compaction_trigger in range(2, 20):
+    (wa, avg_num_srs, max_num_srs, max_size) = Bc_inf.universal(N, compaction_trigger, S)
+    result_universal.vec_wa.append(wa)
+    result_universal.vec_avg_num_srs.append(avg_num_srs)
+    result_universal.vec_max_num_srs.append(max_num_srs)
+
+versions = [
+    {
+        'result': result_leveling,
+        'color': common.colors[0]['dark'],
+        'marker': 's',
+        'markevery': None,
+    },
+    {
+        'result': result_tiering,
+        'color': common.colors[1]['dark'],
+        'marker': 'o',
+        'markevery': None,
+    },
+    {
+        'result': result_universal,
+        'color': common.colors[3]['dark'],
+        'marker': '^',
+        'markevery': None,
+    },
+    {
+        'result': result_benefit_cost,
+        'color': common.versions['benefit-cost']['color'],
+        'marker': 'D',
+        'markevery': markevery,
+    },
+]
 fig = plt.figure(dpi = 300, figsize = (common.double_col_inch, 1.6), constrained_layout=True)
 gs = gridspec.GridSpec(1, 3, figure=fig)
 
@@ -191,9 +225,9 @@ plt.xlabel('Write amplification')
 plt.ylabel('Avg # of sorted runs')
 ax.set_axisbelow(True)
 ax.grid(axis='y')
-ax.plot(result_leveling.vec_wa, result_leveling.vec_avg_num_srs, color=common.colors[0]['dark'], linewidth=linewidth, marker='s', markersize=markersize)
-ax.plot(result_tiering.vec_wa, result_tiering.vec_avg_num_srs, color=common.colors[1]['dark'], linewidth=linewidth, marker='o', markersize=markersize)
-ax.plot(result_benefit_cost.vec_wa, result_benefit_cost.vec_avg_num_srs, color=common.versions['benefit-cost']['color'], linewidth=linewidth, marker='D', markevery=markevery, markersize=markersize)
+for version in versions:
+    result = version['result']
+    ax.plot(result.vec_wa, result.vec_avg_num_srs, color=version['color'], linewidth=linewidth, marker=version['marker'], markersize=markersize, markevery=version['markevery'])
 ax.set_ylim(bottom=0)
 
 subfig = plt.subplot(gs[0, 1])
@@ -202,9 +236,9 @@ plt.xlabel('Write amplification')
 plt.ylabel('Max # of sorted runs')
 ax.set_axisbelow(True)
 ax.grid(axis='y')
-ax.plot(result_leveling.vec_wa, result_leveling.vec_max_num_srs, color=common.colors[0]['dark'], linewidth=linewidth, marker='s', markersize=markersize)
-ax.plot(result_tiering.vec_wa, result_tiering.vec_max_num_srs, color=common.colors[1]['dark'], linewidth=linewidth, marker='o', markersize=markersize)
-ax.plot(result_benefit_cost.vec_wa, result_benefit_cost.vec_max_num_srs, color=common.versions['benefit-cost']['color'], linewidth=linewidth, marker='D', markevery=markevery, markersize=markersize)
+for version in versions:
+    result = version['result']
+    ax.plot(result.vec_wa, result.vec_max_num_srs, color=version['color'], linewidth=linewidth, marker=version['marker'], markersize=markersize, markevery=version['markevery'])
 ax.set_ylim(bottom=0)
 
 subfig = plt.subplot(gs[0, 2])
@@ -213,12 +247,17 @@ plt.xlabel('Bound on write amplification')
 plt.ylabel('Bound on # of sorted runs')
 ax.set_axisbelow(True)
 ax.grid(axis='y')
-ax.plot(result_leveling.vec_wa_theory, result_leveling.vec_num_srs_theory, color=common.colors[0]['dark'], linewidth=linewidth, marker='s', markersize=markersize)
-ax.plot(result_tiering.vec_wa_theory, result_tiering.vec_num_srs_theory, color=common.colors[1]['dark'], linewidth=linewidth, marker='o', markersize=markersize)
-ax.plot(result_benefit_cost.vec_wa_theory, result_benefit_cost.vec_num_srs_theory, color=common.versions['benefit-cost']['color'], linewidth=linewidth, marker='D', markevery=markevery, markersize=markersize)
+for version_idx, version in enumerate(versions):
+    if version_idx == 2:
+        continue
+    result = version['result']
+    ax.plot(result.vec_wa_theory, result.vec_num_srs_theory, color=version['color'], linewidth=linewidth, marker=version['marker'], markersize=markersize, markevery=version['markevery'])
 ax.set_ylim(bottom=0)
 
-fig.legend(['Leveling', 'Tiering', 'Entropy-based'], ncol=3, loc='upper center', bbox_to_anchor=(0.5, 1.14), frameon=False, borderaxespad=0,)
+handles = []
+for version in versions:
+    handles.append(Line2D([0], [0], color=version['color'], linewidth=linewidth, marker=version['marker'], markersize=markersize))
+fig.legend(handles, ['Leveling', 'Tiering', 'Universal', 'Entropy-based'], ncol=len(versions), loc='upper center', bbox_to_anchor=(0.5, 1.14), frameon=False, borderaxespad=0,)
 pdf_path = get_pdf_path('simulation-srs')
 fig.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01, metadata={'CreationDate': None})
 print('Plot saved to ' + pdf_path)
