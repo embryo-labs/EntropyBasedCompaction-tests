@@ -36,7 +36,7 @@ mpl.rcParams.update({
 
 import common
 
-
+our_path = 'preempt-only-by-entropy-ke-1-be-0'
 versions = [
     {
         'path': 'rocksdb-tuned',
@@ -45,29 +45,34 @@ versions = [
         'path': 'universal',
     },
     {
-        'path': 'benefit-cost',
+        'path': our_path,
     },
     {
+        'path': our_path,
         'reserve-MB-s': 10,
         'facecolor': common.colors[1]['light'],
         'hatch': '---',
     },
     {
+        'path': our_path,
         'reserve-MB-s': 30,
         'facecolor': common.colors[3]['light'],
         'hatch': '--\\\\'
     },
     {
+        'path': our_path,
         'reserve-MB-s': 50,
         'facecolor': common.colors[4]['light'],
         'hatch': '--//',
     },
     {
+        'path': our_path,
         'reserve-MB-s': 70,
         'facecolor': common.colors[6]['light'],
         'hatch': '--XX'
     },
     {
+        'path': our_path,
         'reserve-MB-s': 90,
         'facecolor': common.colors[7]['light'],
         'hatch': 'XXXX',
@@ -75,11 +80,11 @@ versions = [
 ]
 version_names = []
 for version in versions:
-    if 'path' in version:
+    if 'reserve-MB-s' in version:
+        version_names.append(str(version['reserve-MB-s']) + 'MB/s')
+    else:
         version_names.append(common.versions[version['path']]['name'])
         version.update(common.versions[version['path']])
-    else:
-        version_names.append(str(version['reserve-MB-s']) + 'MB/s')
 
 bar_width = 1 / (len(versions) + 1)
 cluster_width = bar_width * len(versions)
@@ -124,17 +129,12 @@ fig.legend(handles=handles, labels=version_names, ncol=4,
 for col, write_MB_s in enumerate(vec_write_MB_s):
     for version_idx, version in enumerate(versions):
         x = -cluster_width / 2 + bar_width / 2 + version_idx * bar_width
-        if 'path' in version:
-            if version['path'] in ['rocksdb-tuned', 'universal']:
-                workload = 'readwhilewriting-key-16' + value + '-unique-size-10GB-warmup-secs-' + str(warmup_secs) + '-run-secs-' + str(run_secs) + '-memtable-8MiB' + compaction + '-write-' + str(write_MB_s) + 'MB-s' + read_workload
-                data_dir = os.path.join(dir, workload, version['path'])
-            else:
-                assert version['path'] == 'benefit-cost'
-                workload = 'readwhilewriting-key-16' + value + '-unique-size-10GB-warmup-secs-' + str(warmup_secs) + '-run-secs-' + str(run_secs) + '-memtable-8MiB-max-running-bg-jobs-1' + compaction + '-write-' + str(write_MB_s) + 'MB-s' + read_workload
-                data_dir = os.path.join(dir, workload, 'benefit-cost')
+        if 'reserve-MB-s' in version:
+            io_sa = '-io_sa-' + str(version['reserve-MB-s']) + 'MB-s'
         else:
-            workload = 'readwhilewriting-key-16' + value + '-unique-size-10GB-warmup-secs-' + str(warmup_secs) + '-run-secs-' + str(run_secs) + '-memtable-8MiB-max-running-bg-jobs-1-io_sa-' + str(version['reserve-MB-s']) + 'MB-s' + compaction + '-write-' + str(write_MB_s) + 'MB-s' + read_workload
-            data_dir = os.path.join(dir, workload, 'benefit-cost')
+            io_sa = ''
+        workload = f'readwhilewriting-key-16{value}-unique-size-10GB-warmup-secs-{warmup_secs}-run-secs-{run_secs}-memtable-8MiB{io_sa}{compaction}-write-{write_MB_s}MB-s{read_workload}'
+        data_dir = os.path.join(dir, workload, version['path'])
 
         report = pd.read_csv(os.path.join(data_dir, 'report.csv'))
         panels[0]['ax'][col].bar(x, np.percentile(report['num-sorted-runs'], 99), width=bar_width, facecolor=version['facecolor'], edgecolor='black', linewidth=0.5, hatch=version['hatch'])
