@@ -11,6 +11,9 @@ warmup_secs = 1200
 run_secs = 1200
 read_workload = '-get-0.87-seek-0.13-nexts-48'
 
+preemption = '-soft-preemption'
+max_running_bg_jobs = ''
+
 unique_size = '10GB'
 
 # The humanfriendly module requires Python <= 3.12
@@ -53,7 +56,7 @@ versions = [
         'path': 'universal',
     },
     {
-        'path': 'benefit-cost',
+        'path': 'preempt-only-by-entropy-ke-1-be-0',
     },
 ]
 
@@ -70,10 +73,7 @@ data_cache = {}
 for i, write_MB_s in enumerate(vec_write_MB_s):
     data_cache[i] = {}
     for version_idx, version in enumerate(versions):
-        workload = 'readwhilewriting-key-16' + value + '-unique-size-10GB-warmup-secs-' + str(warmup_secs) + '-run-secs-' + str(run_secs) + '-memtable-8MiB'
-        if version['path'] in ['tiering2', 'tiering4', 'tiering8', 'benefit-cost']:
-            workload += '-max-running-bg-jobs-1'
-        workload += compaction + '-write-' + str(write_MB_s) + 'MB-s' + read_workload
+        workload = f'readwhilewriting-key-16{value}-unique-size-10GB-warmup-secs-{warmup_secs}-run-secs-{run_secs}-memtable-8MiB{max_running_bg_jobs}{compaction}-write-{write_MB_s}MB-s{read_workload}'
         data_dir = os.path.join(dir, workload, version['path'])
         report = pd.read_csv(os.path.join(data_dir, 'report.csv'))
         data_cache[i][version_idx] = {
@@ -119,7 +119,7 @@ def draw(fig, outer_grid, panels):
     handles = [mpl.patches.Patch(facecolor=v['facecolor'], hatch=v['hatch'], 
                                 edgecolor='black', linewidth=0.5) for v in versions]
     fig.legend(handles=handles, labels=version_names, ncol=len(versions), 
-            loc='upper center', bbox_to_anchor=(0.5, 0.99), frameon=False, 
+            loc='upper center', bbox_to_anchor=(0.44, 0.99), frameon=False, 
             handlelength=1.5, handletextpad=0.5, columnspacing=1.0)
 
     renderer = fig.canvas.get_renderer()
@@ -173,7 +173,7 @@ draw(fig, outer_grid, [
         "log_scale": [False, False, False]
     }
 ])
-pdf_path = os.path.join(dir, f'const-write-rates{value}{compaction}-warmup-{warmup_secs}-run-{run_secs}{read_workload}.pdf')
+pdf_path = os.path.join(dir, f'const-write-rates{value}{compaction}-warmup-{warmup_secs}-run-{run_secs}{read_workload}{preemption}.pdf')
 plt.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01, metadata={'CreationDate': None})
 print(f'Plot saved to {pdf_path}')
 
@@ -212,6 +212,6 @@ draw(fig, outer_grid, [
         'log_scale': [False, False, False],
     },
 ])
-pdf_path = os.path.join(dir, f'const-write-rates-read-latency{value}{compaction}-warmup-{warmup_secs}-run-{run_secs}{read_workload}.pdf')
+pdf_path = os.path.join(dir, f'const-write-rates-read-latency{value}{compaction}-warmup-{warmup_secs}-run-{run_secs}{read_workload}{preemption}.pdf')
 plt.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01, metadata={'CreationDate': None})
 print(f'Plot saved to {pdf_path}')
