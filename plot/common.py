@@ -124,7 +124,7 @@ versions = {
         'facecolor': colors[5]['light'],
         'hatch': '\\\\\\',
     },
-    'benefit-cost': {
+    'preempt-only-by-entropy-ke-1-be-0': {
         'name': 'EUC',
         'color': colors[2]['dark'],
         'facecolor': colors[2]['light'],
