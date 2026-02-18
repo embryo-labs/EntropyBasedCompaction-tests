@@ -6,7 +6,6 @@ parser.add_argument('-N', type=int, default=10000)
 parser.add_argument('--entropy_threshold_begin', type=float, default=0.5)
 parser.add_argument('--entropy_threshold_end', type=float, default=5)
 parser.add_argument('--entropy_threshold_step', type=float, default=0.1)
-parser.add_argument('--print_write_amp', action='store_true')
 parser.add_argument('--verbose', action='store_true')
 args = parser.parse_args()
 if args.S == 0:
@@ -68,18 +67,12 @@ def benefit_cost(C, k_n):
     result = BenefitCostResult()
     if S is not None:
         result.vec_space_amp = []
-    if args.print_write_amp or args.verbose:
-        print('Threshold\twrite-amp', end='')
     if args.verbose:
-        print('\tavg-num-srs\tmax-num-srs', end='')
-    print()
+        print('Threshold\twrite-amp\tavg-num-srs\tmax-num-srs')
     for entropy_threshold in np.arange(args.entropy_threshold_begin, args.entropy_threshold_end + args.entropy_threshold_step, args.entropy_threshold_step):
         (wa, avg_num_srs, max_num_srs, max_size) = Bc_inf.benefit_cost(N, entropy_threshold, S, C, k_n)
-        if args.print_write_amp or args.verbose:
-            print('%f\t%f' %(entropy_threshold, wa), end='')
         if args.verbose:
-            print('\t%f\t%f' %(avg_num_srs, max_num_srs), end='')
-        print()
+            print('%f\t%f\t%f\t%f' %(entropy_threshold, wa, avg_num_srs, max_num_srs))
         result.vec_entropy_threshold.append(entropy_threshold)
         if S is None:
             wa_theory = math.log2(N) / entropy_threshold
