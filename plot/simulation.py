@@ -214,7 +214,7 @@ versions = [
     },
     {
         'result': result_benefit_cost,
-        'color': common.versions['benefit-cost']['color'],
+        'color': common.versions['preempt-only-by-entropy-ke-1-be-0']['color'],
         'marker': 'D',
         'markevery': markevery,
     },
