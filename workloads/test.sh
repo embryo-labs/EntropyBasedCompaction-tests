@@ -73,7 +73,6 @@ with_policy_preempt_only_by_entropy() (
 	"$@" \
 		--compaction_style=5 \
 		--num_levels=1 \
-		--sliding_window=false \
 		--preempt_by_entropy=true \
 		--preempt_by_num=false \
 		--k_e="$k_e" \
@@ -83,7 +82,6 @@ with_policy_preempt_only_by_num() {
 	"$@" \
 		--compaction_style=5 \
 		--num_levels=1 \
-		--sliding_window=false \
 		--preempt_by_entropy=false \
 		--preempt_by_num=true
 }
