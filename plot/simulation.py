@@ -3,9 +3,6 @@ import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument('-S', type=int, default=1000)
 parser.add_argument('-N', type=int, default=10000)
-parser.add_argument('--entropy_threshold_begin', type=float, default=0.5)
-parser.add_argument('--entropy_threshold_end', type=float, default=5)
-parser.add_argument('--entropy_threshold_step', type=float, default=0.1)
 parser.add_argument('--verbose', action='store_true')
 args = parser.parse_args()
 if args.S == 0:
@@ -35,7 +32,7 @@ def get_pdf_path(prefix):
         S_str = '-S-' + str(S)
     else:
         S_str = ''
-    return f'{prefix}{S_str}-N-{N}-entropy_threshold-begin-{args.entropy_threshold_begin}-end-{args.entropy_threshold_end}-step-{args.entropy_threshold_step}.pdf'
+    return f'{prefix}{S_str}-N-{N}.pdf'
 
 mpl.rcParams.update({
     'hatch.linewidth': 0.5,
@@ -69,11 +66,12 @@ def benefit_cost(C, k_n):
         result.vec_space_amp = []
     if args.verbose:
         print('Threshold\twrite-amp\tavg-num-srs\tmax-num-srs')
-    for entropy_threshold in np.arange(args.entropy_threshold_begin, args.entropy_threshold_end + args.entropy_threshold_step, args.entropy_threshold_step):
+    for entropy_threshold in [0.5, 0.6, 0.8, 1, 1.2, 1.5, 2, 3, 4, 5]:
         (wa, avg_num_srs, max_num_srs, max_size) = Bc_inf.benefit_cost(N, entropy_threshold, S, C, k_n)
         if args.verbose:
             print('%f\t%f\t%f\t%f' %(entropy_threshold, wa, avg_num_srs, max_num_srs))
         result.vec_entropy_threshold.append(entropy_threshold)
+
         if S is None:
             wa_theory = math.log2(N) / entropy_threshold
         else:
@@ -94,9 +92,6 @@ result_benefit_cost = benefit_cost(None, None)
 linewidth = 1
 markersize = 3
 
-num_marks = 5
-markevery = len(result_benefit_cost.vec_wa) // num_marks
-
 if S is None:
     fig = plt.figure(dpi = 300, figsize = (common.double_col_inch / 3 * 2, 1.6), constrained_layout=True)
     gs = gridspec.GridSpec(1, 2, figure=fig)
@@ -108,8 +103,8 @@ subfig = plt.subplot(gs[0, 0])
 ax = plt.gca()
 ax.set_xlabel('Entropy threshold')
 ax.set_ylabel('Write amplification')
-ax.plot(result_benefit_cost.vec_entropy_threshold, result_benefit_cost.vec_wa_theory, linewidth=linewidth, marker='s', markevery=markevery, markersize=markersize, label='Theoretical bound')
-ax.plot(result_benefit_cost.vec_entropy_threshold, result_benefit_cost.vec_wa, linewidth=linewidth, marker='o', markevery=markevery, markersize=markersize, label='Simulated')
+ax.plot(result_benefit_cost.vec_entropy_threshold, result_benefit_cost.vec_wa_theory, linewidth=linewidth, marker='s', markersize=markersize, label='Theoretical bound')
+ax.plot(result_benefit_cost.vec_entropy_threshold, result_benefit_cost.vec_wa, linewidth=linewidth, marker='o', markersize=markersize, label='Simulated')
 ax.set_ylim(bottom=0)
 ax.set_axisbelow(True)
 ax.grid(axis='y')
@@ -120,9 +115,9 @@ subfig = plt.subplot(gs[0, 1])
 ax = plt.gca()
 ax.set_xlabel('Entropy threshold')
 ax.set_ylabel('# of sorted runs')
-ax.plot(result_benefit_cost.vec_entropy_threshold, result_benefit_cost.vec_num_srs_theory, linewidth=linewidth, marker='s', markevery=markevery, markersize=markersize, label='Theoretical bound')
-ax.plot(result_benefit_cost.vec_entropy_threshold, result_benefit_cost.vec_max_num_srs, linewidth=linewidth, marker='o', markevery=markevery, markersize=markersize, label='Simulated max')
-ax.plot(result_benefit_cost.vec_entropy_threshold, result_benefit_cost.vec_avg_num_srs, linewidth=linewidth, marker='D', markevery=markevery, markersize=markersize, label='Simulated avg')
+ax.plot(result_benefit_cost.vec_entropy_threshold, result_benefit_cost.vec_num_srs_theory, linewidth=linewidth, marker='s', markersize=markersize, label='Theoretical bound')
+ax.plot(result_benefit_cost.vec_entropy_threshold, result_benefit_cost.vec_max_num_srs, linewidth=linewidth, marker='o', markersize=markersize, label='Simulated max')
+ax.plot(result_benefit_cost.vec_entropy_threshold, result_benefit_cost.vec_avg_num_srs, linewidth=linewidth, marker='D', markersize=markersize, label='Simulated avg')
 ax.set_ylim(bottom=0)
 ax.set_axisbelow(True)
 ax.grid(axis='y')
@@ -134,8 +129,8 @@ if S is not None:
     ax = plt.gca()
     ax.set_xlabel('Entropy threshold')
     ax.set_ylabel('Space amplification')
-    ax.plot(result_benefit_cost.vec_entropy_threshold, result_benefit_cost.vec_space_amp_estimation, linewidth=linewidth, marker='s', markevery=markevery, markersize=markersize, label='Theoretical bound')
-    ax.plot(result_benefit_cost.vec_entropy_threshold, result_benefit_cost.vec_space_amp, linewidth=linewidth, marker='o', markevery=markevery, markersize=markersize, label='Simulated')
+    ax.plot(result_benefit_cost.vec_entropy_threshold, result_benefit_cost.vec_space_amp_estimation, linewidth=linewidth, marker='s', markersize=markersize, label='Theoretical bound')
+    ax.plot(result_benefit_cost.vec_entropy_threshold, result_benefit_cost.vec_space_amp, linewidth=linewidth, marker='o', markersize=markersize, label='Simulated')
     ymax = math.ceil(max(result_benefit_cost.vec_space_amp_estimation))
     ax.set_ylim((1, ymax))
     plt.yticks(list(range(1, ymax + 1)))
@@ -177,7 +172,7 @@ for T in range(3, 11):
     result_leveling.vec_max_num_srs.append(max_num_srs)
 
 result_tiering = Result()
-for T in range(2, 11):
+for T in [2, 3, 4, 6, 10, 20]:
     (wa, avg_num_srs, max_num_srs, max_size) = Bc_inf.tiering(N, T, S)
     L = math.log(N, T)
     result_tiering.vec_wa_theory.append(L)
@@ -187,8 +182,13 @@ for T in range(2, 11):
     result_tiering.vec_max_num_srs.append(max_num_srs)
 
 result_universal = Result()
-for compaction_trigger in range(2, 20):
-    (wa, avg_num_srs, max_num_srs, max_size) = Bc_inf.universal(N, compaction_trigger, S)
+for compaction_trigger in [90, 80, 70, 60, 50, 40, 30, 20, 10, 4, 3]:
+    (wa, avg_num_srs, max_num_srs, max_size) = Bc_inf.universal(N, compaction_trigger, 1, S)
+    result_universal.vec_wa.append(wa)
+    result_universal.vec_avg_num_srs.append(avg_num_srs)
+    result_universal.vec_max_num_srs.append(max_num_srs)
+for size_ratio_trigger in np.arange(1, 10, 1):
+    (wa, avg_num_srs, max_num_srs, max_size) = Bc_inf.universal(N, 2, size_ratio_trigger, S)
     result_universal.vec_wa.append(wa)
     result_universal.vec_avg_num_srs.append(avg_num_srs)
     result_universal.vec_max_num_srs.append(max_num_srs)
@@ -198,25 +198,21 @@ versions = [
         'result': result_leveling,
         'color': common.colors[0]['dark'],
         'marker': 's',
-        'markevery': None,
     },
     {
         'result': result_tiering,
         'color': common.colors[1]['dark'],
         'marker': 'o',
-        'markevery': None,
     },
     {
         'result': result_universal,
         'color': common.colors[3]['dark'],
         'marker': '^',
-        'markevery': None,
     },
     {
         'result': result_benefit_cost,
         'color': common.versions['preempt-only-by-entropy-ke-1-be-0']['color'],
         'marker': 'D',
-        'markevery': markevery,
     },
 ]
 fig = plt.figure(dpi = 300, figsize = (common.double_col_inch, 1.6), constrained_layout=True)
@@ -230,7 +226,7 @@ ax.set_axisbelow(True)
 ax.grid(axis='y')
 for version in versions:
     result = version['result']
-    ax.plot(result.vec_wa, result.vec_avg_num_srs, color=version['color'], linewidth=linewidth, marker=version['marker'], markersize=markersize, markevery=version['markevery'])
+    ax.plot(result.vec_wa, result.vec_avg_num_srs, color=version['color'], linewidth=linewidth, marker=version['marker'], markersize=markersize)
 ax.set_ylim(bottom=0)
 
 subfig = plt.subplot(gs[0, 1])
@@ -241,7 +237,7 @@ ax.set_axisbelow(True)
 ax.grid(axis='y')
 for version in versions:
     result = version['result']
-    ax.plot(result.vec_wa, result.vec_max_num_srs, color=version['color'], linewidth=linewidth, marker=version['marker'], markersize=markersize, markevery=version['markevery'])
+    ax.plot(result.vec_wa, result.vec_max_num_srs, color=version['color'], linewidth=linewidth, marker=version['marker'], markersize=markersize)
 ax.set_ylim(bottom=0)
 
 subfig = plt.subplot(gs[0, 2])
@@ -254,7 +250,7 @@ for version_idx, version in enumerate(versions):
     if version_idx == 2:
         continue
     result = version['result']
-    ax.plot(result.vec_wa_theory, result.vec_num_srs_theory, color=version['color'], linewidth=linewidth, marker=version['marker'], markersize=markersize, markevery=version['markevery'])
+    ax.plot(result.vec_wa_theory, result.vec_num_srs_theory, color=version['color'], linewidth=linewidth, marker=version['marker'], markersize=markersize)
 ax.set_ylim(bottom=0)
 
 handles = []

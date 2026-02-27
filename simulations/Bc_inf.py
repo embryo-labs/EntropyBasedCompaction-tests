@@ -262,10 +262,12 @@ class Tiering:
 
 class Universal:
     compaction_trigger: int
+    size_ratio_trigger: float
     merge: Callable[[list], Any]
     s: list
-    def __init__(self, compaction_trigger, merge=None):
+    def __init__(self, compaction_trigger, size_ratio_trigger, merge=None):
         self.compaction_trigger = compaction_trigger
+        self.size_ratio_trigger = size_ratio_trigger
         if merge is None:
             self.merge = lambda s: sum(s)
         else:
@@ -285,7 +287,7 @@ class Universal:
         while i < len(self.s) - 1:
             sum = self.s[i]
             j = i + 1
-            while j < len(self.s) and self.s[j] <= sum:
+            while j < len(self.s) and self.s[j] <= sum * self.size_ratio_trigger:
                 sum += self.s[j]
                 j += 1
             j -= 1
@@ -326,12 +328,12 @@ def tiering(N, T, S=None, print_status=False):
         merge = Merger(S).merge
     return simulate(N, Tiering(T, merge), print_status)
 
-def universal(N, compaction_trigger, S=None, print_status=False):
+def universal(N, compaction_trigger, universal_size_ratio_trigger, S=None, print_status=False):
     if S is None:
         merge = None
     else:
         merge = Merger(S).merge
-    return simulate(N, Universal(compaction_trigger, merge), print_status)
+    return simulate(N, Universal(compaction_trigger, universal_size_ratio_trigger, merge), print_status)
 
 def benefit_cost(N, entropy_threshold, S=None, C=None, k_n=None, print_status=False):
     if S is None:
@@ -351,6 +353,7 @@ if __name__ == '__main__':
     parser.add_argument('--k_n', type=float)
     parser.add_argument('-T', type=int)
     parser.add_argument('--universal_compaction_trigger', type=int)
+    parser.add_argument('--universal_size_ratio_trigger', type=float, default=1)
     args = parser.parse_args()
     print_status = True
 
@@ -360,7 +363,7 @@ if __name__ == '__main__':
     elif policy == 'tiering':
         res = tiering(args.N, args.T, args.S, print_status)
     elif policy == 'universal':
-        res = universal(args.N, args.universal_compaction_trigger, args.S, print_status)
+        res = universal(args.N, args.universal_compaction_trigger, args.universal_size_ratio_trigger, args.S, print_status)
     elif policy == 'benefit-cost':
         res = benefit_cost(args.N, args.entropy_threshold, args.S, args.C, args.k_n, print_status)
     else:
