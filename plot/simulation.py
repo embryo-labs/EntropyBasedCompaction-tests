@@ -152,12 +152,15 @@ class Result:
     vec_num_srs_theory: list
     vec_avg_num_srs: list
     vec_max_num_srs: list
+    vec_space_amp: Optional[list]
     def __init__(self):
         self.vec_wa_theory = []
         self.vec_wa = []
         self.vec_num_srs_theory = []
         self.vec_avg_num_srs = []
         self.vec_max_num_srs = []
+        if S is not None:
+            self.vec_space_amp = []
 result_leveling = Result()
 for T in range(3, 11):
     (wa, avg_num_srs, max_num_srs, max_size) = Bc_inf.leveling(N, T, S)
@@ -170,6 +173,8 @@ for T in range(3, 11):
     result_leveling.vec_num_srs_theory.append(L)
     result_leveling.vec_avg_num_srs.append(avg_num_srs)
     result_leveling.vec_max_num_srs.append(max_num_srs)
+    if S is not None:
+        result_leveling.vec_space_amp.append(max_size / S)
 
 result_tiering = Result()
 for T in [2, 3, 4, 6, 10, 20]:
@@ -180,6 +185,8 @@ for T in [2, 3, 4, 6, 10, 20]:
     result_tiering.vec_num_srs_theory.append((T-1) * L)
     result_tiering.vec_avg_num_srs.append(avg_num_srs)
     result_tiering.vec_max_num_srs.append(max_num_srs)
+    if S is not None:
+        result_tiering.vec_space_amp.append(max_size / S)
 
 result_universal = Result()
 for compaction_trigger in [90, 80, 70, 60, 50, 40, 30, 20, 10, 4, 3]:
@@ -187,11 +194,15 @@ for compaction_trigger in [90, 80, 70, 60, 50, 40, 30, 20, 10, 4, 3]:
     result_universal.vec_wa.append(wa)
     result_universal.vec_avg_num_srs.append(avg_num_srs)
     result_universal.vec_max_num_srs.append(max_num_srs)
+    if S is not None:
+        result_universal.vec_space_amp.append(max_size / S)
 for size_ratio_trigger in np.arange(1, 10, 1):
     (wa, avg_num_srs, max_num_srs, max_size) = Bc_inf.universal(N, 2, size_ratio_trigger, S)
     result_universal.vec_wa.append(wa)
     result_universal.vec_avg_num_srs.append(avg_num_srs)
     result_universal.vec_max_num_srs.append(max_num_srs)
+    if S is not None:
+        result_universal.vec_space_amp.append(max_size / S)
 
 versions = [
     {
