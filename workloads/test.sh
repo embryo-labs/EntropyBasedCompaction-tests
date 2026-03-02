@@ -34,6 +34,11 @@ with_policy_universal() {
 		--compaction_style=1 \
 		--num_levels=1
 }
+with_policy_entropy_based_universal() {
+	"$@" \
+		--compaction_style=7 \
+		--num_levels=1
+}
 with_policy_tiering() (
 	T=$1
 	shift
@@ -73,6 +78,10 @@ with_policy_preempt_only_by_num() {
 		--preempt_by_num=true
 }
 
+no_exclude_small() {
+	"$@" \
+		--exclude_small_sorted_runs=false
+}
 preempt_only_by_entropy() (
 	b_e=$1
 	shift
@@ -81,6 +90,13 @@ preempt_only_by_entropy() (
 		--preempt_by_num=false \
 		--b_e="$b_e"
 )
+
+with_compaction_trigger() {
+	compaction_trigger=$1
+	shift
+	suffix="-compaction-trigger-$compaction_trigger$suffix" "$@" \
+		--level0_file_num_compaction_trigger=$compaction_trigger
+}
 
 with_threads() (
 	threads=$1
