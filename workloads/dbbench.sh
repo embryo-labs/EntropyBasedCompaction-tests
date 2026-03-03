@@ -12,7 +12,7 @@ shift
 workspace=$(realpath "$(dirname $0)"/../..)
 echo Output dir: "$output_dir"
 
-ulimit -n 1000000
+ulimit -n 524288
 # Dump core when crash
 ulimit -c unlimited
 export ASAN_OPTIONS="abort_on_error=1:disable_coredump=0"
