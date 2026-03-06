@@ -34,10 +34,14 @@ with_policy_universal() {
 		--compaction_style=1 \
 		--num_levels=1
 }
-with_policy_entropy_based_universal() {
+with_policy_entropy_based() {
 	"$@" \
 		--compaction_style=7 \
 		--num_levels=1
+}
+with_policy_entropy_based_universal() {
+	with_policy_entropy_based "$@" \
+		--pick_candidates_with_universal=true
 }
 with_policy_tiering() (
 	T=$1
