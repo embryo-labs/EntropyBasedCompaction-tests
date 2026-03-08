@@ -86,6 +86,11 @@ no_exclude_small() {
 	"$@" \
 		--exclude_small_sorted_runs=false
 }
+no_preemption_conditions() {
+	"$@" \
+		--preempt_by_entropy=false \
+		--preempt_by_num=false
+}
 preempt_only_by_entropy() (
 	b_e=$1
 	shift
