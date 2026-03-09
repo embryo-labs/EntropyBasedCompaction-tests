@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 import argparse
 parser = argparse.ArgumentParser()
-parser.add_argument('-S', type=int, default=1000)
-parser.add_argument('-N', type=int, default=10000)
+parser.add_argument('-S', type=int, default=1250)
+parser.add_argument('-N', type=int, default=100000)
 parser.add_argument('--verbose', action='store_true')
 args = parser.parse_args()
 if args.S == 0:
@@ -42,6 +42,7 @@ mpl.rcParams.update({
     'font.size': 9,
 })
 
+entropy_thresholds = [0.5, 0.6, 0.8, 1, 1.2, 1.5, 2, 3, 4, 5]
 @dataclass
 class BenefitCostResult:
     vec_entropy_threshold: list
@@ -60,34 +61,31 @@ class BenefitCostResult:
         self.vec_max_num_srs = []
         self.vec_num_srs_theory = []
         self.vec_space_amp_estimation = []
-def benefit_cost(C, k_n):
-    result = BenefitCostResult()
-    if S is not None:
-        result.vec_space_amp = []
+result_benefit_cost = BenefitCostResult()
+if S is not None:
+    result_benefit_cost.vec_space_amp = []
+if args.verbose:
+    print('Threshold\twrite-amp\tavg-num-srs\tmax-num-srs')
+for entropy_threshold in entropy_thresholds:
+    (wa, avg_num_srs, max_num_srs, max_size) = Bc_inf.benefit_cost(N, entropy_threshold, S, None, None)
     if args.verbose:
-        print('Threshold\twrite-amp\tavg-num-srs\tmax-num-srs')
-    for entropy_threshold in [0.5, 0.6, 0.8, 1, 1.2, 1.5, 2, 3, 4, 5]:
-        (wa, avg_num_srs, max_num_srs, max_size) = Bc_inf.benefit_cost(N, entropy_threshold, S, C, k_n)
-        if args.verbose:
-            print('%f\t%f\t%f\t%f' %(entropy_threshold, wa, avg_num_srs, max_num_srs))
-        result.vec_entropy_threshold.append(entropy_threshold)
+        print('%f\t%f\t%f\t%f' %(entropy_threshold, wa, avg_num_srs, max_num_srs))
+    result_benefit_cost.vec_entropy_threshold.append(entropy_threshold)
 
-        if S is None:
-            wa_theory = math.log2(N) / entropy_threshold
-        else:
-            wa_theory = common.bound_wa(S, entropy_threshold)
-        result.vec_wa_theory.append(wa_theory)
-        result.vec_wa.append(wa)
-        result.vec_avg_num_srs.append(avg_num_srs)
-        result.vec_max_num_srs.append(max_num_srs)
+    if S is None:
+        wa_theory = math.log2(N) / entropy_threshold
+    else:
+        wa_theory = common.bound_wa(S, entropy_threshold)
+    result_benefit_cost.vec_wa_theory.append(wa_theory)
+    result_benefit_cost.vec_wa.append(wa)
+    result_benefit_cost.vec_avg_num_srs.append(avg_num_srs)
+    result_benefit_cost.vec_max_num_srs.append(max_num_srs)
 
-        result.vec_num_srs_theory.append(common.bound_ra(max_size, entropy_threshold))
-        result.vec_space_amp_estimation.append(common.bound_sa(entropy_threshold))
+    result_benefit_cost.vec_num_srs_theory.append(common.bound_ra(max_size, entropy_threshold))
+    result_benefit_cost.vec_space_amp_estimation.append(common.bound_sa(entropy_threshold))
 
-        if S is not None:
-            result.vec_space_amp.append(max_size / S)
-    return result
-result_benefit_cost = benefit_cost(None, None)
+    if S is not None:
+        result_benefit_cost.vec_space_amp.append(max_size / S)
 
 linewidth = 1
 markersize = 3
@@ -105,9 +103,10 @@ ax.set_xlabel('Entropy threshold')
 ax.set_ylabel('Write amplification')
 ax.plot(result_benefit_cost.vec_entropy_threshold, result_benefit_cost.vec_wa_theory, linewidth=linewidth, marker='s', markersize=markersize, label='Theoretical bound')
 ax.plot(result_benefit_cost.vec_entropy_threshold, result_benefit_cost.vec_wa, linewidth=linewidth, marker='o', markersize=markersize, label='Simulated')
+ax.set_xticks([0, 1, 2, 3, 4, 5])
 ax.set_ylim(bottom=0)
 ax.set_axisbelow(True)
-ax.grid(axis='y')
+ax.grid()
 lines, labels = ax.get_legend_handles_labels()
 ax.legend(lines, labels, handlelength=1, handletextpad=0.5, columnspacing=1.5)
 
@@ -115,28 +114,43 @@ subfig = plt.subplot(gs[0, 1])
 ax = plt.gca()
 ax.set_xlabel('Entropy threshold')
 ax.set_ylabel('# of sorted runs')
-ax.plot(result_benefit_cost.vec_entropy_threshold, result_benefit_cost.vec_num_srs_theory, linewidth=linewidth, marker='s', markersize=markersize, label='Theoretical bound')
-ax.plot(result_benefit_cost.vec_entropy_threshold, result_benefit_cost.vec_max_num_srs, linewidth=linewidth, marker='o', markersize=markersize, label='Simulated max')
-ax.plot(result_benefit_cost.vec_entropy_threshold, result_benefit_cost.vec_avg_num_srs, linewidth=linewidth, marker='D', markersize=markersize, label='Simulated avg')
+ax.plot(result_benefit_cost.vec_entropy_threshold, result_benefit_cost.vec_num_srs_theory, color=common.colors[0]['dark'], linewidth=linewidth)
+ax.plot(result_benefit_cost.vec_entropy_threshold, result_benefit_cost.vec_max_num_srs, color=common.colors[1]['dark'], linewidth=linewidth)
+ax.plot(result_benefit_cost.vec_entropy_threshold, result_benefit_cost.vec_avg_num_srs, color=common.colors[2]['dark'], linewidth=linewidth)
+for entropy_threshold in [0.5, 1, 2, 3, 4, 5]:
+    i = entropy_thresholds.index(entropy_threshold)
+    ax.scatter(entropy_threshold, result_benefit_cost.vec_num_srs_theory[i], marker='s', color=common.colors[0]['dark'], s=15, linewidth=0, zorder=2)
+    ax.scatter(entropy_threshold, result_benefit_cost.vec_max_num_srs[i], marker='o', color=common.colors[1]['dark'], s=15, linewidth=0, zorder=2)
+    ax.scatter(entropy_threshold, result_benefit_cost.vec_avg_num_srs[i], marker='D', color=common.colors[2]['dark'], s=15, linewidth=0, zorder=2)
+ax.set_xticks([0, 1, 2, 3, 4, 5])
 ax.set_ylim(bottom=0)
 ax.set_axisbelow(True)
-ax.grid(axis='y')
-lines, labels = ax.get_legend_handles_labels()
-ax.legend(lines, labels, handlelength=1, handletextpad=0.5, columnspacing=1.5, frameon=False, borderaxespad=0, labelspacing=0.4)
+ax.grid()
+ax.legend([
+        mpl.lines.Line2D([0], [0], color=common.colors[0]['dark'], linewidth=linewidth, marker='s', markersize=markersize),
+        mpl.lines.Line2D([0], [0], color=common.colors[1]['dark'], linewidth=linewidth, marker='o', markersize=markersize),
+        mpl.lines.Line2D([0], [0], color=common.colors[2]['dark'], linewidth=linewidth, marker='D', markersize=markersize),
+    ], ['Theoretical bound', 'Simulated max', 'Simulated avg'], handlelength=1, handletextpad=0.5, columnspacing=1.5, labelspacing=0.4)
 
 if S is not None:
     subfig = plt.subplot(gs[0, 2])
     ax = plt.gca()
     ax.set_xlabel('Entropy threshold')
     ax.set_ylabel('Space amplification')
-    ax.plot(result_benefit_cost.vec_entropy_threshold, result_benefit_cost.vec_space_amp_estimation, linewidth=linewidth, marker='s', markersize=markersize, label='Theoretical bound')
-    ax.plot(result_benefit_cost.vec_entropy_threshold, result_benefit_cost.vec_space_amp, linewidth=linewidth, marker='o', markersize=markersize, label='Simulated')
+    ax.plot(result_benefit_cost.vec_entropy_threshold, result_benefit_cost.vec_space_amp_estimation, linewidth=linewidth)
+    ax.plot(result_benefit_cost.vec_entropy_threshold, result_benefit_cost.vec_space_amp, linewidth=linewidth)
+    for entropy_threshold in [0.5, 1, 2, 3, 4, 5]:
+        i = entropy_thresholds.index(entropy_threshold)
+        ax.scatter(entropy_threshold, result_benefit_cost.vec_space_amp_estimation[i], marker='s', color=common.colors[0]['dark'], s=15, linewidth=0, zorder=2)
+        ax.scatter(entropy_threshold, result_benefit_cost.vec_space_amp[i], marker='o', color=common.colors[1]['dark'], s=15, linewidth=0, zorder=2)
     ymax = math.ceil(max(result_benefit_cost.vec_space_amp_estimation))
-    ax.set_ylim((1, ymax))
-    plt.yticks(list(range(1, ymax + 1)))
+    ax.set_xticks([0, 1, 2, 3, 4, 5])
+    ax.set_ylim((0, ymax))
     ax.grid()
-    lines, labels = ax.get_legend_handles_labels()
-    ax.legend(lines, labels, handlelength=1, handletextpad=0.5, columnspacing=1.5)
+    ax.legend([
+            mpl.lines.Line2D([0], [0], color=common.colors[0]['dark'], linewidth=linewidth, marker='s', markersize=markersize),
+            mpl.lines.Line2D([0], [0], color=common.colors[1]['dark'], linewidth=linewidth, marker='o', markersize=markersize),
+        ], ['Theoretical bound', 'Simulated'], handlelength=1, handletextpad=0.5, columnspacing=1.5)
 
 pdf_path = get_pdf_path('simulation')
 plt.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01, metadata={'CreationDate': None})
@@ -267,7 +281,7 @@ ax.set_ylim(bottom=0)
 handles = []
 for version in versions:
     handles.append(Line2D([0], [0], color=version['color'], linewidth=linewidth, marker=version['marker'], markersize=markersize))
-fig.legend(handles, ['Leveling', 'Tiering', 'Universal', 'Entropy-based'], ncol=len(versions), loc='upper center', bbox_to_anchor=(0.5, 1.14), frameon=False, borderaxespad=0,)
+fig.legend(handles, ['Leveling', 'Tiering', 'Universal', 'Entropy-based'], ncol=len(versions), loc='upper center', bbox_to_anchor=(0.5, 1.14), frameon=False, borderaxespad=0)
 pdf_path = get_pdf_path('simulation-srs')
 fig.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01, metadata={'CreationDate': None})
 print('Plot saved to ' + pdf_path)
