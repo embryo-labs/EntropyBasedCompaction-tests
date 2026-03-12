@@ -316,10 +316,10 @@ done
 for t_e in 0 1 1.5 2 2.3 2.5 2.8 3 3.5 4 5 6; do
 	read_workload with_write_MB_s 40 with_compaction_limit_MB_s $compaction_MB_s with_memtable_size 8MiB with_entropy_threshold $t_e with_policy_entropy_based no_preemption_conditions load_all_warmup_run no_preemption_conditions readwhilewriting $key_size $value_size $unique_size $warmup_secs $run_secs
 done
-for t_e in 3 3.1 3.4 3.5 4 4.1 5 6; do
+for t_e in 2.5 3 3.1 3.2 3.5 4 5 6; do
 	read_workload with_write_MB_s 50 with_compaction_limit_MB_s $compaction_MB_s with_memtable_size 8MiB with_entropy_threshold $t_e with_policy_entropy_based no_preemption_conditions load_all_warmup_run no_preemption_conditions readwhilewriting $key_size $value_size $unique_size $warmup_secs $run_secs
 done
-for t_e in 3 3.7 3.8 3.9 4 4.5 5 5.5 6; do
+for t_e in 3.7 3.8 3.9 4 4.5 5 5.5 6; do
 	read_workload with_write_MB_s 60 with_compaction_limit_MB_s $compaction_MB_s with_memtable_size 8MiB with_entropy_threshold $t_e with_policy_entropy_based no_preemption_conditions load_all_warmup_run no_preemption_conditions readwhilewriting $key_size $value_size $unique_size $warmup_secs $run_secs
 done
 
