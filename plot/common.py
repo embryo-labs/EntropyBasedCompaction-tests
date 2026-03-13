@@ -124,8 +124,8 @@ versions = {
         'facecolor': colors[5]['light'],
         'hatch': '\\\\\\',
     },
-    'preempt-only-by-entropy-ke-1-be-0': {
-        'name': 'EUC',
+    'entropy-based': {
+        'name': 'Entropy-based',
         'color': colors[2]['dark'],
         'facecolor': colors[2]['light'],
         'hatch': '///',

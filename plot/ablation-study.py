@@ -11,6 +11,7 @@ warmup_secs = 1200
 run_secs = 1200
 read_workload = '-get-0.87-seek-0.13-nexts-48'
 
+import math
 import os
 import numpy as np
 import pandas as pd
@@ -33,44 +34,52 @@ vec_write_MB_s = [10, 20, 30, 40, 50, 60]
 
 versions = [
     {
-        'path': 'preempt-only-by-entropy-ke-1',
-        'name': 'Only-by-entropy',
+        'path': 'no_preemption_conditions',
+        'name': 'By-theory',
         'max-running-bg-jobs': 1,
         'marker': 's',
         'markersize': 3,
         'color': common.colors[0]['dark'],
     },
     {
-        'path': 'preempt-only-by-num',
-        'name': 'Only-by-num',
+        'path': 'preempt_only_by_entropy-be-0',
+        'name': 'Only-by-entropy',
         'max-running-bg-jobs': 1,
-        'marker': 'v',
+        'marker': 's',
         'markersize': 3,
         'color': common.colors[1]['dark'],
     },
     {
-        'path': 'no-sliding-window',
-        'name': 'No-sliding-window',
+        'path': 'preempt_only_by_num',
+        'name': 'Only-by-num',
         'max-running-bg-jobs': 1,
-        'marker': '>',
+        'marker': 'v',
         'markersize': 3,
         'color': common.colors[3]['dark'],
     },
     {
-        'path': 'benefit-cost',
-        'name': 'Soft-preemption',
-        'max-running-bg-jobs': None,
-        'marker': 'o',
+        'path': 'no_exclude_small',
+        'name': 'No-exclude-small',
+        'max-running-bg-jobs': 1,
+        'marker': '>',
         'markersize': 3,
         'color': common.colors[4]['dark'],
     },
     {
-        'path': 'benefit-cost',
+        'path': 'entropy-based',
+        'name': 'Soft-preemption',
+        'max-running-bg-jobs': None,
+        'marker': 'o',
+        'markersize': 3,
+        'color': common.colors[5]['dark'],
+    },
+    {
+        'path': 'entropy-based',
+        'name': common.versions['entropy-based']['name'],
         'max-running-bg-jobs': 1,
         'marker': 'D',
         'markersize': 3,
-        'name': common.versions['benefit-cost']['name'],
-        'color': common.versions['benefit-cost']['color'],
+        'color': common.versions['entropy-based']['color'],
     },
 ]
 version_names = [v['name'] for v in versions]
@@ -91,7 +100,7 @@ ax_srs_p99 = plt.gca()
 plt.xlabel('Write rates (MB/s)', fontsize=9)
 plt.xticks(vec_write_MB_s, fontsize=9)
 plt.ylabel('P99 # of sorted runs', fontsize=9)
-plt.ylim((0, 100))
+plt.ylim((0, 200))
 plt.yticks(fontsize=9)
 ax_srs_p99.grid(axis='y')
 
@@ -99,10 +108,19 @@ for version in versions:
     srs_avg = []
     srs_p99 = []
     for write_MB_s in vec_write_MB_s:
-        workload = 'readwhilewriting-key-16' + value + '-unique-size-10GB-warmup-secs-' + str(warmup_secs) + '-run-secs-' + str(run_secs) + '-memtable-8MiB'
+        if version['name'] == 'By-theory':
+            entropy_threshold = '-entropy-threshold-' + str(math.log2(math.e * 1250) / (200 / write_MB_s - 1))
+        else:
+            entropy_threshold = ''
         if version['max-running-bg-jobs'] is not None:
-            workload += '-max-running-bg-jobs-1'
-        workload += compaction + '-write-' + str(write_MB_s) + 'MB-s' + read_workload
+            max_running_bg_jobs = '-max-running-bg-jobs-1'
+        else:
+            max_running_bg_jobs = ''
+        if version['path'] == 'benefit-cost':
+            compaction_trigger = ''
+        else:
+            compaction_trigger = '-compaction-trigger-2'
+        workload = f'readwhilewriting-key-16{value}-unique-size-10GB-warmup-secs-{warmup_secs}-run-secs-{run_secs}{entropy_threshold}{compaction_trigger}-memtable-8MiB{max_running_bg_jobs}{compaction}-write-{write_MB_s}MB-s{read_workload}'
         data_dir = os.path.join(dir, workload, version['path'])
         report = pd.read_csv(os.path.join(data_dir, 'report.csv'))
         srs_avg.append(report['num-sorted-runs'].mean())
