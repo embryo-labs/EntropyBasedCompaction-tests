@@ -36,7 +36,7 @@ versions = [
     {
         'path': 'no_preemption_conditions',
         'name': 'By-theory',
-        'max-running-bg-jobs': 1,
+        'max-running-bg-jobs': None,
         'marker': 's',
         'markersize': 3,
         'color': common.colors[0]['dark'],
