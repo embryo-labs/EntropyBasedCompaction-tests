@@ -141,7 +141,7 @@ for line_config in lines_config:
     ax_srs_avg.scatter(entropy_threshold_by_theory, vec_srs_avg[by_theory_index], color=color, marker='s', s=15, linewidth=0, zorder=2)
     ax_srs_p99.scatter(entropy_threshold_by_theory, vec_srs_p99[by_theory_index], color=color, marker='s', s=15, linewidth=0, zorder=2)
 ax_srs_avg.set_ylim(bottom=0, top=100)
-ax_srs_p99.set_ylim(bottom=0, top=200)
+ax_srs_p99.set_ylim(bottom=0, top=150)
 
 handles = []
 for line_config in lines_config:
