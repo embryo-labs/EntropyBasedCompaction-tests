@@ -35,8 +35,9 @@ mpl.rcParams.update({
     'hatch.linewidth': 0.5,
     'font.family': 'sans-serif',
     'font.sans-serif': ['Linux Libertine O'],
+    'axes.unicode_minus': False,
+    'font.size': 9,
 })
-plt.rcParams['axes.unicode_minus'] = False
 
 lines_config = [
     {
@@ -87,7 +88,7 @@ fig = plt.figure(dpi=300, figsize=(common.single_col_inch, 1.5), constrained_lay
 gs = GridSpec(1, 2, figure=fig, hspace=0.2)
 plt.subplot(gs[0, 0])
 ax_srs_avg = plt.gca()
-plt.ylabel('Average # of sorted runs', fontsize=9)
+plt.ylabel('Average # of sorted runs')
 plt.xlabel('Entropy threshold')
 plt.xticks([0, 1, 2, 3, 4, 5, 6])
 ax_srs_avg.set_axisbelow(True)
@@ -95,7 +96,7 @@ ax_srs_avg.grid()
 
 plt.subplot(gs[0, 1])
 ax_srs_p99 = plt.gca()
-plt.ylabel('P99 # of sorted runs', fontsize=9)
+plt.ylabel('P99 # of sorted runs')
 plt.xlabel('Entropy threshold')
 plt.xticks([0, 1, 2, 3, 4, 5, 6])
 ax_srs_p99.set_axisbelow(True)
@@ -114,7 +115,7 @@ for line_config in lines_config:
     vec_srs_avg = []
     vec_srs_p99 = []
     for entropy_threshold in entropy_thresholds:
-        workload = f'readwhilewriting-key-16{value}-unique-size-10GB-warmup-secs-{warmup_secs}-run-secs-{run_secs}-entropy-threshold-{entropy_threshold}-memtable-8MiB{compaction}-write-{write_MB_s}MB-s{read_workload}'
+        workload = f'readwhilewriting-key-16{value}-unique-size-10GB-warmup-secs-{warmup_secs}-run-secs-{run_secs}-entropy-threshold-{entropy_threshold}-compaction-trigger-2-memtable-8MiB{compaction}-write-{write_MB_s}MB-s{read_workload}'
         data_dir = os.path.join(dir, workload, version_path)
 
         report = pd.read_csv(os.path.join(data_dir, 'report.csv'))
@@ -145,7 +146,7 @@ ax_srs_p99.set_ylim(bottom=0, top=200)
 handles = []
 for line_config in lines_config:
     handles.append(mpl.lines.Line2D([0], [0], linewidth=1, color=line_config['color'], marker=line_config['marker'], markersize=3))
-fig.legend(handles, version_names, fontsize=9, ncol=3, loc='center', bbox_to_anchor=(0.5, 1.15), frameon=False)
+fig.legend(handles, version_names, ncol=3, loc='center', bbox_to_anchor=(0.5, 1.15), frameon=False)
 pdf_path = os.path.join(dir, f'{version_path}{value}{compaction}-warmup-{warmup_secs}-run-{run_secs}{read_workload}.pdf')
 fig.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01, metadata={'CreationDate': None})
 print('Plot saved to ' + pdf_path)
