@@ -29,7 +29,7 @@ with_policy_leveling() (
 		--level0_file_num_compaction_trigger=1 \
 		--allow_intra_l0_compactions=false
 )
-with_policy_universal() {
+with_policy_universal_hard_trigger() {
 	"$@" \
 		--compaction_style=1 \
 		--num_levels=1
@@ -280,7 +280,7 @@ read_workload() {
 }
 for write_MB_s in 10 30 50; do
 	read_workload with_write_MB_s $write_MB_s with_compaction_limit_MB_s $compaction_MB_s with_memtable_size 8MiB with_policy_rocksdb_tuned load_all_warmup_run rocksdb-tuned readwhilewriting $key_size $value_size $unique_size $warmup_secs $run_secs
-	read_workload with_write_MB_s $write_MB_s with_compaction_limit_MB_s $compaction_MB_s with_memtable_size 8MiB with_policy_universal load_all_warmup_run universal readwhilewriting $key_size $value_size $unique_size $warmup_secs $run_secs
+	read_workload with_write_MB_s $write_MB_s with_compaction_limit_MB_s $compaction_MB_s with_memtable_size 8MiB with_policy_universal_hard_trigger load_all_warmup_run universal-hard-trigger readwhilewriting $key_size $value_size $unique_size $warmup_secs $run_secs
 
 	for ratio in 2 4 8; do
 		read_workload with_write_MB_s $write_MB_s with_compaction_limit_MB_s $compaction_MB_s with_max_running_background_jobs 1 with_memtable_size 8MiB with_policy_tiering $ratio load_all_warmup_run tiering$ratio readwhilewriting $key_size $value_size $unique_size $warmup_secs $run_secs

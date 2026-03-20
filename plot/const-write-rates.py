@@ -11,9 +11,6 @@ warmup_secs = 1200
 run_secs = 1200
 read_workload = '-get-0.87-seek-0.13-nexts-48'
 
-preemption = '-soft-preemption'
-max_running_bg_jobs = ''
-
 unique_size = '10GB'
 
 # The humanfriendly module requires Python <= 3.12
@@ -21,6 +18,7 @@ import subprocess
 unique_size_bytes = subprocess.run(['humanfriendly', '--parse-size', unique_size], stdout=subprocess.PIPE, text=True).stdout
 unique_size_bytes = int(unique_size_bytes)
 
+import math
 import os
 import numpy as np
 import pandas as pd
@@ -28,6 +26,8 @@ import json
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 from matplotlib import gridspec
+
+import common
 
 mpl.rcParams.update({
     'hatch.linewidth': 0.5,
@@ -42,25 +42,37 @@ vec_write_MB_s = [10, 30, 50]
 versions = [
     {
         'path': 'rocksdb-tuned',
+        'max-running-bg-jobs': None,
     },
     {
         'path': 'tiering2',
+        'max-running-bg-jobs': 1,
     },
     {
         'path': 'tiering4',
+        'max-running-bg-jobs': 1,
     },
     {
         'path': 'tiering8',
+        'max-running-bg-jobs': 1,
     },
     {
-        'path': 'universal',
+        'path': 'universal-hard-trigger',
+        'max-running-bg-jobs': None,
     },
     {
-        'path': 'preempt-only-by-entropy-ke-1-be-0',
+        'path': 'no_preemption_conditions',
+        'name': 'By-theory',
+        'max-running-bg-jobs': None,
+        'facecolor': common.colors[6]['light'],
+        'hatch': '--XX',
+    },
+    {
+        'path': 'entropy-based',
+        'max-running-bg-jobs': 1,
     },
 ]
 
-import common
 for v in versions:
     if v['path'] in common.versions:
         v.update(common.versions[v['path']])
@@ -73,7 +85,19 @@ data_cache = {}
 for i, write_MB_s in enumerate(vec_write_MB_s):
     data_cache[i] = {}
     for version_idx, version in enumerate(versions):
-        workload = f'readwhilewriting-key-16{value}-unique-size-10GB-warmup-secs-{warmup_secs}-run-secs-{run_secs}-memtable-8MiB{max_running_bg_jobs}{compaction}-write-{write_MB_s}MB-s{read_workload}'
+        if version['name'] == 'By-theory':
+            entropy_threshold = '-entropy-threshold-' + str(math.log2(math.e * 1250) / (200 / write_MB_s - 1))
+        else:
+            entropy_threshold = ''
+        if version['path'] in ['no_preemption_conditions', 'entropy-based']:
+            compaction_trigger = '-compaction-trigger-2'
+        else:
+            compaction_trigger = ''
+        if version['max-running-bg-jobs'] is None:
+            max_running_bg_jobs = ''
+        else:
+            max_running_bg_jobs = '-max-running-bg-jobs-1'
+        workload = f'readwhilewriting-key-16{value}-unique-size-10GB-warmup-secs-{warmup_secs}-run-secs-{run_secs}{entropy_threshold}{compaction_trigger}-memtable-8MiB{max_running_bg_jobs}{compaction}-write-{write_MB_s}MB-s{read_workload}'
         data_dir = os.path.join(dir, workload, version['path'])
         report = pd.read_csv(os.path.join(data_dir, 'report.csv'))
         data_cache[i][version_idx] = {
@@ -173,7 +197,7 @@ draw(fig, outer_grid, [
         "log_scale": [False, False, False]
     }
 ])
-pdf_path = os.path.join(dir, f'const-write-rates{value}{compaction}-warmup-{warmup_secs}-run-{run_secs}{read_workload}{preemption}.pdf')
+pdf_path = os.path.join(dir, f'const-write-rates{value}{compaction}-warmup-{warmup_secs}-run-{run_secs}{read_workload}.pdf')
 plt.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01, metadata={'CreationDate': None})
 print(f'Plot saved to {pdf_path}')
 
@@ -212,6 +236,6 @@ draw(fig, outer_grid, [
         'log_scale': [False, False, False],
     },
 ])
-pdf_path = os.path.join(dir, f'const-write-rates-read-latency{value}{compaction}-warmup-{warmup_secs}-run-{run_secs}{read_workload}{preemption}.pdf')
+pdf_path = os.path.join(dir, f'const-write-rates-read-latency{value}{compaction}-warmup-{warmup_secs}-run-{run_secs}{read_workload}.pdf')
 plt.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01, metadata={'CreationDate': None})
 print(f'Plot saved to {pdf_path}')

@@ -118,7 +118,7 @@ versions = {
         'facecolor': colors[4]['light'],
         'hatch': '--\\\\',
     },
-    'universal': {
+    'universal-hard-trigger': {
         'name': 'Universal',
         'color': colors[5]['dark'],
         'facecolor': colors[5]['light'],
