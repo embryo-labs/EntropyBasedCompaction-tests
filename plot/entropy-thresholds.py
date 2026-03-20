@@ -54,7 +54,7 @@ plt.xlabel('Write rates (MB/s)', fontsize=9)
 plt.xticks(vec_write_MB_s, fontsize=9)
 plt.ylabel('P99 # of sorted runs', fontsize=9)
 plt.yscale('log')
-plt.ylim((4, 100))
+plt.ylim((4, 120))
 yticks = [4, 10, 100]
 plt.yticks(yticks, labels=yticks, fontsize=9)
 ax_srs_p99.set_axisbelow(True)
@@ -106,10 +106,11 @@ for version in versions:
     for write_MB_s in vec_write_MB_s:
         entropy_threshold = version['t_e']
         if entropy_threshold != 0.78:
-            workload = f'readwhilewriting-key-16{value}-unique-size-10GB-warmup-secs-{warmup_secs}-run-secs-{run_secs}-entropy-threshold-{entropy_threshold}-memtable-8MiB-max-running-bg-jobs-1{compaction}-write-{write_MB_s}MB-s{read_workload}'
+            entropy_threshold = f'-entropy-threshold-{entropy_threshold}'
         else:
-            workload = f'readwhilewriting-key-16{value}-unique-size-10GB-warmup-secs-{warmup_secs}-run-secs-{run_secs}-memtable-8MiB-max-running-bg-jobs-1{compaction}-write-{write_MB_s}MB-s{read_workload}'
-        data_dir = os.path.join(dir, workload, 'benefit-cost')
+            entropy_threshold = ''
+        workload = f'readwhilewriting-key-16{value}-unique-size-10GB-warmup-secs-{warmup_secs}-run-secs-{run_secs}{entropy_threshold}-compaction-trigger-2-memtable-8MiB-max-running-bg-jobs-1{compaction}-write-{write_MB_s}MB-s{read_workload}'
+        data_dir = os.path.join(dir, workload, 'entropy-based')
 
         report = pd.read_csv(os.path.join(data_dir, 'report.csv'))
         srs_avg.append(report['num-sorted-runs'].mean())
