@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import argparse
 parser = argparse.ArgumentParser()
-parser.add_argument('-S', type=int, default=1250)
+parser.add_argument('-S', type=int, default=1200)
 parser.add_argument('-N', type=int, default=100000)
 parser.add_argument('--verbose', action='store_true')
 args = parser.parse_args()
