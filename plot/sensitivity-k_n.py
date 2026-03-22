@@ -43,8 +43,8 @@ versions = [
     },
     {
         'k_n': 1.7,
-        'color': common.versions['benefit-cost']['facecolor'],
-        'hatch': common.versions['benefit-cost']['hatch'],
+        'color': common.versions['entropy-based']['facecolor'],
+        'hatch': common.versions['entropy-based']['hatch'],
     },
     {
         'k_n': 2,
@@ -90,10 +90,10 @@ for i, write_MB_s in enumerate(vec_write_MB_s):
         x = -cluster_width / 2 + bar_width / 2 + version_idx * bar_width
         k_n = version['k_n']
         if k_n == 1.7:
-            workload = 'readwhilewriting-key-16' + value + '-unique-size-10GB-warmup-secs-' + str(warmup_secs) + '-run-secs-' + str(run_secs) + '-memtable-8MiB-max-running-bg-jobs-1' + compaction + '-write-' + str(write_MB_s) + 'MB-s' + read_workload
+            workload = 'readwhilewriting-key-16' + value + '-unique-size-10GB-warmup-secs-' + str(warmup_secs) + '-run-secs-' + str(run_secs) + '-compaction-trigger-2-memtable-8MiB-max-running-bg-jobs-1' + compaction + '-write-' + str(write_MB_s) + 'MB-s' + read_workload
         else:
-            workload = 'readwhilewriting-key-16' + value + '-unique-size-10GB-warmup-secs-' + str(warmup_secs) + '-run-secs-' + str(run_secs) + '-k_n-' + str(k_n) + '-memtable-8MiB-max-running-bg-jobs-1' + compaction + '-write-' + str(write_MB_s) + 'MB-s' + read_workload
-        data_dir = os.path.join(dir, workload, 'benefit-cost')
+            workload = 'readwhilewriting-key-16' + value + '-unique-size-10GB-warmup-secs-' + str(warmup_secs) + '-run-secs-' + str(run_secs) + '-k_n-' + str(k_n) + '-compaction-trigger-2-memtable-8MiB-max-running-bg-jobs-1' + compaction + '-write-' + str(write_MB_s) + 'MB-s' + read_workload
+        data_dir = os.path.join(dir, workload, 'entropy-based')
 
         report = pd.read_csv(os.path.join(data_dir, 'report.csv'))
         ax.bar(x, np.percentile(report['num-sorted-runs'], 99), width=bar_width, facecolor=version['color'], edgecolor='black', linewidth=0.5, hatch=version['hatch'])
@@ -102,7 +102,7 @@ names = []
 for version in versions:
     k_n = version['k_n']
     if k_n == 1.7:
-        names.append(common.versions['benefit-cost']['name'] + ' (' + str(k_n) + ')')
+        names.append(common.versions['entropy-based']['name'] + ' (' + str(k_n) + ')')
     else:
         names.append(str(k_n))
 fig.legend(names, fontsize=9, ncol=4, loc='center', bbox_to_anchor=(0.5, 1.1), frameon=False, handlelength=1.5, handletextpad=0.5)

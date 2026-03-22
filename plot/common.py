@@ -125,7 +125,7 @@ versions = {
         'hatch': '\\\\\\',
     },
     'entropy-based': {
-        'name': 'Entropy-based',
+        'name': 'EBC',
         'color': colors[2]['dark'],
         'facecolor': colors[2]['light'],
         'hatch': '///',
