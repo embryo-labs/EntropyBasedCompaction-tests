@@ -86,7 +86,7 @@ for i, write_MB_s in enumerate(vec_write_MB_s):
     data_cache[i] = {}
     for version_idx, version in enumerate(versions):
         if version['name'] == 'By-theory':
-            entropy_threshold = '-entropy-threshold-' + str(math.log2(math.e * 1250) / (200 / write_MB_s - 1))
+            entropy_threshold = '-autotune_entropy_threshold'
         else:
             entropy_threshold = ''
         if version['path'] in ['no_preemption_conditions', 'entropy-based']:

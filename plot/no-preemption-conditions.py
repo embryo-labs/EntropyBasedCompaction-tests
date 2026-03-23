@@ -16,7 +16,7 @@ version_path = 'no_preemption_conditions'
 
 import os
 import bisect
-import math
+import json
 import numpy as np
 import pandas as pd
 import matplotlib as mpl
@@ -109,13 +109,23 @@ for line_config in lines_config:
     entropy_thresholds = line_config['entropy_thresholds']
     version_names.append(f'{write_MB_s}MB/s')
 
-    entropy_threshold_by_theory = math.log2(math.e * 1250) / (compaction_MB_s / write_MB_s - 1)
+    entropy_threshold_by_theory = None
+    for line in open(os.path.join(dir, f'readwhilewriting-key-16{value}-unique-size-10GB-warmup-secs-{warmup_secs}-run-secs-{run_secs}-autotune_entropy_threshold-compaction-trigger-2-memtable-8MiB{compaction}-write-{write_MB_s}MB-s{read_workload}', version_path, 'log.json')):
+        entry = json.loads(line)
+        if entry['event'] == 'adjust-entropy-threshold':
+            entropy_threshold_by_theory = entry['value']
+            break
+    assert entropy_threshold_by_theory is not None
     bisect.insort(entropy_thresholds, entropy_threshold_by_theory)
 
     vec_srs_avg = []
     vec_srs_p99 = []
     for entropy_threshold in entropy_thresholds:
-        workload = f'readwhilewriting-key-16{value}-unique-size-10GB-warmup-secs-{warmup_secs}-run-secs-{run_secs}-entropy-threshold-{entropy_threshold}-compaction-trigger-2-memtable-8MiB{compaction}-write-{write_MB_s}MB-s{read_workload}'
+        if entropy_threshold == entropy_threshold_by_theory:
+            entropy_threshold = '-autotune_entropy_threshold'
+        else:
+            entropy_threshold = f'-entropy-threshold-{entropy_threshold}'
+        workload = f'readwhilewriting-key-16{value}-unique-size-10GB-warmup-secs-{warmup_secs}-run-secs-{run_secs}{entropy_threshold}-compaction-trigger-2-memtable-8MiB{compaction}-write-{write_MB_s}MB-s{read_workload}'
         data_dir = os.path.join(dir, workload, version_path)
 
         report = pd.read_csv(os.path.join(data_dir, 'report.csv'))
