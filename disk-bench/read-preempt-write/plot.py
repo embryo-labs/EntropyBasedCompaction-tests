@@ -10,8 +10,8 @@ import matplotlib.pyplot as plt
 
 mpl.rcParams.update({
     'hatch.linewidth': 0.5,
-    'font.family': 'sans-serif',
-    'font.sans-serif': ['Linux Libertine O'],
+    'font.family': 'serif',
+    'font.serif': ['Linux Libertine O'],
 })
 plt.rcParams['axes.unicode_minus'] = False
 

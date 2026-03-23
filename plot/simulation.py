@@ -36,8 +36,8 @@ def get_pdf_path(prefix):
 
 mpl.rcParams.update({
     'hatch.linewidth': 0.5,
-    'font.family': 'sans-serif',
-    'font.sans-serif': ['Linux Libertine O'],
+    'font.family': 'serif',
+    'font.serif': ['Linux Libertine O'],
     'axes.unicode_minus': False,
     'font.size': 9,
 })

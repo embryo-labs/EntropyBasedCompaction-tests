@@ -14,8 +14,8 @@ fontsize=9
 fonten = {'family': 'Linux Libertine O', 'size': fontsize}
 
 mpl.rcParams.update({
-    'font.family': 'sans-serif',
-    'font.sans-serif': ['Linux Libertine O'],
+    'font.family': 'serif',
+    'font.serif': ['Linux Libertine O'],
     })  # 设置全局字体
 plt.rcParams['axes.unicode_minus'] = False  # 用来正常显示负号
 

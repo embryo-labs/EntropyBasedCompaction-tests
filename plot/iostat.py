@@ -18,8 +18,8 @@ def cm_to_inch(value):
     return value/2.54
 
 mpl.rcParams.update({
-    'font.family': 'sans-serif',
-    'font.sans-serif': ['Linux Libertine O'],
+    'font.family': 'serif',
+    'font.serif': ['Linux Libertine O'],
 })
 plt.rcParams['axes.unicode_minus'] = False
 

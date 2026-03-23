@@ -24,8 +24,8 @@ import common
 
 mpl.rcParams.update({
     'hatch.linewidth': 0.5,
-    'font.family': 'sans-serif',
-    'font.sans-serif': ['Linux Libertine O'],
+    'font.family': 'serif',
+    'font.serif': ['Linux Libertine O'],
     'axes.unicode_minus': False,
     'font.size': 9,
 })
@@ -118,7 +118,7 @@ for col, write_MB_s in enumerate(vec_write_MB_s):
     for version_idx, version in enumerate(versions):
         x = -cluster_width / 2 + bar_width / 2 + version_idx * bar_width
         if version['name'] == 'By-theory':
-            entropy_threshold = '-entropy-threshold-' + str(math.log2(math.e * 1250) / (200 / write_MB_s - 1))
+            entropy_threshold = '-entropy-threshold-' + str(math.log2(math.e * 1200) / (200 / write_MB_s - 1))
         else:
             entropy_threshold = ''
         if version['max-running-bg-jobs'] is not None:
