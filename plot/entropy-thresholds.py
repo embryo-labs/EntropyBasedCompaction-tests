@@ -14,10 +14,11 @@ read_workload = '-get-0.87-seek-0.13-nexts-48'
 import os
 import numpy as np
 import pandas as pd
-import json
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 from matplotlib.gridspec import GridSpec
+
+import common
 
 # Paper specific settings
 SINGLE_COL_WIDTH = 8.5
@@ -122,7 +123,7 @@ names = []
 for version in versions:
     t_e = version['t_e']
     if t_e == 0.78:
-        names.append(str(t_e) + ' (EUC)')
+        names.append(f'{t_e} ({common.versions['entropy-based']['name']})')
     else:
         names.append(str(t_e))
 fig.legend(names, fontsize=9, ncol=3, loc='center', bbox_to_anchor=(0.5, 1.07), frameon=False)
