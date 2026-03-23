@@ -36,13 +36,13 @@ mpl.rcParams.update({
 
 import common
 
-our_path = 'preempt-only-by-entropy-ke-1-be-0'
+our_path = 'entropy-based'
 versions = [
     {
         'path': 'rocksdb-tuned',
     },
     {
-        'path': 'universal',
+        'path': 'universal-hard-trigger',
     },
     {
         'path': our_path,
@@ -133,7 +133,13 @@ for col, write_MB_s in enumerate(vec_write_MB_s):
             io_sa = '-io_sa-' + str(version['reserve-MB-s']) + 'MB-s'
         else:
             io_sa = ''
-        workload = f'readwhilewriting-key-16{value}-unique-size-10GB-warmup-secs-{warmup_secs}-run-secs-{run_secs}-memtable-8MiB{io_sa}{compaction}-write-{write_MB_s}MB-s{read_workload}'
+        if version['path'] == our_path:
+            compaction_trigger = '-compaction-trigger-2'
+            max_running_bg_jobs = '-max-running-bg-jobs-1'
+        else:
+            compaction_trigger = ''
+            max_running_bg_jobs = ''
+        workload = f'readwhilewriting-key-16{value}-unique-size-10GB-warmup-secs-{warmup_secs}-run-secs-{run_secs}{compaction_trigger}-memtable-8MiB{max_running_bg_jobs}{io_sa}{compaction}-write-{write_MB_s}MB-s{read_workload}'
         data_dir = os.path.join(dir, workload, version['path'])
 
         report = pd.read_csv(os.path.join(data_dir, 'report.csv'))
