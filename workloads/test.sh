@@ -369,10 +369,12 @@ meituan_writer() (
 
 	num_unique_keys=$(($(humanfriendly --parse-size="$unique_size") / (key_size + value_size)))
 	"$(dirname $0)"/prepare.sh "$output_dir" || return $?
+	mkdir -p "$output_dir"/load
 	"$(dirname $0)"/dbbench.sh "$output_dir" "$num_unique_keys" "$key_size" \
 		--value_size="$value_size" \
 		--benchmarks_json="[
 	{
+		\"output_dir\": \"load\",
 		\"name\": \"filluniquerandom\",
 		\"threads\": 1,
 		\"duration\": 0,
@@ -411,10 +413,10 @@ read_workload() {
 }
 for type in peak normal; do
 	read_workload with_compaction_limit_MB_s $compaction_MB_s with_memtable_size 8MiB with_policy_rocksdb_tuned meituan_writer rocksdb-tuned $type $period_secs $num_shards $unique_size
-	read_workload with_compaction_limit_MB_s $compaction_MB_s with_memtable_size 8MiB with_policy_universal meituan_writer universal $type $period_secs $num_shards $unique_size
+	read_workload with_compaction_limit_MB_s $compaction_MB_s with_memtable_size 8MiB with_policy_universal_hard_trigger meituan_writer universal-hard-trigger $type $period_secs $num_shards $unique_size
 
 	for ratio in 2 4 8; do
 		read_workload with_compaction_limit_MB_s $compaction_MB_s with_max_running_background_jobs 1 with_memtable_size 8MiB with_policy_tiering $ratio meituan_writer tiering$ratio $type $period_secs $num_shards $unique_size
 	done
-	read_workload with_compaction_limit_MB_s $compaction_MB_s with_max_running_background_jobs 1 with_memtable_size 8MiB with_policy_benefit_cost meituan_writer benefit-cost $type $period_secs $num_shards $unique_size
+	read_workload with_compaction_limit_MB_s $compaction_MB_s with_max_running_background_jobs 1 with_memtable_size 8MiB with_compaction_trigger 2 with_policy_entropy_based meituan_writer entropy-based $type $period_secs $num_shards $unique_size
 done
