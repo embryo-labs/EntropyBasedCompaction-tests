@@ -18,7 +18,6 @@ import subprocess
 unique_size_bytes = subprocess.run(['humanfriendly', '--parse-size', unique_size], stdout=subprocess.PIPE, text=True).stdout
 unique_size_bytes = int(unique_size_bytes)
 
-import math
 import os
 import numpy as np
 import pandas as pd
@@ -59,13 +58,6 @@ versions = [
     {
         'path': 'universal-hard-trigger',
         'max-running-bg-jobs': None,
-    },
-    {
-        'path': 'no_preemption_conditions',
-        'name': 'By-theory',
-        'max-running-bg-jobs': None,
-        'facecolor': common.colors[6]['light'],
-        'hatch': '--XX',
     },
     {
         'path': 'entropy-based',
@@ -182,35 +174,20 @@ panels_scan_get = [
             "log_scale": [False, True, True],
             'ax': [],
         },
-        {
-            "title": "(b) Scan latency (99th percentile)",
-            "ylabel": "P99 scan latency (ms)",
-            'ylims': [None, (1, 100), (1, 1000)],
-            'log_scale': [False, True, True],
-            'ax': [],
-        },
     ],
     [
         {
-            'title': '(c) Get latency (average)',
+            'title': '(b) Get latency (average)',
             'ylabel': 'Avg get latency (ms)',
             'ylims': [None, None, None],
             'yticks': [[0, 0.1], [0, 0.1], None],
             'log_scale': [False, False, False],
             'ax': [],
         },
-        {
-            'title': '(d) Get latency (99th percentile)',
-            'ylabel': 'P99 get latency (ms)',
-            'ylims': [None, None, None],
-            'yticks': [None, None, None],
-            'log_scale': [False, False, False],
-            'ax': [],
-        },
     ],
 ]
-fig_scan_get = plt.figure(dpi=300, figsize=(common.double_col_inch, 2.8))
-outer_grid = gridspec.GridSpec(2, 2, figure=fig_scan_get, hspace=0.4, wspace=0.2, 
+fig_scan_get = plt.figure(dpi=300, figsize=(common.single_col_inch, 2.8))
+outer_grid = gridspec.GridSpec(2, 1, figure=fig_scan_get, hspace=0.4, wspace=0.2, 
                             left=0, right=0.93, bottom=0, top=0.92)
 draw(fig_scan_get, outer_grid, panels_scan_get)
 for row in range(0, len(panels_scan_get)):
@@ -220,8 +197,8 @@ for row in range(0, len(panels_scan_get)):
         fig_scan_get.text(bbox.x0 + bbox.width/2, bbox.y0 - 0.07, panel['title'], ha='center', va='top')
 handles = [mpl.patches.Patch(facecolor=v['facecolor'], hatch=v['hatch'], 
                             edgecolor='black', linewidth=0.5) for v in versions]
-fig_scan_get.legend(handles=handles, labels=version_names, ncol=len(versions), 
-        loc='upper center', bbox_to_anchor=(0.44, 1.03), frameon=False, 
+fig_scan_get.legend(handles=handles, labels=version_names, ncol=3, 
+        loc='upper center', bbox_to_anchor=(0.44, 1.1), frameon=False, 
         handlelength=1.5, handletextpad=0.5, columnspacing=1.0)
 
 
@@ -257,9 +234,7 @@ for i, write_MB_s in enumerate(vec_write_MB_s):
         add_bar(panels_main[2][1], report['size'].max() / unique_size_bytes)
 
         add_bar(panels_scan_get[0][0], scan_latency_us['Average'] / 1000)
-        add_bar(panels_scan_get[0][1], scan_latency_us['99%'] / 1000)
         add_bar(panels_scan_get[1][0], get_latency_us['Average'] / 1000)
-        add_bar(panels_scan_get[1][1], get_latency_us['99%'] / 1000)
 
 renderer = fig_main.canvas.get_renderer()
 tight_bbox = fig_main.get_tightbbox(renderer)
