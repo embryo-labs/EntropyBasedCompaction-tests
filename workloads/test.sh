@@ -153,6 +153,12 @@ with_write_exp_range() (
 	suffix="-write-exp-range-$exp_range$suffix" "$@" \
 		--write_random_exp_range="$exp_range"
 )
+with_write_zipfian_theta() (
+	zipfian_theta=$1
+	shift
+	suffix="-write_zipfian_theta-$zipfian_theta$suffix" "$@" \
+		--write_zipfian_theta="$zipfian_theta"
+)
 with_nexts() (
 	nexts=$1
 	shift
@@ -344,6 +350,80 @@ for io_sa in 10 30 50 70 90; do
 		read_workload with_write_MB_s $write_MB_s with_compaction_limit_MB_s $compaction_MB_s with_io_sa_limit_MB_s $io_sa with_max_running_background_jobs 1 with_memtable_size 8MiB with_compaction_trigger 2 with_policy_entropy_based load_all_warmup_run entropy-based readwhilewriting $key_size $value_size $unique_size $warmup_secs $run_secs
 	done
 done
+
+write_MB_s=50
+for zipfian_theta in 0.5 0.8 0.9 0.99; do
+	read_workload with_write_MB_s $write_MB_s with_write_zipfian_theta $zipfian_theta with_compaction_limit_MB_s $compaction_MB_s with_memtable_size 8MiB with_compaction_trigger 2 autotune_entropy_threshold with_policy_entropy_based no_preemption_conditions load_all_warmup_run no_preemption_conditions readwhilewriting $key_size $value_size $unique_size $warmup_secs $run_secs
+	read_workload with_write_MB_s $write_MB_s with_write_zipfian_theta $zipfian_theta with_compaction_limit_MB_s $compaction_MB_s with_max_running_background_jobs 1 with_memtable_size 8MiB with_compaction_trigger 2 with_policy_entropy_based load_all_warmup_run entropy-based readwhilewriting $key_size $value_size $unique_size $warmup_secs $run_secs
+done
+
+load_all_run_phases() (
+	version=$1
+	shift
+	benchmark=$1
+	shift
+	key_size=$1
+	shift
+	value_size=$1
+	shift
+	unique_size=$1
+	shift
+	phase_secs=$1
+	shift
+	phases_write_MB_s=$1
+	shift
+	output_dir="../../data/$benchmark-key-$key_size-value-$value_size-unique-size-$unique_size-phase-secs-$phase_secs-write-MB-s-$(echo $phases_write_MB_s | tr ' ' '-')$suffix/$version"
+	num_unique_keys=$(($(humanfriendly --parse-size="$unique_size") / (key_size + value_size)))
+
+	benchmarks_json="[
+	{
+		\"output_dir\": \"load\",
+		\"name\": \"filluniquerandom\",
+		\"threads\": 1,
+		\"duration\": 0,
+		\"writes\": $num_unique_keys,
+		\"benchmark_write_rate_limit\": 0
+	},
+	{
+		\"name\": \"waitforcompaction\"
+	},
+	{
+		\"name\": \"stats\"
+	}"
+	benchmarks_json=$(echo "$phases_write_MB_s" | tr ' ' '\n' | {
+		while read write_MB_s; do
+			benchmarks_json="$benchmarks_json,
+	{
+		\"name\": \"resetstats\"
+	},
+	{
+		\"name\": \"$benchmark\",
+		\"duration\": $phase_secs,
+		\"benchmark_write_rate_limit\": $((write_MB_s * 1000000))
+	},
+	{
+		\"name\": \"stats\"
+	}"
+		done
+		echo "$benchmarks_json"
+	})
+	benchmarks_json="$benchmarks_json
+]"
+	echo "$benchmarks_json"
+
+	"$(dirname $0)"/prepare.sh "$output_dir" || return $?
+	mkdir -p "$output_dir"/load
+	"$(dirname $0)"/dbbench.sh "$output_dir" "$num_unique_keys" "$key_size" \
+		--value_size="$value_size" \
+		--benchmarks_json="$benchmarks_json" \
+		"$@"
+	"$(dirname $0)"/../helper/data-rocksdb.sh "$output_dir"
+	"$(dirname $0)"/../helper/plot-rocksdb.sh "$output_dir"
+)
+phase_secs=3600
+phases_write_MB_s="10 30 50 30 10"
+read_workload with_compaction_limit_MB_s $compaction_MB_s with_memtable_size 8MiB with_compaction_trigger 2 autotune_entropy_threshold with_policy_entropy_based no_preemption_conditions load_all_run_phases no_preemption_conditions readwhilewriting $key_size $value_size $unique_size $phase_secs "$phases_write_MB_s"
+read_workload with_compaction_limit_MB_s $compaction_MB_s with_max_running_background_jobs 1 with_memtable_size 8MiB with_compaction_trigger 2 with_entropy_threshold 0 with_policy_entropy_based load_all_run_phases entropy-based readwhilewriting $key_size $value_size $unique_size $phase_secs "$phases_write_MB_s"
 
 meituan_writer() (
 	workspace=$(realpath "$(dirname $0)"/../..)
