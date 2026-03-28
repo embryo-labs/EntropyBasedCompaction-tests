@@ -85,6 +85,8 @@ def find_data_dir(day_type, version_path):
     workload += '-compaction-200MB-s' + read_workload
     return os.path.join(dir, workload, version_path)
 
+title_y = -0.45
+xlabelpad = 1
 sa_yticks = [1, 10]
 
 fig = plt.figure(dpi=300, figsize=(common.single_col_inch, 4.5), constrained_layout=True)
@@ -92,7 +94,8 @@ gs = gridspec.GridSpec(3, 1, figure=fig)
 
 plt.subplot(gs[0, 0])
 ax_num_srs = plt.gca()
-plt.xlabel('Time (hours)')
+plt.text(0.5, title_y, '(a) Number of sorted runs (log scale)', transform=ax_num_srs.transAxes, ha='center', va='center')
+plt.xlabel('Time (hours)', labelpad=xlabelpad)
 plt.ylabel('# of sorted runs')
 plt.yscale('log')
 plt.ylim((3, 100))
@@ -101,7 +104,8 @@ ax_num_srs.grid(axis='y')
 
 plt.subplot(gs[1, 0])
 ax_read = plt.gca()
-plt.xlabel('Time (hours)')
+plt.text(0.5, title_y, '(b) Read latency (log scale)', transform=ax_read.transAxes, ha='center', va='center')
+plt.xlabel('Time (hours)', labelpad=xlabelpad)
 plt.ylabel('Read latency (ms)')
 plt.yscale('log')
 plt.ylim((0.1, 2))
@@ -110,7 +114,8 @@ ax_read.grid(axis='y')
 
 plt.subplot(gs[2, 0])
 ax_sa = plt.gca()
-plt.xlabel('Time (hours)')
+plt.text(0.5, title_y, '(c) Space amplification (log scale)', transform=ax_sa.transAxes, ha='center', va='center')
+plt.xlabel('Time (hours)', labelpad=xlabelpad)
 plt.ylabel('Space amplification')
 plt.yscale('log')
 plt.ylim((min(sa_yticks), max(sa_yticks)))
@@ -135,7 +140,7 @@ for version_idx, version in enumerate(versions):
     read_latency = micros.groupby(micros.index // mean_step_secs).sum() / count.groupby(count.index // mean_step_secs).sum()
     ax_read.plot(time / 3600, read_latency / 1000, linewidth=linewidth, color=version['color'], marker=version['marker'], markersize=version['markersize'], markeredgewidth=0.8, markevery=(version_idx * offset, markevery))
 
-fig.legend(version_names, ncol=3, loc='center', bbox_to_anchor=(0.5, 1.05), handlelength=1, handletextpad=0.5, columnspacing=1.5, frameon=False)
+fig.legend(version_names, ncol=3, loc='center', bbox_to_anchor=(0.5, 1.04), handlelength=1, handletextpad=0.5, columnspacing=1.5, frameon=False)
 pdf_path = os.path.join(dir, f'meituan-peak-day-num_shards-{num_shards}-unique_size-{unique_size}-period_secs-{period_secs}{read_workload}-mean_step_secs-{mean_step_secs}.pdf')
 fig.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01, metadata={'CreationDate': None})
 print('Plot saved to ' + pdf_path)
