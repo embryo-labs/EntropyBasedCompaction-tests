@@ -85,142 +85,139 @@ def find_data_dir(day_type, version_path):
     workload += '-compaction-200MB-s' + read_workload
     return os.path.join(dir, workload, version_path)
 
-def draw(config):
-    day_type = config['day-type']
-    fig = plt.figure(dpi=300, figsize=(common.single_col_inch, 4.5), constrained_layout=True)
-    gs = gridspec.GridSpec(3, 1, figure=fig)
+sa_yticks = [1, 10]
 
-    plt.subplot(gs[0, 0])
-    ax_num_srs = plt.gca()
-    plt.xlabel('Time (hours)')
-    plt.ylabel('# of sorted runs')
-    plt.yscale('log')
-    plt.ylim((min(config['num-srs-yticks']), max(config['num-srs-yticks'])))
-    plt.yticks(config['num-srs-yticks'])
-    ax_num_srs.tick_params(axis='y', which='minor', labelleft=False)
-    ax_num_srs.grid(axis='y')
+fig = plt.figure(dpi=300, figsize=(common.single_col_inch, 4.5), constrained_layout=True)
+gs = gridspec.GridSpec(3, 1, figure=fig)
 
-    plt.subplot(gs[1, 0])
-    ax_read = plt.gca()
-    plt.xlabel('Time (hours)')
-    plt.ylabel('Read latency (ms)')
-    plt.yscale('log')
-    plt.ylim(config['read-ylim'])
-    ax_read.tick_params(axis='y', which='minor', labelleft=False)
-    ax_read.grid(axis='y')
+plt.subplot(gs[0, 0])
+ax_num_srs = plt.gca()
+plt.xlabel('Time (hours)')
+plt.ylabel('# of sorted runs')
+plt.yscale('log')
+plt.ylim((3, 100))
+ax_num_srs.tick_params(axis='y', which='minor', labelleft=False)
+ax_num_srs.grid(axis='y')
 
-    plt.subplot(gs[2, 0])
-    ax_sa = plt.gca()
-    plt.xlabel('Time (hours)')
-    plt.ylabel('Space amplification')
-    plt.yscale('log')
-    plt.ylim((min(config['sa-yticks']), max(config['sa-yticks'])))
-    plt.yticks(config['sa-yticks'])
-    ax_sa.tick_params(axis='y', which='minor', labelleft=False)
-    ax_sa.grid(axis='y')
+plt.subplot(gs[1, 0])
+ax_read = plt.gca()
+plt.xlabel('Time (hours)')
+plt.ylabel('Read latency (ms)')
+plt.yscale('log')
+plt.ylim((0.1, 2))
+ax_read.tick_params(axis='y', which='minor', labelleft=False)
+ax_read.grid(axis='y')
 
-    fig_read = plt.figure(dpi=300, figsize=(common.single_col_inch, 3), constrained_layout=True)
-    gs = gridspec.GridSpec(2, 1, figure=fig_read)
+plt.subplot(gs[2, 0])
+ax_sa = plt.gca()
+plt.xlabel('Time (hours)')
+plt.ylabel('Space amplification')
+plt.yscale('log')
+plt.ylim((min(sa_yticks), max(sa_yticks)))
+plt.yticks(sa_yticks)
+ax_sa.tick_params(axis='y', which='minor', labelleft=False)
+ax_sa.grid(axis='y')
 
-    plt.subplot(gs[0, 0])
-    ax_scan = plt.gca()
-    plt.xlabel('Time (hours)')
-    plt.ylabel('Scan latency (ms)')
-    plt.yscale('log')
-    ax_scan.tick_params(axis='y', which='minor', labelleft=False)
-    ax_scan.grid(axis='y')
+for version_idx, version in enumerate(versions):
+    data_dir = find_data_dir('peak', version['path'])
+    report = pd.read_csv(os.path.join(data_dir, 'report.csv'))
+    report = report[['secs_elapsed', 'num-sorted-runs', 'size']]
+    report = report.groupby(report.index // mean_step_secs).mean()
+    ax_num_srs.plot(report['secs_elapsed'] / 3600, report['num-sorted-runs'], linewidth=linewidth, color=version['color'], marker=version['marker'], markersize=version['markersize'], markeredgewidth=0.8, markevery=(version_idx * offset, markevery))
+    ax_sa.plot(report['secs_elapsed'] / 3600, report['size'] / unique_size_bytes, linewidth=linewidth, color=version['color'], marker=version['marker'], markersize=version['markersize'], markeredgewidth=0.8, markevery=(version_idx * offset, markevery))
 
-    plt.subplot(gs[1, 0])
-    ax_get = plt.gca()
-    plt.xlabel('Time (hours)')
-    plt.ylabel('Get latency (ms)')
-    plt.ylim((0, 0.2))
-    ax_get.tick_params(axis='y', which='minor', labelleft=False)
-    ax_get.grid(axis='y')
+    read_count_time = pd.read_csv(os.path.join(data_dir, 'read-count-time.csv'))
 
-    for i, version in enumerate(versions):
-        data_dir = find_data_dir(day_type, version['path'])
-        report = pd.read_csv(os.path.join(data_dir, 'report.csv'))
-        report = report[['secs_elapsed', 'num-sorted-runs', 'size']]
-        report = report.groupby(report.index // mean_step_secs).mean()
-        ax_num_srs.plot(report['secs_elapsed'] / 3600, report['num-sorted-runs'], linewidth=linewidth, color=version['color'], marker=version['marker'], markersize=version['markersize'], markeredgewidth=0.8, markevery=(i * offset, markevery))
-        ax_sa.plot(report['secs_elapsed'] / 3600, report['size'] / unique_size_bytes, linewidth=linewidth, color=version['color'], marker=version['marker'], markersize=version['markersize'], markeredgewidth=0.8, markevery=(i * offset, markevery))
+    time = read_count_time['secs_elapsed']
+    time = time.groupby(time.index // mean_step_secs).mean()
+    micros = read_count_time['micros']
+    count = read_count_time['count']
+    read_latency = micros.groupby(micros.index // mean_step_secs).sum() / count.groupby(count.index // mean_step_secs).sum()
+    ax_read.plot(time / 3600, read_latency / 1000, linewidth=linewidth, color=version['color'], marker=version['marker'], markersize=version['markersize'], markeredgewidth=0.8, markevery=(version_idx * offset, markevery))
 
-        def draw_latency(ax, op):
-            count_time = pd.read_csv(os.path.join(data_dir, op + '-count-time.csv'))
-
-            time = count_time['secs_elapsed']
-            time = time.groupby(time.index // mean_step_secs).mean()
-
-            micros = count_time['micros']
-            count = count_time['count']
-            read_latency = micros.groupby(micros.index // mean_step_secs).sum() / count.groupby(count.index // mean_step_secs).sum()
-
-            ax.plot(time / 3600, read_latency / 1000, linewidth=linewidth, color=version['color'], marker=version['marker'], markersize=version['markersize'], markeredgewidth=0.8, markevery=(i * offset, markevery))
-        draw_latency(ax_read, 'read')
-        draw_latency(ax_scan, 'seek')
-        draw_latency(ax_get, 'get')
-
-    fig.legend(version_names, ncol=3, loc='center', bbox_to_anchor=(0.5, 1.05), handlelength=1, handletextpad=0.5, columnspacing=1.5, frameon=False)
-    pdf_path = os.path.join(dir, f'meituan-{day_type}-day-num_shards-{num_shards}-unique_size-{unique_size}-period_secs-{period_secs}{read_workload}-mean_step_secs-{mean_step_secs}.pdf')
-    fig.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01, metadata={'CreationDate': None})
-    print('Plot saved to ' + pdf_path)
-
-    fig_read.legend(version_names, ncol=3, loc='center', bbox_to_anchor=(0.5, 1.05), handlelength=1, handletextpad=0.5, columnspacing=1.5, frameon=False)
-    pdf_path = os.path.join(dir, f'meituan-{day_type}-day-read-latency-num_shards-{num_shards}-unique_size-{unique_size}-period_secs-{period_secs}{read_workload}-mean_step_secs-{mean_step_secs}.pdf')
-    fig_read.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01, metadata={'CreationDate': None})
-    print('Plot saved to ' + pdf_path)
-
-draw({
-    'day-type': 'peak',
-    'num-srs-yticks': [3, 10, 100],
-    'read-ylim': (0.1, 2),
-    'sa-yticks': [1, 10],
-})
-draw({
-    'day-type': 'normal',
-    'num-srs-yticks': [3, 10, 30],
-    'read-ylim': (0.1, 1),
-    'sa-yticks': [1, 5],
-})
+fig.legend(version_names, ncol=3, loc='center', bbox_to_anchor=(0.5, 1.05), handlelength=1, handletextpad=0.5, columnspacing=1.5, frameon=False)
+pdf_path = os.path.join(dir, f'meituan-peak-day-num_shards-{num_shards}-unique_size-{unique_size}-period_secs-{period_secs}{read_workload}-mean_step_secs-{mean_step_secs}.pdf')
+fig.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01, metadata={'CreationDate': None})
+print('Plot saved to ' + pdf_path)
 
 
-panels = [
+def draw_panels(panels, xlabelpad=None, xlabel_loc=None):
+    for col, panel in enumerate(panels):
+        plt.subplot(gs[0, col])
+        ax = plt.gca()
+        plt.xlabel(panel['title'], labelpad=xlabelpad, loc=xlabel_loc)
+        plt.ylabel(panel['ylabel'])
+        if 'yticks' in panel:
+            plt.yticks(panel['yticks'])
+        plt.xticks([])
+        ax.set_axisbelow(True)
+        ax.grid(axis='y')
+        panel['ax'] = ax
+
+panels_read = [
     {
-        'day-type': 'peak',
+        'title': '(a) Read latency',
+        'ylabel': 'Avg read latency (ms)',
+        'ax': None,
+    },
+    {
+        'title': '(b) Scan latency',
+        'ylabel': 'Avg scan latency (ms)',
+        'ax': None,
+    },
+    {
+        'title': '(c) Get latency',
+        'ylabel': 'Avg get latency (ms)',
+        'yticks': [0, 0.1],
+        'ax': None,
+    }
+]
+fig_read = plt.figure(dpi=300, figsize=(common.single_col_inch, 1.3), constrained_layout=True)
+gs = gridspec.GridSpec(1, 3, figure=fig_read)
+draw_panels(panels_read, xlabelpad=5, xlabel_loc='right')
+
+panels_p99 = [
+    {
         'title': '(a) Peak day',
         'ylabel': 'P99 read latency (ms)',
         'ax': None,
     },
     {
-        'day-type': 'normal',
         'title': '(b) Normal day',
         'ylabel': 'P99 read latency (ms)',
         'ax': None,
     }
 ]
-fig = plt.figure(dpi = 300, figsize = (common.single_col_inch, 1.3), constrained_layout=True)
-gs = gridspec.GridSpec(1, 2, figure=fig)
+fig_p99 = plt.figure(dpi = 300, figsize = (common.single_col_inch, 1.3), constrained_layout=True)
+gs = gridspec.GridSpec(1, 2, figure=fig_p99)
+draw_panels(panels_p99)
 
-for col, panel in enumerate(panels):
-    plt.subplot(gs[0, col])
-    ax = plt.gca()
-    plt.xlabel(panel['title'])
-    plt.xticks([])
-    plt.ylabel(panel['ylabel'])
-    ax.set_axisbelow(True)
-    ax.grid(axis='y')
-    panel['ax'] = ax
-
-for panel in panels:
-    day_type = panel['day-type']
-    for version_idx in range(len(versions)):
+for day_type in ['peak', 'normal']:
+    match day_type:
+        case 'peak':
+            panel_p99 = panels_p99[0]
+        case 'normal':
+            panel_p99 = panels_p99[1]
+    for version_idx, version in enumerate(versions):
         x = -cluster_width / 2 + bar_width / 2 + version_idx * bar_width
-        version = versions[version_idx]
         data_dir = find_data_dir(day_type, version['path'])
         read_latency_us = json.load(open(os.path.join(data_dir, 'read-latency-us.json')))
-        panel['ax'].bar(x, read_latency_us['99%'] / 1000, width=bar_width, facecolor=version['facecolor'], edgecolor='black', linewidth=0.5, hatch=version['hatch'])
-fig.legend(version_names, ncol=3, loc='center', bbox_to_anchor=(0.5, 1.15), handlelength=1, handletextpad=0.5, columnspacing=1.5, frameon=False)
+        def add_bar(ax, v):
+            ax.bar(x, v, width=bar_width, facecolor=version['facecolor'], edgecolor='black', linewidth=0.5, hatch=version['hatch'])
+        if day_type == 'peak':
+            scan_latency_us = json.load(open(os.path.join(data_dir, 'seek-latency-us.json')))
+            get_latency_us = json.load(open(os.path.join(data_dir, 'get-latency-us.json')))
+            add_bar(panels_read[0]['ax'], read_latency_us['Average'] / 1000)
+            add_bar(panels_read[1]['ax'], scan_latency_us['Average'] / 1000)
+            add_bar(panels_read[2]['ax'], get_latency_us['Average'] / 1000)
+        add_bar(panel_p99['ax'], read_latency_us['99%'] / 1000)
+
+fig_read.legend(version_names, ncol=3, loc='center', bbox_to_anchor=(0.5, 1.15), handlelength=1, handletextpad=0.5, columnspacing=1.5, frameon=False)
+pdf_path = os.path.join(dir, f'meituan-peak-day-read-latency-num_shards-{num_shards}-unique_size-{unique_size}-period_secs-{period_secs}{read_workload}-mean_step_secs-{mean_step_secs}.pdf')
+fig_read.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01, metadata={'CreationDate': None})
+print('Plot saved to ' + pdf_path)
+
+fig_p99.legend(version_names, ncol=3, loc='center', bbox_to_anchor=(0.5, 1.15), handlelength=1, handletextpad=0.5, columnspacing=1.5, frameon=False)
 pdf_path = os.path.join(dir, 'meituan-p99-read-num_shards-' + str(num_shards) + '-unique_size-' + unique_size + '-period_secs-' + str(period_secs) + read_workload + '.pdf')
 plt.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01, metadata={'CreationDate': None})
 print('Plot saved to ' + pdf_path)
