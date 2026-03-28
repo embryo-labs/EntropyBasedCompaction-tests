@@ -18,7 +18,6 @@ unique_size_bytes = int(unique_size_bytes)
 
 import os
 import json
-import numpy as np
 import pandas as pd
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -54,12 +53,12 @@ versions = [
         'markersize': 3,
     },
     {
-        'path': 'universal',
+        'path': 'universal-hard-trigger',
         'marker': 's',
         'markersize': 3,
     },
     {
-        'path': 'benefit-cost',
+        'path': 'entropy-based',
         'marker': 'D',
         'markersize': 3,
     },
@@ -77,8 +76,11 @@ bar_width = 1 / (len(versions) + 1)
 cluster_width = bar_width * len(versions)
 
 def find_data_dir(day_type, version_path):
-    workload = 'meituan-writer-' + day_type + '-day-period-secs-' + str(period_secs) + '-num_shards-' + str(num_shards) + '-key-16-value-603-unique-size-' + unique_size + '-memtable-8MiB'
-    if version_path in ['tiering2', 'tiering4', 'tiering8', 'benefit-cost']:
+    workload = 'meituan-writer-' + day_type + '-day-period-secs-' + str(period_secs) + '-num_shards-' + str(num_shards) + '-key-16-value-603-unique-size-' + unique_size
+    if version_path == 'entropy-based':
+        workload += '-compaction-trigger-2'
+    workload += '-memtable-8MiB'
+    if version_path in ['tiering2', 'tiering4', 'tiering8', 'entropy-based']:
         workload += '-max-running-bg-jobs-1'
     workload += '-compaction-200MB-s' + read_workload
     return os.path.join(dir, workload, version_path)
@@ -136,8 +138,7 @@ def draw(config):
     ax_get.tick_params(axis='y', which='minor', labelleft=False)
     ax_get.grid(axis='y')
 
-    for i in range(len(versions)):
-        version = versions[i]
+    for i, version in enumerate(versions):
         data_dir = find_data_dir(day_type, version['path'])
         report = pd.read_csv(os.path.join(data_dir, 'report.csv'))
         report = report[['secs_elapsed', 'num-sorted-runs', 'size']]
