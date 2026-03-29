@@ -20,44 +20,39 @@ from matplotlib.gridspec import GridSpec
 
 import common
 
-# Paper specific settings
-SINGLE_COL_WIDTH = 8.5
-DOUBLE_COL_WIDTH = 17.8
-def cm_to_inch(value):
-    return value/2.54
-
 mpl.rcParams.update({
     'hatch.linewidth': 0.5,
     'font.family': 'serif',
     'font.serif': ['Linux Libertine O'],
+    'axes.unicode_minus': False,
+    'font.size': 9,
 })
-plt.rcParams['axes.unicode_minus'] = False
 
 vec_write_MB_s = [10, 20, 30, 40, 50, 60]
 
-fig = plt.figure(dpi=300, figsize=(cm_to_inch(SINGLE_COL_WIDTH), cm_to_inch(6)), constrained_layout=True)
+fig = plt.figure(dpi=300, figsize=(common.single_col_inch, 2.3), constrained_layout=True)
 gs = GridSpec(2, 2, figure=fig)
 plt.subplot(gs[0, 0])
 ax_srs_avg = plt.gca()
-plt.xlabel('Write rates (MB/s)', fontsize=9)
-plt.xticks(vec_write_MB_s, fontsize=9)
-plt.ylabel('Average # of sorted runs', fontsize=9)
+plt.xlabel('Write rates (MB/s)')
+plt.xticks(vec_write_MB_s)
+plt.ylabel('Average # of sorted runs')
 plt.yscale('log')
 plt.ylim((4, 100))
 yticks = [4, 10, 100]
-plt.yticks(yticks, labels=yticks, fontsize=9)
+plt.yticks(yticks, labels=yticks)
 ax_srs_avg.set_axisbelow(True)
 ax_srs_avg.grid(axis='y')
 
 plt.subplot(gs[0, 1])
 ax_srs_p99 = plt.gca()
-plt.xlabel('Write rates (MB/s)', fontsize=9)
-plt.xticks(vec_write_MB_s, fontsize=9)
-plt.ylabel('P99 # of sorted runs', fontsize=9)
+plt.xlabel('Write rates (MB/s)')
+plt.xticks(vec_write_MB_s)
+plt.ylabel('P99 # of sorted runs')
 plt.yscale('log')
 plt.ylim((4, 120))
 yticks = [4, 10, 100]
-plt.yticks(yticks, labels=yticks, fontsize=9)
+plt.yticks(yticks, labels=yticks)
 ax_srs_p99.set_axisbelow(True)
 ax_srs_p99.grid(axis='y')
 
@@ -77,25 +72,25 @@ versions = [
     {
         't_e': 0.78,
         'marker': '^',
-        'markersize': 2,
+        'markersize': 3,
         'markerfacecolor': None,
     },
     {
         't_e': 1,
         'marker': '>',
-        'markersize': 2,
+        'markersize': 3,
         'markerfacecolor': None,
     },
     {
         't_e': 2,
         'marker': '<',
-        'markersize': 2,
+        'markersize': 3,
         'markerfacecolor': None,
     },
     {
         't_e': 3,
         'marker': 'v',
-        'markersize': 2,
+        'markersize': 3,
         'markerfacecolor': None,
     },
 ]
@@ -126,7 +121,7 @@ for version in versions:
         names.append(f'{t_e} ({common.versions['entropy-based']['name']})')
     else:
         names.append(str(t_e))
-fig.legend(names, fontsize=9, ncol=3, loc='center', bbox_to_anchor=(0.5, 1.07), frameon=False)
+fig.legend(names, ncol=3, loc='center', bbox_to_anchor=(0.5, 1.07), frameon=False)
 pdf_path = os.path.join(dir, f'entropy-thresholds{value}{compaction}-warmup-{warmup_secs}-run-{run_secs}{read_workload}.pdf')
 fig.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01, metadata={'CreationDate': None})
 print('Plot saved to ' + pdf_path)
