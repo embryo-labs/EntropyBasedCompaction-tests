@@ -2,4 +2,5 @@
 pip3 install \
 	matplotlib \
 	pandas \
-	scipy
+	scipy \
+	runstats
