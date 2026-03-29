@@ -96,7 +96,7 @@ for line in open(os.path.join(dir, versions[1]['path'], 'log.json')):
     if entry['event'] == 'new-compaction':
         time_new_compaction.append((entry['timestamp(ns)'] - ts_begin_ns) / 1e9)
         reff_new_compaction.append(entry['R_eff'])
-scatter = plt.scatter(time_new_compaction, reff_new_compaction, 0.3, color=versions[1]['color'])
+scatter = plt.scatter(time_new_compaction, reff_new_compaction, linewidth=0, s=2, color=versions[1]['color'])
 plt.xlim((0, len(vec_write_MB_s) * phase_secs))
 ylim = math.ceil(max(reff_new_compaction))
 plt.ylim((0, ylim))
@@ -110,7 +110,7 @@ scatter_label = legend.get_texts()[1]
 scatter_label.set_position((scatter_label.get_position()[0] - 7, scatter_label.get_position()[1]))
 
 pdf_path = os.path.join(dir, f'phased-write-speed-phase_secs-{phase_secs}-write_MB_s{write_MB_s_string}-reff.pdf')
-plt.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01)
+plt.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01, metadata={'CreationDate': None})
 print('Plot saved to ' + pdf_path)
 
 
@@ -133,5 +133,5 @@ plt.vlines([phase_secs * i for i in range(1, len(vec_write_MB_s))], ymin=0, ymax
 plt.legend(version_names, ncol=len(versions), loc='center', bbox_to_anchor=(0.5, 1.27), frameon=False)
 
 pdf_path = os.path.join(dir, f'phased-write-speed-phase_secs-{phase_secs}-write_MB_s{write_MB_s_string}-num-srs.pdf')
-plt.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01)
+plt.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01, metadata={'CreationDate': None})
 print('Plot saved to ' + pdf_path)
