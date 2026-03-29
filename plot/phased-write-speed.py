@@ -96,7 +96,7 @@ for line in open(os.path.join(dir, versions[1]['path'], 'log.json')):
     if entry['event'] == 'new-compaction':
         time_new_compaction.append((entry['timestamp(ns)'] - ts_begin_ns) / 1e9)
         reff_new_compaction.append(entry['R_eff'])
-scatter = plt.scatter(time_new_compaction, reff_new_compaction, linewidth=0, s=2, color=versions[1]['color'])
+scatter = plt.scatter(time_new_compaction, reff_new_compaction, linewidth=0, s=2, color=versions[1]['color'], rasterized=True)
 plt.xlim((0, len(vec_write_MB_s) * phase_secs))
 ylim = math.ceil(max(reff_new_compaction))
 plt.ylim((0, ylim))
