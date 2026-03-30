@@ -73,7 +73,7 @@ version_names = [v.get('name', v['path']) for v in versions]
 bar_width = 1 / (len(versions) + 1)
 cluster_width = bar_width * len(versions)
 
-def draw(fig, outer_grid, panels):
+def draw_panels(fig, outer_grid, panels):
     for row in range(0, len(panels)):
         for col in range(0, len(panels[row])):
             panel = panels[row][col]
@@ -91,27 +91,33 @@ def draw(fig, outer_grid, panels):
                 if panel['log_scale'][i]:
                     ax.set_yscale('log')
                     ax.tick_params(axis='y', pad=1)
-                if panel['ylims'][i] is not None:
-                    ax.set_ylim(panel['ylims'][i])
                 if 'yticks' in panel and panel['yticks'][i] is not None:
                     ax.set_yticks(panel['yticks'][i])
                 ax.tick_params(axis='y', which='minor', labelleft=False)
                 ax.set_axisbelow(True)
                 ax.grid(axis='y')
+def draw_ylims(panels):
+    for row in range(0, len(panels)):
+        for col in range(0, len(panels[row])):
+            panel = panels[row][col]
+            for i, write_MB_s in enumerate(vec_write_MB_s):
+                ax = panel['ax'][i]
+                if panel['ylims'][i] is not None:
+                    ax.set_ylim(panel['ylims'][i])
 
 panels_main = [
     [
         {
             "title": "(a) Number of sorted runs (average)",
             "ylabel": "Avg # of sorted runs",
-            "ylims": [None, (1, 300), (1, 3000)],
+            'ylims': [None, (1, None), (1, None)],
             "log_scale": [False, True, True],
             'ax': [],
         },
         {
             "title": "(b) Number of sorted runs (99th percentile)",
             "ylabel": "P99 # of sorted runs",
-            "ylims": [None, (1, 300), (1, 3000)],
+            'ylims': [None, (1, None), (1, None)],
             "log_scale": [False, True, True],
             'ax': [],
         },
@@ -120,14 +126,14 @@ panels_main = [
         {
             "title": "(c) Read latency (average)",
             "ylabel": "Avg read latency (ms)",
-            "ylims": [None, (0.1, 4), (0.1, 40)],
+            'ylims': [None, (0.1, None), (0.1, None)],
             "log_scale": [False, True, True],
             'ax': [],
         },
         {
             "title": "(d) Read latency (99th percentile)",
             "ylabel": "P99 read latency (ms)",
-            "ylims": [None, (1, 40), (1, 400)],
+            'ylims': [None, (1, None), (1, None)],
             "log_scale": [False, True, True],
             'ax': [],
         },
@@ -136,14 +142,14 @@ panels_main = [
         {
             "title": "(e) Space amplification (average)",
             "ylabel": "Average space amp",
-            "ylims": [None, None, None],
+            'ylims': [None, None, None],
             "log_scale": [False, False, False],
             'ax': [],
         },
         {
             "title": "(f) Space amplification (max)",
             "ylabel": "Max space amp",
-            "ylims": [None, None, None],
+            'ylims': [None, None, None],
             'yticks': [None, [0, 2, 4, 6, 8, 10], None],
             "log_scale": [False, False, False],
             'ax': [],
@@ -152,7 +158,7 @@ panels_main = [
 ]
 fig_main = plt.figure(dpi=300, figsize=(common.double_col_inch, 4.5))
 outer_grid = gridspec.GridSpec(3, 2, figure=fig_main, hspace=0.4, wspace=0.2, left=0, right=0.93, bottom=0, top=0.92)
-draw(fig_main, outer_grid, panels_main)
+draw_panels(fig_main, outer_grid, panels_main)
 for row in range(0, len(panels_main)):
     for col in range(0, len(panels_main[row])):
         panel = panels_main[row][col]
@@ -164,13 +170,12 @@ fig_main.legend(handles=handles, labels=version_names, ncol=len(versions),
         loc='upper center', bbox_to_anchor=(0.44, 0.99), frameon=False, 
         handlelength=1.5, handletextpad=0.5, columnspacing=1.0)
 
-
 panels_scan_get = [
     [
         {
             "title": "(a) Scan latency (average)",
             "ylabel": "Avg scan latency (ms)",
-            "ylims": [None, (1, 30), (1, 300)],
+            'ylims': [None, (1, None), (1, None)],
             "log_scale": [False, True, True],
             'ax': [],
         },
@@ -189,7 +194,7 @@ panels_scan_get = [
 fig_scan_get = plt.figure(dpi=300, figsize=(common.single_col_inch, 2.8))
 outer_grid = gridspec.GridSpec(2, 1, figure=fig_scan_get, hspace=0.4, wspace=0.2, 
                             left=0, right=0.93, bottom=0, top=0.92)
-draw(fig_scan_get, outer_grid, panels_scan_get)
+draw_panels(fig_scan_get, outer_grid, panels_scan_get)
 for row in range(0, len(panels_scan_get)):
     for col in range(0, len(panels_scan_get[row])):
         panel = panels_scan_get[row][col]
@@ -240,11 +245,13 @@ renderer = fig_main.canvas.get_renderer()
 tight_bbox = fig_main.get_tightbbox(renderer)
 print(f'width: {tight_bbox.width}, height: {tight_bbox.height}')
 
+draw_ylims(panels_main)
 pdf_path = os.path.join(dir, f'const-write-rates{value}{compaction}-warmup-{warmup_secs}-run-{run_secs}{read_workload}.pdf')
 fig_main.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01, metadata={'CreationDate': None})
 print(f'Plot saved to {pdf_path}')
 
 
+draw_ylims(panels_scan_get)
 pdf_path = os.path.join(dir, f'const-write-rates-read-latency{value}{compaction}-warmup-{warmup_secs}-run-{run_secs}{read_workload}.pdf')
 fig_scan_get.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01, metadata={'CreationDate': None})
 print(f'Plot saved to {pdf_path}')
