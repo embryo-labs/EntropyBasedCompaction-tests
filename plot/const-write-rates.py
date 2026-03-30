@@ -170,6 +170,7 @@ fig_main.legend(handles=handles, labels=version_names, ncol=len(versions),
         loc='upper center', bbox_to_anchor=(0.44, 0.99), frameon=False, 
         handlelength=1.5, handletextpad=0.5, columnspacing=1.0)
 
+
 panels_scan_get = [
     [
         {
@@ -207,6 +208,34 @@ fig_scan_get.legend(handles=handles, labels=version_names, ncol=3,
         handlelength=1.5, handletextpad=0.5, columnspacing=1.0)
 
 
+versions_intro = [0, 2, 4, 5]
+bar_width_intro = 1 / (len(versions_intro) + 1)
+cluster_width_intro = bar_width_intro * len(versions_intro)
+
+fig_intro = plt.figure(dpi=300, figsize=(common.single_col_inch, 1.3), constrained_layout=True)
+gs = gridspec.GridSpec(1, 2, figure=fig_intro)
+plt.subplot(gs[0, 0])
+ax_10 = plt.gca()
+plt.xlabel('(a) User write 10MB/s')
+plt.xticks([])
+plt.ylabel('Avg # of sorted runs')
+
+plt.subplot(gs[0, 1])
+ax_30 = plt.gca()
+plt.xlabel('(b) User write 30MB/s')
+plt.xticks([])
+
+handles = []
+version_names = []
+for i in versions_intro:
+    v = versions[i]
+    handles.append(mpl.patches.Patch(facecolor=v['facecolor'], hatch=v['hatch'], edgecolor='black', linewidth=0.5))
+    version_names.append(v['name'])
+fig_intro.legend(handles=handles, labels=version_names, ncol=len(versions_intro), 
+        loc='upper center', bbox_to_anchor=(0.5, 1.2), frameon=False, 
+        handlelength=1.3, handletextpad=0.5, columnspacing=1.0)
+
+
 for i, write_MB_s in enumerate(vec_write_MB_s):
     for version_idx, version in enumerate(versions):
         x = -cluster_width / 2 + bar_width / 2 + version_idx * bar_width
@@ -229,9 +258,11 @@ for i, write_MB_s in enumerate(vec_write_MB_s):
         scan_latency_us = json.load(open(os.path.join(data_dir, 'seek-latency-us.json')))
         get_latency_us = json.load(open(os.path.join(data_dir, 'get-latency-us.json')))
 
+        num_srs_avg = report['num-sorted-runs'].mean()
+
         def add_bar(panel, val):
             panel['ax'][i].bar(x, val, width=bar_width, edgecolor='black', linewidth=0.5, facecolor=version['facecolor'], hatch=version['hatch'])
-        add_bar(panels_main[0][0], report['num-sorted-runs'].mean())
+        add_bar(panels_main[0][0], num_srs_avg)
         add_bar(panels_main[0][1], np.percentile(report['num-sorted-runs'], 99))
         add_bar(panels_main[1][0], read_latency_us['Average'] / 1000)
         add_bar(panels_main[1][1], read_latency_us['99%'] / 1000)
@@ -240,6 +271,19 @@ for i, write_MB_s in enumerate(vec_write_MB_s):
 
         add_bar(panels_scan_get[0][0], scan_latency_us['Average'] / 1000)
         add_bar(panels_scan_get[1][0], get_latency_us['Average'] / 1000)
+
+        if version_idx in versions_intro:
+            match write_MB_s:
+                case 10:
+                    ax = ax_10
+                case 30:
+                    ax = ax_30
+                case _:
+                    ax = None
+            if ax is not None:
+                version_idx_intro = versions_intro.index(version_idx)
+                x = -cluster_width_intro / 2 + bar_width_intro / 2 + version_idx_intro * bar_width_intro
+                ax.bar(x, num_srs_avg, width=bar_width_intro, edgecolor='black', linewidth=0.5, facecolor=version['facecolor'], hatch=version['hatch'])
 
 renderer = fig_main.canvas.get_renderer()
 tight_bbox = fig_main.get_tightbbox(renderer)
@@ -254,4 +298,10 @@ print(f'Plot saved to {pdf_path}')
 draw_ylims(panels_scan_get)
 pdf_path = os.path.join(dir, f'const-write-rates-read-latency{value}{compaction}-warmup-{warmup_secs}-run-{run_secs}{read_workload}.pdf')
 fig_scan_get.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01, metadata={'CreationDate': None})
+print(f'Plot saved to {pdf_path}')
+
+
+ax_30.set_ylim(bottom=1)
+pdf_path = os.path.join(dir, f'const-write-rates-intro{value}{compaction}-warmup-{warmup_secs}-run-{run_secs}{read_workload}.pdf')
+fig_intro.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01, metadata={'CreationDate': None})
 print(f'Plot saved to {pdf_path}')
