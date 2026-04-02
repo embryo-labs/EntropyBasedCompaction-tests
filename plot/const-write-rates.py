@@ -64,10 +64,11 @@ versions = [
         'max-running-bg-jobs': 1,
     },
 ]
-
+path_version = {}
 for v in versions:
     if v['path'] in common.versions:
         v.update(common.versions[v['path']])
+    path_version[v['path']] = v
 version_names = [v.get('name', v['path']) for v in versions]
 
 bar_width = 1 / (len(versions) + 1)
@@ -208,11 +209,28 @@ fig_scan_get.legend(handles=handles, labels=version_names, ncol=3,
         handlelength=1.5, handletextpad=0.5, columnspacing=1.0)
 
 
-versions_intro = [0, 2, 4, 5]
-bar_width_intro = 1 / (len(versions_intro) + 1)
-cluster_width_intro = bar_width_intro * len(versions_intro)
+versions_intro = [
+    {
+        'path': 'rocksdb-tuned',
+        'name': 'Leveling (T=5)',
+    },
+    {
+        'path': 'tiering4',
+        'name': 'Tiering (T=4)',
+    },
+    {
+        'path': 'entropy-based',
+        'name': common.versions['entropy-based']['name'],
+    },
+]
+map_path_to_version_intro_idx = {}
+for version_intro_idx, v in enumerate(versions_intro):
+    map_path_to_version_intro_idx[v['path']] = version_intro_idx
 
-fig_intro = plt.figure(dpi=300, figsize=(common.single_col_inch, 1.3), constrained_layout=True)
+bar_width_intro = 1 / (len(versions_intro) + 1)
+cluster_width_intro = 1 / (len(versions_intro) + 1) * len(versions_intro)
+
+fig_intro = plt.figure(dpi=300, figsize=(3.1, 1.3), constrained_layout=True)
 gs = gridspec.GridSpec(1, 2, figure=fig_intro)
 plt.subplot(gs[0, 0])
 ax_10 = plt.gca()
@@ -227,12 +245,12 @@ plt.xticks([])
 
 handles = []
 version_names = []
-for i in versions_intro:
-    v = versions[i]
+for v_intro in versions_intro:
+    v = path_version[v_intro['path']]
     handles.append(mpl.patches.Patch(facecolor=v['facecolor'], hatch=v['hatch'], edgecolor='black', linewidth=0.5))
-    version_names.append(v['name'])
+    version_names.append(v_intro['name'])
 fig_intro.legend(handles=handles, labels=version_names, ncol=len(versions_intro), 
-        loc='upper center', bbox_to_anchor=(0.5, 1.2), frameon=False, 
+        loc='upper center', bbox_to_anchor=(0.56, 1.2), frameon=False, 
         handlelength=1.3, handletextpad=0.5, columnspacing=1.0)
 
 
@@ -272,7 +290,8 @@ for i, write_MB_s in enumerate(vec_write_MB_s):
         add_bar(panels_scan_get[0][0], scan_latency_us['Average'] / 1000)
         add_bar(panels_scan_get[1][0], get_latency_us['Average'] / 1000)
 
-        if version_idx in versions_intro:
+        if version['path'] in map_path_to_version_intro_idx:
+            version_intro_idx = map_path_to_version_intro_idx[version['path']]
             match write_MB_s:
                 case 10:
                     ax = ax_10
@@ -281,9 +300,8 @@ for i, write_MB_s in enumerate(vec_write_MB_s):
                 case _:
                     ax = None
             if ax is not None:
-                version_idx_intro = versions_intro.index(version_idx)
-                x = -cluster_width_intro / 2 + bar_width_intro / 2 + version_idx_intro * bar_width_intro
-                ax.bar(x, num_srs_avg, width=bar_width_intro, edgecolor='black', linewidth=0.5, facecolor=version['facecolor'], hatch=version['hatch'])
+                x = -cluster_width_intro / 2 + bar_width_intro / 2 + version_intro_idx * bar_width_intro
+                ax.bar(x, num_srs_avg, width=bar_width_intro * 0.65, edgecolor='black', linewidth=0.5, facecolor=version['facecolor'], hatch=version['hatch'])
 
 renderer = fig_main.canvas.get_renderer()
 tight_bbox = fig_main.get_tightbbox(renderer)
