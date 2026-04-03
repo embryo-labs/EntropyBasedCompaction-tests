@@ -21,7 +21,7 @@ workspace=~/EUC
 
 ```shell
 cd $workspace
-git clone <URL-to-this-repo>
+git clone <URL-to-this-repo> tests
 cd tests
 cd setup
 ```
