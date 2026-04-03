@@ -1,4 +1,4 @@
-# Test scripts for EUC
+# Test scripts for Entropy-based Compaction
 
 ## Prerequisites
 
@@ -21,7 +21,7 @@ workspace=~/EUC
 
 ```shell
 cd $workspace
-git clone https://github.com/embryo-labs/EUC-tests.git
+git clone <URL-to-this-repo>
 cd tests
 cd setup
 ```
