@@ -13,8 +13,8 @@ workspace=~
 If you prefer to put everything in a subdirectory:
 
 ```shell
-mkdir ~/EUC
-workspace=~/EUC
+mkdir ~/EntropyCompaction
+workspace=~/EntropyCompaction
 ```
 
 ### Clone this repo
