@@ -93,7 +93,8 @@ preempt_only_by_entropy() (
 preempt_only_by_num() {
 	"$@" \
 		--preempt_by_entropy=false \
-		--preempt_by_num=true
+		--preempt_by_num=true \
+		--pick_best_reff=false
 }
 
 with_compaction_trigger() {
@@ -296,8 +297,6 @@ for write_MB_s in 10 30 50; do
 		read_workload with_write_MB_s $write_MB_s with_compaction_limit_MB_s $compaction_MB_s with_max_running_background_jobs 1 with_memtable_size 8MiB with_policy_tiering $ratio load_all_warmup_run tiering$ratio readwhilewriting $key_size $value_size $unique_size $warmup_secs $run_secs
 	done
 
-	read_workload with_write_MB_s $write_MB_s with_compaction_limit_MB_s $compaction_MB_s with_max_running_background_jobs 1 with_memtable_size 8MiB with_compaction_trigger 2 with_policy_entropy_based load_all_warmup_run entropy-based readwhilewriting $key_size $value_size $unique_size $warmup_secs $run_secs
-
 	# Soft-preemption
 	read_workload with_write_MB_s $write_MB_s with_compaction_limit_MB_s $compaction_MB_s with_memtable_size 8MiB with_compaction_trigger 2 with_policy_entropy_based load_all_warmup_run entropy-based readwhilewriting $key_size $value_size $unique_size $warmup_secs $run_secs
 
@@ -309,6 +308,10 @@ for write_MB_s in 10 30 50; do
 
 	# No-exclude-small
 	read_workload with_write_MB_s $write_MB_s with_compaction_limit_MB_s $compaction_MB_s with_max_running_background_jobs 1 with_memtable_size 8MiB with_compaction_trigger 2 with_policy_entropy_based no_exclude_small load_all_warmup_run no_exclude_small readwhilewriting $key_size $value_size $unique_size $warmup_secs $run_secs
+done
+
+for write_MB_s in 10 20 30 40 50 60; do
+	read_workload with_write_MB_s $write_MB_s with_compaction_limit_MB_s $compaction_MB_s with_max_running_background_jobs 1 with_memtable_size 8MiB with_compaction_trigger 2 with_policy_entropy_based load_all_warmup_run entropy-based readwhilewriting $key_size $value_size $unique_size $warmup_secs $run_secs
 done
 
 for write_MB_s in 10 20 30 40 50 60; do
