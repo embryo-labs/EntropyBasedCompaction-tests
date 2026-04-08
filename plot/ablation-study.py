@@ -11,7 +11,6 @@ warmup_secs = 1200
 run_secs = 1200
 read_workload = '-get-0.87-seek-0.13-nexts-48'
 
-import math
 import os
 import numpy as np
 import pandas as pd
@@ -37,28 +36,28 @@ versions = [
         'path': 'preempt_only_by_entropy-be-0',
         'name': 'Only-by-entropy',
         'max-running-bg-jobs': 1,
-        'color': common.colors[1]['light'],
+        'color': common.colors[0]['light'],
         'hatch': '--//',
     },
     {
         'path': 'preempt_only_by_num',
         'name': 'Only-by-num',
         'max-running-bg-jobs': 1,
-        'color': common.colors[3]['light'],
+        'color': common.colors[1]['light'],
         'hatch': '---',
     },
     {
         'path': 'no_exclude_small',
         'name': 'No-exclude-small',
         'max-running-bg-jobs': 1,
-        'color': common.colors[4]['light'],
+        'color': common.colors[3]['light'],
         'hatch': '--\\\\',
     },
     {
         'path': 'entropy-based',
         'name': 'Soft-preemption',
         'max-running-bg-jobs': None,
-        'color': common.colors[5]['light'],
+        'color': common.colors[4]['light'],
         'hatch': '\\\\\\',
     },
     {
@@ -77,16 +76,10 @@ cluster_width = bar_width * len(versions)
 row_configs = [
     {
         'ylabel': 'Avg # of sorted runs',
-        'ylims': [None, None, (10, 400)],
-        'log-scale': [False, False, True],
+        'ylims': [(1, None), (10, None), (10, None)],
+        'log-scale': [True, True, True],
         'ax': [],
     },
-    {
-        'ylabel': 'P99 # of sorted runs',
-        'ylims': [None, None, (10, 400)],
-        'log-scale': [False, False, True],
-        'ax': [],
-    }
 ]
 
 fig = plt.figure(dpi=300, figsize=(common.single_col_inch, 2.5), constrained_layout=True)
@@ -99,8 +92,6 @@ for row, row_config in enumerate(row_configs):
         plt.xticks([])
         if col == 0:
             plt.ylabel(row_config['ylabel'])
-        if row_config['ylims'][col] is not None:
-            plt.ylim(row_config['ylims'][col])
         if row_config['log-scale'][col]:
             plt.yscale('log')
         ax.set_axisbelow(True)
@@ -122,9 +113,11 @@ for col, write_MB_s in enumerate(vec_write_MB_s):
         data_dir = os.path.join(dir, workload, version['path'])
         report = pd.read_csv(os.path.join(data_dir, 'report.csv'))
         row_configs[0]['ax'][col].bar(x, report['num-sorted-runs'].mean(), width=bar_width, edgecolor='black', linewidth=0.5, facecolor=version['color'], hatch=version['hatch'])
-        row_configs[1]['ax'][col].bar(x, np.percentile(report['num-sorted-runs'], 99), width=bar_width, edgecolor='black', linewidth=0.5, facecolor=version['color'], hatch=version['hatch'])
 
-        read_latency_us = json.load(open(os.path.join(data_dir, 'read-latency-us.json')))
+for row, row_config in enumerate(row_configs):
+    for col in range(0, len(vec_write_MB_s)):
+        if row_config['ylims'][col] is not None:
+            row_config['ax'][col].set_ylim(row_config['ylims'][col])
 
 fig.legend(version_names, fontsize=9, ncol=2, loc='center', bbox_to_anchor=(0.5, 1.1), frameon=False)
 pdf_path = os.path.join(dir, f'ablation-study{value}{compaction}-warmup-{warmup_secs}-run-{run_secs}{read_workload}.pdf')
