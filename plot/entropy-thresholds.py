@@ -126,14 +126,14 @@ fig_wa = plt.figure(dpi=300, figsize=(common.single_col_inch, 1.5), constrained_
 gs = GridSpec(1, 2, figure=fig_wa)
 plt.subplot(gs[0, 0])
 ax_10 = plt.gca()
-plt.text(0.5, -0.45, '(a) user write 10MB/s', transform=ax_10.transAxes, ha='center', va='center')
+plt.text(0.5, -0.45, '(a) User write 10MB/s', transform=ax_10.transAxes, ha='center', va='center')
 plt.ylabel('Write amplification')
 plt.xlabel('Entropy threshold', labelpad=xlabelpad)
 plt.xticks([0, 1, 2, 3])
 
 plt.subplot(gs[0, 1])
 ax_50 = plt.gca()
-plt.text(0.5, -0.45, '(b) user write 50MB/s', transform=ax_50.transAxes, ha='center', va='center')
+plt.text(0.5, -0.45, '(b) User write 50MB/s', transform=ax_50.transAxes, ha='center', va='center')
 plt.xlabel('Entropy threshold', labelpad=xlabelpad)
 plt.xticks([0, 1, 2, 3])
 
