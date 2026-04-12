@@ -36,7 +36,7 @@ with_policy_universal_hard_trigger() {
 }
 with_policy_entropy_based() {
 	"$@" \
-		--compaction_style=5 \
+		--compaction_style=3 \
 		--num_levels=1
 }
 with_policy_entropy_based_universal() {
@@ -48,16 +48,22 @@ with_policy_tiering() (
 	shift
 	"$@" \
 		--compaction_style=4 \
-		--compaction_policy="tiering" \
 		--max_bytes_for_level_multiplier=$T \
 		--num_levels=1 \
 		--max_background_jobs=100
 )
-with_policy_benefit_cost() {
+with_policy_lazy_leveling() (
+	T=$1
+	shift
+	C=$1
+	shift
 	"$@" \
-		--compaction_style=3 \
-		--num_levels=1
-}
+		--compaction_style=5 \
+		--num_levels=1 \
+		--max_bytes_for_level_multiplier=$T \
+		--C=$C \
+		--max_background_jobs=100
+)
 with_entropy_threshold() (
 	entropy_threshold=$1
 	shift
