@@ -46,7 +46,6 @@ def draw(ylabel, col_name, pdf_name=None):
     plt.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01)
     print('Plot saved to ' + pdf_path)
 draw('Operation per second', 'interval_qps', 'ops')
-draw('Number of wait for LLC', 'wait-for-last-level-compaction')
 draw('Size', 'size')
 draw('Size of buffer level', 'rocksdb.buffer-level-size')
 if 'rate-limit' in report:
