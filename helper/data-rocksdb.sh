@@ -7,3 +7,6 @@ output_dir=$(realpath "$1")
 cd $(dirname $0)/../../testdb
 mv LOG "$output_dir"
 mv "$(ls OPTIONS-* | sort -n | tail -n1)" "$output_dir"
+if [ -f log.json ]; then
+	mv log.json "$output_dir"
+fi

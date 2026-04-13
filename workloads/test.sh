@@ -2,42 +2,37 @@
 workspace=$(realpath "$(dirname $0)"/../..)
 nice ../helper/build.sh
 
-with_memtable_size() (
-	arg_memtable_size=$1
-	shift
-	memtable_size=$(humanfriendly --parse-size="$arg_memtable_size")
-	suffix="-memtable-$arg_memtable_size$suffix" "$@" \
-		--write_buffer_size=$memtable_size \
-		--target_file_size_base=$memtable_size \
-		--max_bytes_for_level_base=$((memtable_size * 4))
-)
-
 with_policy_rocksdb_tuned() (
-	"$@" \
+	db_bench_path="$workspace"/rocksdb/build/db_bench "$@" \
 		--level_compaction_dynamic_level_bytes=true \
 		--num_levels=10 \
+		--max_background_jobs=16 \
 		--max_bytes_for_level_multiplier=5 \
 		--level0_file_num_compaction_trigger=1
 )
 with_policy_leveling() (
 	T=$1
 	shift
-	"$@" \
+	db_bench_path="$workspace"/rocksdb/build/db_bench "$@" \
 		--level_compaction_dynamic_level_bytes=true \
 		--num_levels=10 \
+		--max_background_jobs=16 \
 		--max_bytes_for_level_multiplier=$T \
 		--level0_file_num_compaction_trigger=1 \
 		--allow_intra_l0_compactions=false
 )
 with_policy_universal_hard_trigger() {
-	"$@" \
+	db_bench_path="$workspace"/rocksdb/build/db_bench "$@" \
 		--compaction_style=1 \
-		--num_levels=1
+		--num_levels=1 \
+		--max_background_jobs=16
 }
 with_policy_entropy_based() {
-	"$@" \
+	db_bench_path="$workspace"/rocksdb/build/db_bench "$@" \
 		--compaction_style=3 \
-		--num_levels=1
+		--num_levels=1 \
+		--max_background_jobs=16 \
+		--json_log_file="$workspace/testdb/log.json"
 }
 with_policy_entropy_based_universal() {
 	with_policy_entropy_based "$@" \
@@ -46,7 +41,7 @@ with_policy_entropy_based_universal() {
 with_policy_tiering() (
 	T=$1
 	shift
-	"$@" \
+	db_bench_path="$workspace"/rocksdb/build/db_bench "$@" \
 		--compaction_style=4 \
 		--max_bytes_for_level_multiplier=$T \
 		--num_levels=1 \
@@ -57,7 +52,7 @@ with_policy_lazy_leveling() (
 	shift
 	C=$1
 	shift
-	"$@" \
+	db_bench_path="$workspace"/rocksdb/build/db_bench "$@" \
 		--compaction_style=5 \
 		--num_levels=1 \
 		--max_bytes_for_level_multiplier=$T \
@@ -104,6 +99,15 @@ preempt_only_by_num() {
 		--pick_best_reff=false
 }
 
+with_memtable_size() (
+	arg_memtable_size=$1
+	shift
+	memtable_size=$(humanfriendly --parse-size="$arg_memtable_size")
+	suffix="-memtable-$arg_memtable_size$suffix" "$@" \
+		--write_buffer_size=$memtable_size \
+		--target_file_size_base=$memtable_size \
+		--max_bytes_for_level_base=$((memtable_size * 4))
+)
 with_compaction_trigger() {
 	compaction_trigger=$1
 	shift
@@ -244,7 +248,7 @@ load_all_warmup_run() (
 	"$(dirname $0)"/prepare.sh "$output_dir" || return $?
 	mkdir -p "$output_dir"/load
 	mkdir -p "$output_dir"/warmup
-	"$(dirname $0)"/dbbench.sh "$output_dir" "$num_unique_keys" "$key_size" \
+	"$(dirname $0)"/dbbench.sh "$db_bench_path" "$output_dir" "$num_unique_keys" "$key_size" \
 		--value_size="$value_size" \
 		--benchmarks_json="[
 	{
@@ -423,7 +427,7 @@ load_all_run_phases() (
 
 	"$(dirname $0)"/prepare.sh "$output_dir" || return $?
 	mkdir -p "$output_dir"/load
-	"$(dirname $0)"/dbbench.sh "$output_dir" "$num_unique_keys" "$key_size" \
+	"$(dirname $0)"/dbbench.sh "$db_bench_path" "$output_dir" "$num_unique_keys" "$key_size" \
 		--value_size="$value_size" \
 		--benchmarks_json="$benchmarks_json" \
 		"$@"
@@ -460,7 +464,7 @@ meituan_writer() (
 	num_unique_keys=$(($(humanfriendly --parse-size="$unique_size") / (key_size + value_size)))
 	"$(dirname $0)"/prepare.sh "$output_dir" || return $?
 	mkdir -p "$output_dir"/load
-	"$(dirname $0)"/dbbench.sh "$output_dir" "$num_unique_keys" "$key_size" \
+	"$(dirname $0)"/dbbench.sh "$db_bench_path" "$output_dir" "$num_unique_keys" "$key_size" \
 		--value_size="$value_size" \
 		--benchmarks_json="[
 	{

@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
-if [ ! "$3" ]; then
-	echo Usage: $0 output-dir num-unique-keys key-size args...
+if [ ! "$4" ]; then
+	echo Usage: $0 db_bench_path output-dir num-unique-keys key-size args...
 	exit 1
 fi
+db_bench_path=$1
+shift
 output_dir=$(realpath "$1")
 shift
 num_unique_keys=$1
@@ -17,7 +19,7 @@ ulimit -n 524288
 ulimit -c unlimited
 export ASAN_OPTIONS="abort_on_error=1:disable_coredump=0"
 cd "$output_dir"
-"$workspace"/tests/helper/exe-while . "$workspace"/rocksdb/build/db_bench \
+"$workspace"/tests/helper/exe-while . $db_bench_path \
 	--ttl_seconds=0 \
 	--use_direct_io_for_flush_and_compaction=true \
 	--use_direct_reads=true \
@@ -25,13 +27,11 @@ cd "$output_dir"
 	--compression_ratio=1 \
 	--bloom_bits=10 \
 	--key_size="$key_size" \
-	--max_background_jobs=16 \
 	--block_size=4096 \
 	--enable_pipelined_write=false \
 	--unordered_write=true \
 	--auto_readahead_size=true \
 	--db="$workspace/testdb" \
-	--json_log_file="$output_dir/log.json" \
 	--num=$num_unique_keys \
 	--level0_slowdown_writes_trigger=100000 \
 	--level0_stop_writes_trigger=100000 \
