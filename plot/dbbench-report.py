@@ -47,7 +47,8 @@ def draw(ylabel, col_name, pdf_name=None):
     print('Plot saved to ' + pdf_path)
 draw('Operation per second', 'interval_qps', 'ops')
 draw('Size', 'size')
-draw('Size of buffer level', 'rocksdb.buffer-level-size')
+if 'rocksdb.buffer-level-size' in report:
+    draw('Size of buffer level', 'rocksdb.buffer-level-size')
 if 'rate-limit' in report:
     draw('Rate limit', 'rate-limit')
 if 'size-ratio' in report:
@@ -57,13 +58,15 @@ def draw_num_sorted_runs(report, fname, yscale=None):
     fig = plt.figure(dpi = 300, figsize = (common.single_col_inch, 2), constrained_layout=True)
     ax = plt.gca()
     plt.plot(report['secs_elapsed'], report['num-sorted-runs'])
-    plt.plot(report['secs_elapsed'], report['rocksdb.num-merging-l0-sorted-runs'])
+    if 'rocksdb.num-merging-l0-sorted-runs' in report:
+        plt.plot(report['secs_elapsed'], report['rocksdb.num-merging-l0-sorted-runs'])
     if yscale is not None:
         plt.yscale(yscale)
     ax.set_ylim(bottom=1)
     plt.xlabel('Time (Seconds)')
     plt.ylabel('# of sorted runs')
-    plt.legend(['Total', 'Merging'])
+    if 'rocksdb.num-merging-l0-sorted-runs' in report:
+        plt.legend(['Total', 'Merging L0'])
     pdf_path = os.path.join(plot_dir, fname)
     plt.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01)
     print('Plot saved to ' + pdf_path)
@@ -73,7 +76,7 @@ draw_num_sorted_runs(report, 'num-sorted-runs.pdf')
 draw_num_sorted_runs(report, 'num-sorted-runs-log.pdf', yscale='log')
 if len(report) >= 200:
     mean_step = len(report) // 100
-    draw_num_sorted_runs(report[['secs_elapsed', 'num-sorted-runs', 'rocksdb.num-merging-l0-sorted-runs']].groupby(report.index // mean_step).mean(), 'num-sorted-runs-mean-every-1p.pdf')
+    draw_num_sorted_runs(report[['secs_elapsed', 'num-sorted-runs']].groupby(report.index // mean_step).mean(), 'num-sorted-runs-mean-every-1p.pdf')
 
 fig = plt.figure(dpi = 300, figsize = (common.single_col_inch, 2), constrained_layout=True)
 ax = plt.gca()
@@ -109,16 +112,17 @@ print('Plot saved to ' + pdf_path)
 if 'DISPLAY' in os.environ:
     plt.show(block=False)
 
-plt.figure(dpi = 300, figsize = (common.single_col_inch, 2), constrained_layout=True)
-ax = plt.gca()
-formatter = ScalarFormatter(useMathText=True)
-formatter.set_powerlimits((-3, 4))
-ax.yaxis.set_major_formatter(formatter)
-data = report[report['Re'] != 0]
-plt.plot(data['secs_elapsed'], data['Re'])
-ax.set_ylim(bottom=0)
-plt.xlabel('Time (Seconds)')
-plt.ylabel('Re')
-pdf_path = os.path.join(plot_dir, 'Re.pdf')
-plt.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01)
-print('Plot saved to ' + pdf_path)
+if 'Re' in report:
+    plt.figure(dpi = 300, figsize = (common.single_col_inch, 2), constrained_layout=True)
+    ax = plt.gca()
+    formatter = ScalarFormatter(useMathText=True)
+    formatter.set_powerlimits((-3, 4))
+    ax.yaxis.set_major_formatter(formatter)
+    data = report[report['Re'] != 0]
+    plt.plot(data['secs_elapsed'], data['Re'])
+    ax.set_ylim(bottom=0)
+    plt.xlabel('Time (Seconds)')
+    plt.ylabel('Re')
+    pdf_path = os.path.join(plot_dir, 'Re.pdf')
+    plt.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01)
+    print('Plot saved to ' + pdf_path)
