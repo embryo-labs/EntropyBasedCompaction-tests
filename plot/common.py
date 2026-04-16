@@ -124,6 +124,18 @@ versions = {
         'facecolor': colors[5]['light'],
         'hatch': '\\\\\\',
     },
+    'lazy-leveling-2-3': {
+        'name': 'LazyLeveling',
+        'color': colors[6]['dark'],
+        'facecolor': colors[6]['light'],
+        'hatch': '--XX',
+    },
+    'bush': {
+        'name': 'LSM-bush',
+        'color': colors[7]['dark'],
+        'facecolor': colors[7]['light'],
+        'hatch': 'XXXX',
+    },
     'entropy-based': {
         'name': 'EBC',
         'color': colors[2]['dark'],

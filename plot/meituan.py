@@ -58,6 +58,12 @@ versions = [
         'markersize': 3,
     },
     {
+        'path': 'lazy-leveling-2-3',
+    },
+    {
+        'path': 'bush',
+    },
+    {
         'path': 'entropy-based',
         'marker': 'D',
         'markersize': 3,
@@ -68,19 +74,35 @@ for v in versions:
     v.update(common.versions[v['path']])
 version_names = [v['name'] for v in versions]
 
+versions_typical = versions[0:5] + [versions[7]]
+version_names_typical = [v['name'] for v in versions_typical]
+
+class BarPlotter:
+    versions: list
+    bar_width: float
+    cluster_width: float
+    def __init__(self, versions):
+        self.versions = versions
+        self.bar_width = 1 / (len(self.versions) + 1)
+        self.cluster_width = self.bar_width * len(self.versions)
+    def add_bar(self, ax, version_idx, value):
+        x = -self.cluster_width / 2 + self.bar_width / 2 + version_idx * self.bar_width
+        version = self.versions[version_idx]
+        ax.bar(x, value, width=self.bar_width, facecolor=version['facecolor'], edgecolor='black', linewidth=0.5, hatch=version['hatch'])
+
+bar_plotter = BarPlotter(versions)
+bar_plotter_typical = BarPlotter(versions_typical)
+
 linewidth = 1
 markevery = len(versions)
 offset = 1
-
-bar_width = 1 / (len(versions) + 1)
-cluster_width = bar_width * len(versions)
 
 def find_data_dir(day_type, version_path):
     workload = 'meituan-writer-' + day_type + '-day-period-secs-' + str(period_secs) + '-num_shards-' + str(num_shards) + '-key-16-value-603-unique-size-' + unique_size
     if version_path == 'entropy-based':
         workload += '-compaction-trigger-2'
     workload += '-memtable-8MiB'
-    if version_path in ['tiering2', 'tiering4', 'tiering8', 'entropy-based']:
+    if version_path in ['tiering2', 'tiering4', 'tiering8', 'lazy-leveling-2-3', 'bush', 'entropy-based']:
         workload += '-max-running-bg-jobs-1'
     workload += '-compaction-200MB-s' + read_workload
     return os.path.join(dir, workload, version_path)
@@ -123,7 +145,7 @@ plt.yticks(sa_yticks)
 ax_sa.tick_params(axis='y', which='minor', labelleft=False)
 ax_sa.grid(axis='y')
 
-for version_idx, version in enumerate(versions):
+for version_idx, version in enumerate(versions_typical):
     data_dir = find_data_dir('peak', version['path'])
     report = pd.read_csv(os.path.join(data_dir, 'report.csv'))
     report = report[['secs_elapsed', 'num-sorted-runs', 'size']]
@@ -140,7 +162,7 @@ for version_idx, version in enumerate(versions):
     read_latency = micros.groupby(micros.index // mean_step_secs).sum() / count.groupby(count.index // mean_step_secs).sum()
     ax_read.plot(time / 3600, read_latency / 1000, linewidth=linewidth, color=version['color'], marker=version['marker'], markersize=version['markersize'], markeredgewidth=0.8, markevery=(version_idx * offset, markevery))
 
-fig.legend(version_names, ncol=3, loc='center', bbox_to_anchor=(0.5, 1.04), handlelength=1, handletextpad=0.5, columnspacing=1.5, frameon=False)
+fig.legend(version_names_typical, ncol=3, loc='center', bbox_to_anchor=(0.5, 1.04), handlelength=1, handletextpad=0.5, columnspacing=1.5, frameon=False)
 pdf_path = os.path.join(dir, f'meituan-peak-day-num_shards-{num_shards}-unique_size-{unique_size}-period_secs-{period_secs}{read_workload}-mean_step_secs-{mean_step_secs}.pdf')
 fig.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01, metadata={'CreationDate': None})
 print('Plot saved to ' + pdf_path)
@@ -183,46 +205,44 @@ draw_panels(panels_read, xlabelpad=5, xlabel_loc='right')
 
 panels_p99 = [
     {
-        'title': '(a) Peak day',
+        'title': '(a) Normal day',
         'ylabel': 'P99 read latency (ms)',
         'ax': None,
     },
     {
-        'title': '(b) Normal day',
+        'title': '(b) Peak day',
         'ylabel': 'P99 read latency (ms)',
         'ax': None,
-    }
+    },
 ]
 fig_p99 = plt.figure(dpi = 300, figsize = (common.single_col_inch, 1.3), constrained_layout=True)
 gs = gridspec.GridSpec(1, 2, figure=fig_p99)
 draw_panels(panels_p99)
 
-for day_type in ['peak', 'normal']:
+for day_type in ['normal', 'peak']:
     match day_type:
-        case 'peak':
-            panel_p99 = panels_p99[0]
         case 'normal':
+            panel_p99 = panels_p99[0]
+        case 'peak':
             panel_p99 = panels_p99[1]
     for version_idx, version in enumerate(versions):
-        x = -cluster_width / 2 + bar_width / 2 + version_idx * bar_width
         data_dir = find_data_dir(day_type, version['path'])
         read_latency_us = json.load(open(os.path.join(data_dir, 'read-latency-us.json')))
-        def add_bar(ax, v):
-            ax.bar(x, v, width=bar_width, facecolor=version['facecolor'], edgecolor='black', linewidth=0.5, hatch=version['hatch'])
-        if day_type == 'peak':
+        if day_type == 'peak' and version['name'] in version_names_typical:
+            version_idx_typical = version_names_typical.index(version['name'])
             scan_latency_us = json.load(open(os.path.join(data_dir, 'seek-latency-us.json')))
             get_latency_us = json.load(open(os.path.join(data_dir, 'get-latency-us.json')))
-            add_bar(panels_read[0]['ax'], read_latency_us['Average'] / 1000)
-            add_bar(panels_read[1]['ax'], scan_latency_us['Average'] / 1000)
-            add_bar(panels_read[2]['ax'], get_latency_us['Average'] / 1000)
-        add_bar(panel_p99['ax'], read_latency_us['99%'] / 1000)
+            bar_plotter_typical.add_bar(panels_read[0]['ax'], version_idx_typical, read_latency_us['Average'] / 1000)
+            bar_plotter_typical.add_bar(panels_read[1]['ax'], version_idx_typical, scan_latency_us['Average'] / 1000)
+            bar_plotter_typical.add_bar(panels_read[2]['ax'], version_idx_typical, get_latency_us['Average'] / 1000)
+        bar_plotter.add_bar(panel_p99['ax'], version_idx, read_latency_us['99%'] / 1000)
 
-fig_read.legend(version_names, ncol=3, loc='center', bbox_to_anchor=(0.5, 1.15), handlelength=1, handletextpad=0.5, columnspacing=1.5, frameon=False)
+fig_read.legend(version_names_typical, ncol=3, loc='center', bbox_to_anchor=(0.5, 1.15), handlelength=1, handletextpad=0.5, columnspacing=1.5, frameon=False)
 pdf_path = os.path.join(dir, f'meituan-peak-day-read-latency-num_shards-{num_shards}-unique_size-{unique_size}-period_secs-{period_secs}{read_workload}-mean_step_secs-{mean_step_secs}.pdf')
 fig_read.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01, metadata={'CreationDate': None})
 print('Plot saved to ' + pdf_path)
 
-fig_p99.legend(version_names, ncol=3, loc='center', bbox_to_anchor=(0.5, 1.15), handlelength=1, handletextpad=0.5, columnspacing=1.5, frameon=False)
+fig_p99.legend(version_names, ncol=3, loc='center', bbox_to_anchor=(0.5, 1.2), handlelength=1, handletextpad=0.5, columnspacing=1.5, frameon=False)
 pdf_path = os.path.join(dir, 'meituan-p99-read-num_shards-' + str(num_shards) + '-unique_size-' + unique_size + '-period_secs-' + str(period_secs) + read_workload + '.pdf')
 plt.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01, metadata={'CreationDate': None})
 print('Plot saved to ' + pdf_path)

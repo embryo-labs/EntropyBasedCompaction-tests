@@ -512,5 +512,8 @@ for type in peak normal; do
 	for ratio in 2 4 8; do
 		read_workload with_compaction_limit_MB_s $compaction_MB_s with_max_running_background_jobs 1 with_memtable_size 8MiB with_policy_tiering $ratio meituan_writer tiering$ratio $type $period_secs $num_shards $unique_size
 	done
+	read_workload with_compaction_limit_MB_s $compaction_MB_s with_max_running_background_jobs 1 with_memtable_size 8MiB with_policy_lazy_leveling 2 3 meituan_writer lazy-leveling-2-3 $type $period_secs $num_shards $unique_size
+	read_workload with_compaction_limit_MB_s $compaction_MB_s with_max_running_background_jobs 1 with_memtable_size 8MiB with_policy_bush meituan_writer bush $type $period_secs $num_shards $unique_size
+
 	read_workload with_compaction_limit_MB_s $compaction_MB_s with_max_running_background_jobs 1 with_memtable_size 8MiB with_compaction_trigger 2 with_policy_entropy_based meituan_writer entropy-based $type $period_secs $num_shards $unique_size
 done
