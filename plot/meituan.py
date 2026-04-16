@@ -94,7 +94,7 @@ bar_plotter = BarPlotter(versions)
 bar_plotter_typical = BarPlotter(versions_typical)
 
 linewidth = 1
-markevery = len(versions)
+markevery = len(versions_typical)
 offset = 1
 
 def find_data_dir(day_type, version_path):

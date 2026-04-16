@@ -59,6 +59,14 @@ with_policy_lazy_leveling() (
 		--C=$C \
 		--max_background_jobs=100
 )
+with_policy_bush() (
+	db_bench_path="$workspace"/rocksdb/build/db_bench "$@" \
+		--compaction_style=6 \
+		--num_levels=1 \
+		--num_logical_levels=4 \
+		--max_background_jobs=100
+)
+
 with_entropy_threshold() (
 	entropy_threshold=$1
 	shift

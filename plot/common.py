@@ -125,7 +125,7 @@ versions = {
         'hatch': '\\\\\\',
     },
     'lazy-leveling-2-3': {
-        'name': 'LazyLeveling',
+        'name': 'Lazy Leveling',
         'color': colors[6]['dark'],
         'facecolor': colors[6]['light'],
         'hatch': '--XX',
