@@ -193,7 +193,7 @@ panels_scan_get = [
         },
     ],
 ]
-fig_scan_get = plt.figure(dpi=300, figsize=(common.single_col_inch, 2.8))
+fig_scan_get = plt.figure(dpi=300, figsize=(3.1, 2.8))
 outer_grid = gridspec.GridSpec(2, 1, figure=fig_scan_get, hspace=0.4, wspace=0.2, 
                             left=0, right=0.93, bottom=0, top=0.92)
 draw_panels(fig_scan_get, outer_grid, panels_scan_get)
@@ -306,13 +306,15 @@ for i, write_MB_s in enumerate(vec_write_MB_s):
 renderer = fig_main.canvas.get_renderer()
 tight_bbox = fig_main.get_tightbbox(renderer)
 print(f'width: {tight_bbox.width}, height: {tight_bbox.height}')
-
 draw_ylims(panels_main)
 pdf_path = os.path.join(dir, f'const-write-rates{value}{compaction}-warmup-{warmup_secs}-run-{run_secs}{read_workload}.pdf')
 fig_main.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01, metadata={'CreationDate': None})
 print(f'Plot saved to {pdf_path}')
 
 
+renderer = fig_scan_get.canvas.get_renderer()
+tight_bbox = fig_scan_get.get_tightbbox(renderer)
+print(f'width: {tight_bbox.width}, height: {tight_bbox.height}')
 draw_ylims(panels_scan_get)
 pdf_path = os.path.join(dir, f'const-write-rates-read-latency{value}{compaction}-warmup-{warmup_secs}-run-{run_secs}{read_workload}.pdf')
 fig_scan_get.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01, metadata={'CreationDate': None})
