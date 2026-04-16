@@ -230,7 +230,7 @@ for version_intro_idx, v in enumerate(versions_intro):
 bar_width_intro = 1 / (len(versions_intro) + 1)
 cluster_width_intro = 1 / (len(versions_intro) + 1) * len(versions_intro)
 
-fig_intro = plt.figure(dpi=300, figsize=(3.1, 1.3), constrained_layout=True)
+fig_intro = plt.figure(dpi=300, figsize=(3.1, 1.2), constrained_layout=True)
 gs = gridspec.GridSpec(1, 2, figure=fig_intro)
 plt.subplot(gs[0, 0])
 ax_10 = plt.gca()
