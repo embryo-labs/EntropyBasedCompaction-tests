@@ -91,16 +91,16 @@ linewidth = 1
 markersize = 3
 
 if S is None:
-    fig = plt.figure(dpi = 300, figsize = (common.double_col_inch / 3 * 2, 1.6), constrained_layout=True)
+    fig = plt.figure(dpi = 300, figsize = (common.double_col_inch / 3 * 2, 1.4), constrained_layout=True)
     gs = gridspec.GridSpec(1, 2, figure=fig)
 else:
-    fig = plt.figure(dpi = 300, figsize = (common.double_col_inch, 1.6), constrained_layout=True)
+    fig = plt.figure(dpi = 300, figsize = (common.double_col_inch, 1.4), constrained_layout=True)
     gs = gridspec.GridSpec(1, 3, figure=fig)
 
 subfig = plt.subplot(gs[0, 0])
 ax = plt.gca()
-ax.set_xlabel('Entropy threshold')
-ax.set_ylabel('Write amplification')
+ax.set_xlabel('Entropy threshold', labelpad=1)
+ax.set_ylabel('Write amplification', loc='top')
 ax.plot(result_entropy_based.vec_entropy_threshold, result_entropy_based.vec_wa_theory, linewidth=linewidth, marker='s', markersize=markersize, label='Theoretical bound')
 ax.plot(result_entropy_based.vec_entropy_threshold, result_entropy_based.vec_wa, linewidth=linewidth, marker='o', markersize=markersize, label='Simulated')
 ax.set_xticks([0, 1, 2, 3, 4, 5])
@@ -108,11 +108,11 @@ ax.set_ylim(bottom=0)
 ax.set_axisbelow(True)
 ax.grid()
 lines, labels = ax.get_legend_handles_labels()
-ax.legend(lines, labels, handlelength=1, handletextpad=0.5, columnspacing=1.5)
+ax.legend(lines, labels, handlelength=1, handletextpad=0.5, columnspacing=1.5, borderaxespad=0.1)
 
 subfig = plt.subplot(gs[0, 1])
 ax = plt.gca()
-ax.set_xlabel('Entropy threshold')
+ax.set_xlabel('Entropy threshold', labelpad=1)
 ax.set_ylabel('# of sorted runs')
 ax.plot(result_entropy_based.vec_entropy_threshold, result_entropy_based.vec_num_srs_theory, color=common.colors[0]['dark'], linewidth=linewidth)
 ax.plot(result_entropy_based.vec_entropy_threshold, result_entropy_based.vec_max_num_srs, color=common.colors[1]['dark'], linewidth=linewidth)
@@ -130,13 +130,13 @@ ax.legend([
         mpl.lines.Line2D([0], [0], color=common.colors[0]['dark'], linewidth=linewidth, marker='s', markersize=markersize),
         mpl.lines.Line2D([0], [0], color=common.colors[1]['dark'], linewidth=linewidth, marker='o', markersize=markersize),
         mpl.lines.Line2D([0], [0], color=common.colors[2]['dark'], linewidth=linewidth, marker='D', markersize=markersize),
-    ], ['Theoretical bound', 'Simulated max', 'Simulated avg'], handlelength=1, handletextpad=0.5, columnspacing=1.5, labelspacing=0.4)
+    ], ['Theoretical bound', 'Simulated max', 'Simulated avg'], handlelength=1, handletextpad=0.5, columnspacing=1.5, labelspacing=0.4, borderaxespad=0.1)
 
 if S is not None:
     subfig = plt.subplot(gs[0, 2])
     ax = plt.gca()
-    ax.set_xlabel('Entropy threshold')
-    ax.set_ylabel('Space amplification')
+    ax.set_xlabel('Entropy threshold', labelpad=1)
+    ax.set_ylabel('Space amplification', loc='top')
     ax.plot(result_entropy_based.vec_entropy_threshold, result_entropy_based.vec_space_amp_estimation, linewidth=linewidth)
     ax.plot(result_entropy_based.vec_entropy_threshold, result_entropy_based.vec_space_amp, linewidth=linewidth)
     for entropy_threshold in [0.5, 1, 2, 3, 4, 5]:
@@ -150,7 +150,7 @@ if S is not None:
     ax.legend([
             mpl.lines.Line2D([0], [0], color=common.colors[0]['dark'], linewidth=linewidth, marker='s', markersize=markersize),
             mpl.lines.Line2D([0], [0], color=common.colors[1]['dark'], linewidth=linewidth, marker='o', markersize=markersize),
-        ], ['Theoretical bound', 'Simulated'], handlelength=1, handletextpad=0.5, columnspacing=1.5)
+        ], ['Theoretical bound', 'Simulated'], handlelength=1, handletextpad=0.5, columnspacing=1.5, borderaxespad=0.1)
 
 pdf_path = get_pdf_path('simulation')
 plt.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01, metadata={'CreationDate': None})
