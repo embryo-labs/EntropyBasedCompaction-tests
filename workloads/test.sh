@@ -66,6 +66,18 @@ with_policy_bush() (
 		--num_logical_levels=4 \
 		--max_background_jobs=100
 )
+with_policy_vertiorizon() (
+	num_horizontal_levels=$1
+	shift
+	k=$1
+	shift
+	db_bench_path="$workspace"/rocksdb/build/db_bench "$@" \
+		--compaction_style=7 \
+		--num_levels=3 \
+		--num_horizontal_levels=$num_horizontal_levels \
+		--k=$k \
+		--max_background_jobs=100
+)
 
 with_entropy_threshold() (
 	entropy_threshold=$1
