@@ -64,6 +64,9 @@ versions = [
         'path': 'bush',
     },
     {
+        'path': 'vertiorizon-5-4',
+    },
+    {
         'path': 'entropy-based',
         'marker': 'D',
         'markersize': 3,
@@ -74,7 +77,7 @@ for v in versions:
     v.update(common.versions[v['path']])
 version_names = [v['name'] for v in versions]
 
-versions_typical = versions[0:5] + [versions[7]]
+versions_typical = versions[0:5] + [versions[8]]
 version_names_typical = [v['name'] for v in versions_typical]
 
 class BarPlotter:
@@ -102,7 +105,7 @@ def find_data_dir(day_type, version_path):
     if version_path == 'entropy-based':
         workload += '-compaction-trigger-2'
     workload += '-memtable-8MiB'
-    if version_path in ['tiering2', 'tiering4', 'tiering8', 'lazy-leveling-2-3', 'bush', 'entropy-based']:
+    if version_path in ['tiering2', 'tiering4', 'tiering8', 'lazy-leveling-2-3', 'bush', 'vertiorizon-5-4', 'entropy-based']:
         workload += '-max-running-bg-jobs-1'
     workload += '-compaction-200MB-s' + read_workload
     return os.path.join(dir, workload, version_path)
@@ -225,6 +228,8 @@ for day_type in ['normal', 'peak']:
             panel_p99 = panels_p99[0]
         case 'peak':
             panel_p99 = panels_p99[1]
+        case _:
+            assert False
     for version_idx, version in enumerate(versions):
         data_dir = find_data_dir(day_type, version['path'])
         read_latency_us = json.load(open(os.path.join(data_dir, 'read-latency-us.json')))
