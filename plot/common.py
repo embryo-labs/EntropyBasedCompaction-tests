@@ -91,6 +91,10 @@ colors = [
         'dark': 'C7',
         'light': plt.get_cmap('tab20c')(17),
     },
+    {
+        'dark': 'C8',
+        'light': 'C8',
+    },
 ]
 
 versions = {
@@ -135,6 +139,12 @@ versions = {
         'color': colors[7]['dark'],
         'facecolor': colors[7]['light'],
         'hatch': 'XXXX',
+    },
+    'vertiorizon-5-4': {
+        'name': 'Vertiorizon',
+        'color': colors[8]['dark'],
+        'facecolor': colors[8]['light'],
+        'hatch': '\\\\\\\\\\\\',
     },
     'entropy-based': {
         'name': 'EBC',
