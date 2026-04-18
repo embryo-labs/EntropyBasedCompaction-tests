@@ -82,7 +82,7 @@ row_configs = [
     },
 ]
 
-fig = plt.figure(dpi=300, figsize=(common.single_col_inch, 2.5), constrained_layout=True)
+fig = plt.figure(dpi=300, figsize=(common.single_col_inch, 2.1), constrained_layout=True)
 gs = gridspec.GridSpec(2, 3, figure=fig)
 for row, row_config in enumerate(row_configs):
     for col, write_MB_s in enumerate(vec_write_MB_s):
@@ -119,7 +119,7 @@ for row, row_config in enumerate(row_configs):
         if row_config['ylims'][col] is not None:
             row_config['ax'][col].set_ylim(row_config['ylims'][col])
 
-fig.legend(version_names, fontsize=9, ncol=2, loc='center', bbox_to_anchor=(0.5, 1.1), frameon=False)
+fig.legend(version_names, fontsize=9, ncol=3, loc='center', bbox_to_anchor=(0.5, 1.08), frameon=False, handlelength=1.5, handletextpad=0.5, columnspacing=1.0)
 pdf_path = os.path.join(dir, f'ablation-study{value}{compaction}-warmup-{warmup_secs}-run-{run_secs}{read_workload}.pdf')
 fig.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01, metadata={'CreationDate': None})
 print('Plot saved to ' + pdf_path)
