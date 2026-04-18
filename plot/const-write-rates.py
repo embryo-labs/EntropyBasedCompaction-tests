@@ -74,37 +74,40 @@ version_names = [v.get('name', v['path']) for v in versions]
 bar_width = 1 / (len(versions) + 1)
 cluster_width = bar_width * len(versions)
 
+def draw_panel(panel):
+    for i, write_MB_s in enumerate(vec_write_MB_s):
+        ax = panel['ax'][i]
+        ax.set_xlabel(f"{write_MB_s}MB/s")
+        ax.set_xticks([])
+        if i == 0:
+            ax.set_ylabel(panel['ylabel'])
+        if panel['log_scale'][i]:
+            ax.set_yscale('log')
+            ax.tick_params(axis='y', pad=1)
+        if 'yticks' in panel and panel['yticks'][i] is not None:
+            ax.set_yticks(panel['yticks'][i])
+        ax.tick_params(axis='y', which='minor', labelleft=False)
+        ax.set_axisbelow(True)
+        ax.grid(axis='y')
 def draw_panels(fig, outer_grid, panels):
     for row in range(0, len(panels)):
         for col in range(0, len(panels[row])):
             panel = panels[row][col]
             inner_grid = gridspec.GridSpecFromSubplotSpec(1, 3, subplot_spec=outer_grid[row, col], wspace=0.4)
-            for i, write_MB_s in enumerate(vec_write_MB_s):
-                ax = plt.Subplot(fig, inner_grid[i])
-                fig.add_subplot(ax)
+            for i in range(len(vec_write_MB_s)):
+                ax = fig.add_subplot(inner_grid[i])
                 panel['ax'].append(ax)
+            draw_panel(panel)
 
-                ax.set_xlabel(f"{write_MB_s}MB/s")
-                ax.set_xticks([])
-
-                if i == 0:
-                    ax.set_ylabel(panel['ylabel'])
-                if panel['log_scale'][i]:
-                    ax.set_yscale('log')
-                    ax.tick_params(axis='y', pad=1)
-                if 'yticks' in panel and panel['yticks'][i] is not None:
-                    ax.set_yticks(panel['yticks'][i])
-                ax.tick_params(axis='y', which='minor', labelleft=False)
-                ax.set_axisbelow(True)
-                ax.grid(axis='y')
-def draw_ylims(panels):
+def draw_panel_ylims(panel):
+    for i in range(len(vec_write_MB_s)):
+        ax = panel['ax'][i]
+        if panel['ylims'][i] is not None:
+            ax.set_ylim(panel['ylims'][i])
+def draw_panels_ylims(panels):
     for row in range(0, len(panels)):
         for col in range(0, len(panels[row])):
-            panel = panels[row][col]
-            for i, write_MB_s in enumerate(vec_write_MB_s):
-                ax = panel['ax'][i]
-                if panel['ylims'][i] is not None:
-                    ax.set_ylim(panel['ylims'][i])
+            draw_panel_ylims(panels[row][col])
 
 panels_main = [
     [
@@ -139,25 +142,8 @@ panels_main = [
             'ax': [],
         },
     ],
-    [
-        {
-            "title": "(e) Space amplification (average)",
-            "ylabel": "Average space amp",
-            'ylims': [None, None, None],
-            "log_scale": [False, False, False],
-            'ax': [],
-        },
-        {
-            "title": "(f) Space amplification (max)",
-            "ylabel": "Max space amp",
-            'ylims': [None, None, None],
-            'yticks': [None, [0, 2, 4, 6, 8, 10], None],
-            "log_scale": [False, False, False],
-            'ax': [],
-        },
-    ],
 ]
-fig_main = plt.figure(dpi=300, figsize=(common.double_col_inch, 4.5))
+fig_main = plt.figure(dpi=300, figsize=(common.double_col_inch, 4))
 outer_grid = gridspec.GridSpec(3, 2, figure=fig_main, hspace=0.4, wspace=0.2, left=0, right=0.93, bottom=0, top=0.92)
 draw_panels(fig_main, outer_grid, panels_main)
 for row in range(0, len(panels_main)):
@@ -171,6 +157,24 @@ fig_main.legend(handles=handles, labels=version_names, ncol=len(versions),
         loc='upper center', bbox_to_anchor=(0.44, 0.99), frameon=False, 
         handlelength=1.5, handletextpad=0.5, columnspacing=1.0)
 
+panel_sa_max = {
+    "ylabel": "Max space amp",
+    'ylims': [None, None, None],
+    'yticks': [None, None, None],
+    "log_scale": [False, False, False],
+    'ax': [],
+}
+fig_sa_max = plt.figure(dpi=300, figsize=(3.1, 1), constrained_layout=True)
+gs = gridspec.GridSpec(1, 3, figure=fig_sa_max)
+for i in range(len(vec_write_MB_s)):
+    plt.subplot(gs[0, i])
+    panel_sa_max['ax'].append(plt.gca())
+draw_panel(panel_sa_max)
+handles = [mpl.patches.Patch(facecolor=v['facecolor'], hatch=v['hatch'], 
+                            edgecolor='black', linewidth=0.5) for v in versions]
+fig_sa_max.legend(handles=handles, labels=version_names, ncol=3, 
+        loc='upper center', bbox_to_anchor=(0.53, 1.42), frameon=False, 
+        handlelength=1.5, handletextpad=0.5, columnspacing=1.0)
 
 panels_scan_get = [
     [
@@ -284,8 +288,8 @@ for i, write_MB_s in enumerate(vec_write_MB_s):
         add_bar(panels_main[0][1], np.percentile(report['num-sorted-runs'], 99))
         add_bar(panels_main[1][0], read_latency_us['Average'] / 1000)
         add_bar(panels_main[1][1], read_latency_us['99%'] / 1000)
-        add_bar(panels_main[2][0], report['size'].mean() / unique_size_bytes)
-        add_bar(panels_main[2][1], report['size'].max() / unique_size_bytes)
+
+        add_bar(panel_sa_max, report['size'].max() / unique_size_bytes)
 
         add_bar(panels_scan_get[0][0], scan_latency_us['Average'] / 1000)
         add_bar(panels_scan_get[1][0], get_latency_us['Average'] / 1000)
@@ -306,16 +310,20 @@ for i, write_MB_s in enumerate(vec_write_MB_s):
 renderer = fig_main.canvas.get_renderer()
 tight_bbox = fig_main.get_tightbbox(renderer)
 print(f'width: {tight_bbox.width}, height: {tight_bbox.height}')
-draw_ylims(panels_main)
+draw_panels_ylims(panels_main)
 pdf_path = os.path.join(dir, f'const-write-rates{value}{compaction}-warmup-{warmup_secs}-run-{run_secs}{read_workload}.pdf')
 fig_main.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01, metadata={'CreationDate': None})
 print(f'Plot saved to {pdf_path}')
 
+draw_panel_ylims(panel_sa_max)
+pdf_path = os.path.join(dir, f'const-write-rates-sa-max{value}{compaction}-warmup-{warmup_secs}-run-{run_secs}{read_workload}.pdf')
+fig_sa_max.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01, metadata={'CreationDate': None})
+print(f'Plot saved to {pdf_path}')
 
 renderer = fig_scan_get.canvas.get_renderer()
 tight_bbox = fig_scan_get.get_tightbbox(renderer)
 print(f'width: {tight_bbox.width}, height: {tight_bbox.height}')
-draw_ylims(panels_scan_get)
+draw_panels_ylims(panels_scan_get)
 pdf_path = os.path.join(dir, f'const-write-rates-read-latency{value}{compaction}-warmup-{warmup_secs}-run-{run_secs}{read_workload}.pdf')
 fig_scan_get.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01, metadata={'CreationDate': None})
 print(f'Plot saved to {pdf_path}')
