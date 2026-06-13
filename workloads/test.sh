@@ -538,3 +538,13 @@ for type in peak normal; do
 
 	read_workload with_compaction_limit_MB_s $compaction_MB_s with_max_running_background_jobs 1 with_memtable_size 8MiB with_compaction_trigger 2 with_policy_entropy_based meituan_writer entropy-based $type $period_secs $num_shards $unique_size
 done
+
+# 64MiB memtable
+unique_size=100GB
+warmup_secs=$((3 * 3600))
+run_secs=$((3 * 3600))
+for write_MB_s in 10 30; do
+	read_workload with_write_MB_s $write_MB_s with_compaction_limit_MB_s $compaction_MB_s with_policy_rocksdb_tuned load_all_warmup_run rocksdb-tuned readwhilewriting $key_size $value_size $unique_size $warmup_secs $run_secs
+	read_workload with_write_MB_s $write_MB_s with_compaction_limit_MB_s $compaction_MB_s with_max_running_background_jobs 1 with_policy_tiering 4 load_all_warmup_run tiering4 readwhilewriting $key_size $value_size $unique_size $warmup_secs $run_secs
+	read_workload with_write_MB_s $write_MB_s with_compaction_limit_MB_s $compaction_MB_s with_max_running_background_jobs 1 with_compaction_trigger 2 with_policy_entropy_based load_all_warmup_run entropy-based readwhilewriting $key_size $value_size $unique_size $warmup_secs $run_secs
+done
