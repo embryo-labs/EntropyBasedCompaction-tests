@@ -306,7 +306,7 @@ load_all_warmup_run() (
 	{
 		\"name\": \"stats\"
 	}
-]" "$@"
+]" "$@" || return $?
 	"$(dirname $0)"/../helper/data-rocksdb.sh "$output_dir"
 	"$(dirname $0)"/../helper/plot-rocksdb.sh "$output_dir"
 )
@@ -450,7 +450,7 @@ load_all_run_phases() (
 	"$(dirname $0)"/dbbench.sh "$db_bench_path" "$output_dir" "$num_unique_keys" "$key_size" \
 		--value_size="$value_size" \
 		--benchmarks_json="$benchmarks_json" \
-		"$@"
+		"$@" || return $?
 	"$(dirname $0)"/../helper/data-rocksdb.sh "$output_dir"
 	"$(dirname $0)"/../helper/plot-rocksdb.sh "$output_dir"
 )
@@ -514,7 +514,7 @@ meituan_writer() (
 		--period_secs="$period_secs" \
 		--writes_per_second_file="$writes_per_second_file" \
 		--duration=$period_secs \
-		"$@"
+		"$@" || return $?
 	"$(dirname $0)"/../helper/data-rocksdb.sh "$output_dir"
 	"$(dirname $0)"/../helper/plot-rocksdb.sh "$output_dir"
 )

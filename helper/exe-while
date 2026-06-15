@@ -20,9 +20,20 @@ def wakeup():
 
 import signal
 should_exit = False
-def mark_should_exit(sig=None, frame=None):
+exit_code = 0
+
+def status_to_exit_code(status):
+    if os.WIFEXITED(status):
+        return os.WEXITSTATUS(status)
+    if os.WIFSIGNALED(status):
+        return 128 + os.WTERMSIG(status)
+    return 1
+
+def mark_should_exit(sig, frame):
     global should_exit
+    global exit_code
     should_exit = True
+    exit_code = 128 + int(sig)
     wakeup()
 signal.signal(signal.SIGINT, mark_should_exit)
 signal.signal(signal.SIGTERM, mark_should_exit)
@@ -52,6 +63,7 @@ pids_expected_alive = [main_job.pid, bg_job.pid]
 def on_chld(sig=None, frame=None):
     global should_exit
     global mutex, pids_to_kill, pids_expected_alive
+    global exit_code
     while True:
         try:
             reaped_pid, status = os.waitpid(-1, os.WNOHANG)
@@ -63,6 +75,13 @@ def on_chld(sig=None, frame=None):
             if reaped_pid in pids_expected_alive:
                 pids_to_kill.remove(reaped_pid)
                 pids_expected_alive.remove(reaped_pid)
+                if should_exit:
+                    break
+                if reaped_pid == main_job.pid:
+                    exit_code = status_to_exit_code(status)
+                elif reaped_pid == bg_job.pid:
+                    exit_code = 1
+                    print('exe-while: background job exited before db_bench', file=sys.stderr)
                 should_exit = True
                 wakeup()
                 break
@@ -74,6 +93,7 @@ import select
 def kill_bg_job_when_db_bench_done(thread_should_stop, tmp_dir, main_job, bg_job):
     global should_exit
     global mutex, pids_to_kill, pids_expected_alive
+    global exit_code
 
     print('Waiting for db_bench to be done', file=sys.stderr)
     rlist = [thread_should_stop]
@@ -108,6 +128,7 @@ def kill_bg_job_when_db_bench_done(thread_should_stop, tmp_dir, main_job, bg_job
     print('ACK db_bench exit', file=sys.stderr)
     with mutex:
         pids_to_kill.remove(main_job.pid)
+        exit_code = main_job.returncode
     should_exit = True
     wakeup()
 thread_should_stop, thread_should_stop_w = os.pipe()
@@ -129,3 +150,4 @@ if bg_job.pid in pids_to_kill:
 
 import shutil
 shutil.rmtree(tmp_dir)
+sys.exit(exit_code)

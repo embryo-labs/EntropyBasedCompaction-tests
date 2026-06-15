@@ -44,6 +44,11 @@ cd "$output_dir"
 	--histogram=true \
 	"$@" \
 	> stdout.txt
+exit_code=$?
+if [ "$exit_code" -ne 0 ]; then
+	echo "exe-while failed with exit code $exit_code" >&2
+	exit "$exit_code"
+fi
 if [ "$with_perf" ] && [ "$with_perf" -gt 0 ]; then
 	perf script -i perf.data -f | inferno-collapse-perf | $FlameGraphPath/flamegraph.pl > perf.svg
 fi
