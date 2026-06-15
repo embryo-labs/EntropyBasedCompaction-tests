@@ -258,7 +258,7 @@ load_all_warmup_run() (
 	shift
 	run_secs=$1
 	shift
-	output_dir="../../data/$benchmark-key-$key_size-value-$value_size-unique-size-$unique_size-warmup-secs-$warmup_secs-run-secs-$run_secs$suffix/$version"
+	output_dir="$workspace/data/$benchmark-key-$key_size-value-$value_size-unique-size-$unique_size-warmup-secs-$warmup_secs-run-secs-$run_secs$suffix/$version"
 	num_unique_keys=$(($(humanfriendly --parse-size="$unique_size") / (key_size + value_size)))
 
 	"$workspace"/tests/workloads/prepare.sh "$output_dir" || return $?
@@ -324,7 +324,7 @@ load_all_run_phases() (
 	shift
 	phases_write_MB_s=$1
 	shift
-	output_dir="../../data/$benchmark-key-$key_size-value-$value_size-unique-size-$unique_size-phase-secs-$phase_secs-write-MB-s-$(echo $phases_write_MB_s | tr ' ' '-')$suffix/$version"
+	output_dir="$workspace/data/$benchmark-key-$key_size-value-$value_size-unique-size-$unique_size-phase-secs-$phase_secs-write-MB-s-$(echo $phases_write_MB_s | tr ' ' '-')$suffix/$version"
 	num_unique_keys=$(($(humanfriendly --parse-size="$unique_size") / (key_size + value_size)))
 
 	benchmarks_json="[
@@ -394,7 +394,7 @@ meituan_writer() (
 	echo $writes_per_second_file
 	awk "{print \$0 / $num_shards}" "$workspace/tests/meituan/write-speed-$type-day" > $writes_per_second_file
 	workload_name="meituan-writer-$type-day-period-secs-$period_secs-num_shards-$num_shards-key-$key_size-value-$value_size-unique-size-$unique_size$suffix"
-	output_dir=../../data/$workload_name/$version
+	output_dir=$workspace/data/$workload_name/$version
 
 	num_unique_keys=$(($(humanfriendly --parse-size="$unique_size") / (key_size + value_size)))
 	"$workspace"/tests/workloads/prepare.sh "$output_dir" || return $?
