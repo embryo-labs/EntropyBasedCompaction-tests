@@ -47,6 +47,7 @@ cd "$output_dir"
 exit_code=$?
 if [ "$exit_code" -ne 0 ]; then
 	echo "exe-while failed with exit code $exit_code" >&2
+	echo $exit_code > "$output_dir"/exe-while-exit-code
 	exit "$exit_code"
 fi
 if [ "$with_perf" ] && [ "$with_perf" -gt 0 ]; then

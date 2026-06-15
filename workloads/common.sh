@@ -302,9 +302,11 @@ load_all_warmup_run() (
 	{
 		\"name\": \"stats\"
 	}
-]" "$@" || return $?
+]" "$@"
+	exit_code=$?
 	"$workspace"/tests/helper/data-rocksdb.sh "$output_dir"
 	"$workspace"/tests/helper/plot-rocksdb.sh "$output_dir"
+	return $exit_code
 )
 
 load_all_run_phases() (
@@ -366,9 +368,11 @@ load_all_run_phases() (
 	"$workspace"/tests/workloads/dbbench.sh "$db_bench_path" "$output_dir" "$num_unique_keys" "$key_size" \
 		--value_size="$value_size" \
 		--benchmarks_json="$benchmarks_json" \
-		"$@" || return $?
+		"$@"
+	exit_code=$?
 	"$workspace"/tests/helper/data-rocksdb.sh "$output_dir"
 	"$workspace"/tests/helper/plot-rocksdb.sh "$output_dir"
+	return $exit_code
 )
 
 meituan_writer() (
@@ -425,7 +429,9 @@ meituan_writer() (
 		--period_secs="$period_secs" \
 		--writes_per_second_file="$writes_per_second_file" \
 		--duration=$period_secs \
-		"$@" || return $?
+		"$@"
+	exit_code=$?
 	"$workspace"/tests/helper/data-rocksdb.sh "$output_dir"
 	"$workspace"/tests/helper/plot-rocksdb.sh "$output_dir"
+	return $exit_code
 )
