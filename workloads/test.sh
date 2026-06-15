@@ -1,6 +1,4 @@
 #!/usr/bin/env sh
-export db_dev=nvme1n1
-
 workspace=$(realpath "$(dirname $0)"/../..)
 . $(dirname $0)/common.sh
 nice $(dirname $0)/../helper/build.sh
