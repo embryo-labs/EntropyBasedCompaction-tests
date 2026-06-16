@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 if [ ! "$5" ]; then
 	echo Usage: $0 db_bench_path output-dir num-unique-keys key-size value-size args...
 	exit 1
