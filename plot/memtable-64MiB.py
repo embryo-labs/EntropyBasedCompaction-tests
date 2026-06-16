@@ -13,11 +13,6 @@ read_workload = '-get-0.87-seek-0.13-nexts-48'
 
 unique_size = '100GB'
 
-# The humanfriendly module requires Python <= 3.12
-import subprocess
-unique_size_bytes = subprocess.run(['humanfriendly', '--parse-size', unique_size], stdout=subprocess.PIPE, text=True).stdout
-unique_size_bytes = int(unique_size_bytes)
-
 import os
 import numpy as np
 import pandas as pd
@@ -66,17 +61,31 @@ for version_idx, v in enumerate(versions):
 bar_width = 1 / (len(versions) + 1)
 cluster_width = 1 / (len(versions) + 1) * len(versions)
 
+ax_srs_avg = []
+ax_read_avg = []
+
 fig = plt.figure(dpi=300, figsize=(3.1, 1.2), constrained_layout=True)
-gs = gridspec.GridSpec(1, 2, figure=fig)
+gs = gridspec.GridSpec(1, 4, figure=fig)
 plt.subplot(gs[0, 0])
-ax_10 = plt.gca()
-plt.xlabel('(a) User write 10MB/s')
+ax_srs_avg.append(plt.gca())
+plt.xlabel('10MB/s')
 plt.xticks([])
 plt.ylabel('Avg # of sorted runs')
 
 plt.subplot(gs[0, 1])
-ax_30 = plt.gca()
-plt.xlabel('(b) User write 30MB/s')
+ax_srs_avg.append(plt.gca())
+plt.xlabel('30MB/s')
+plt.xticks([])
+
+plt.subplot(gs[0, 2])
+ax_read_avg.append(plt.gca())
+plt.xlabel('10MB/s')
+plt.xticks([])
+plt.ylabel('Avg read latency (ms)', y=0.44)
+
+plt.subplot(gs[0, 3])
+ax_read_avg.append(plt.gca())
+plt.xlabel('30MB/s')
 plt.xticks([])
 
 handles = []
@@ -104,23 +113,13 @@ for i, write_MB_s in enumerate(vec_write_MB_s):
         data_dir = os.path.join(dir, workload, version['path'])
         report = pd.read_csv(os.path.join(data_dir, 'report.csv'))
         read_latency_us = json.load(open(os.path.join(data_dir, 'read-latency-us.json')))
-        scan_latency_us = json.load(open(os.path.join(data_dir, 'seek-latency-us.json')))
-        get_latency_us = json.load(open(os.path.join(data_dir, 'get-latency-us.json')))
 
         num_srs_avg = report['num-sorted-runs'].mean()
 
         version_idx = map_path_to_version_idx[version['path']]
-        match write_MB_s:
-            case 10:
-                ax = ax_10
-            case 30:
-                ax = ax_30
-            case _:
-                assert False
-        x = -cluster_width / 2 + bar_width / 2 + version_idx * bar_width
-        ax.bar(x, num_srs_avg, width=bar_width * 0.65, edgecolor='black', linewidth=0.5, facecolor=version['facecolor'], hatch=version['hatch'])
+        ax_srs_avg[i].bar(x, num_srs_avg, width=bar_width, edgecolor='black', linewidth=0.5, facecolor=version['facecolor'], hatch=version['hatch'])
+        ax_read_avg[i].bar(x, read_latency_us['Average'] / 1000, width=bar_width, edgecolor='black', linewidth=0.5, facecolor=version['facecolor'], hatch=version['hatch'])
 
-ax_30.set_ylim(bottom=1)
 pdf_path = os.path.join(dir, f'memtable-64MiB{value}{compaction}-warmup-{warmup_secs}-run-{run_secs}{read_workload}.pdf')
 fig.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01, metadata={'CreationDate': None})
 print(f'Plot saved to {pdf_path}')
