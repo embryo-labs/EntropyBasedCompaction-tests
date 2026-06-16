@@ -329,7 +329,6 @@ fig_scan_get.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01, metadata={'
 print(f'Plot saved to {pdf_path}')
 
 
-ax_30.set_ylim(bottom=1)
 pdf_path = os.path.join(dir, f'const-write-rates-intro{value}{compaction}-warmup-{warmup_secs}-run-{run_secs}{read_workload}.pdf')
 fig_intro.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01, metadata={'CreationDate': None})
 print(f'Plot saved to {pdf_path}')
