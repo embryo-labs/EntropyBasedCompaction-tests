@@ -264,8 +264,7 @@ load_all_warmup_run() (
 	"$workspace"/tests/workloads/prepare.sh "$output_dir" || return $?
 	mkdir -p "$output_dir"/load
 	mkdir -p "$output_dir"/warmup
-	"$workspace"/tests/workloads/dbbench.sh "$db_bench_path" "$output_dir" "$num_unique_keys" "$key_size" \
-		--value_size="$value_size" \
+	"$workspace"/tests/workloads/dbbench.sh "$db_bench_path" "$output_dir" "$num_unique_keys" "$key_size" "$value_size" \
 		--benchmarks_json="[
 	{
 		\"output_dir\": \"load\",
@@ -365,8 +364,7 @@ load_all_run_phases() (
 
 	"$workspace"/tests/workloads/prepare.sh "$output_dir" || return $?
 	mkdir -p "$output_dir"/load
-	"$workspace"/tests/workloads/dbbench.sh "$db_bench_path" "$output_dir" "$num_unique_keys" "$key_size" \
-		--value_size="$value_size" \
+	"$workspace"/tests/workloads/dbbench.sh "$db_bench_path" "$output_dir" "$num_unique_keys" "$key_size" "$value_size" \
 		--benchmarks_json="$benchmarks_json" \
 		"$@"
 	exit_code=$?
@@ -399,8 +397,7 @@ meituan_writer() (
 	num_unique_keys=$(($(humanfriendly --parse-size="$unique_size") / (key_size + value_size)))
 	"$workspace"/tests/workloads/prepare.sh "$output_dir" || return $?
 	mkdir -p "$output_dir"/load
-	"$workspace"/tests/workloads/dbbench.sh "$db_bench_path" "$output_dir" "$num_unique_keys" "$key_size" \
-		--value_size="$value_size" \
+	"$workspace"/tests/workloads/dbbench.sh "$db_bench_path" "$output_dir" "$num_unique_keys" "$key_size" "$value_size" \
 		--benchmarks_json="[
 	{
 		\"output_dir\": \"load\",

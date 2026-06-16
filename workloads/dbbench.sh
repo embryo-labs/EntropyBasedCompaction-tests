@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-if [ ! "$4" ]; then
-	echo Usage: $0 db_bench_path output-dir num-unique-keys key-size args...
+if [ ! "$5" ]; then
+	echo Usage: $0 db_bench_path output-dir num-unique-keys key-size value-size args...
 	exit 1
 fi
 db_bench_path=$1
@@ -10,6 +10,8 @@ shift
 num_unique_keys=$1
 shift
 key_size=$1
+shift
+value_size=$1
 shift
 workspace=$(realpath "$(dirname $0)"/../..)
 echo Output dir: "$output_dir"
@@ -28,6 +30,7 @@ cd "$output_dir"
 	--bloom_bits=10 \
 	--key_size="$key_size" \
 	--block_size=4096 \
+	--value_size="$value_size" \
 	--enable_pipelined_write=false \
 	--unordered_write=true \
 	--auto_readahead_size=true \
