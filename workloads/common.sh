@@ -130,7 +130,6 @@ with_compaction_trigger() {
 	suffix="-compaction-trigger-$compaction_trigger$suffix" "$@" \
 		--level0_file_num_compaction_trigger=$compaction_trigger
 }
-
 with_threads() (
 	threads=$1
 	shift
@@ -144,6 +143,20 @@ with_cache() (
 	suffix="-cache-$cache$suffix" "$@" \
 		--cache_size="$cache_size"
 )
+with_stall_trigger() (
+	slowdown=$1
+	shift
+	stop=$1
+	shift
+	suffix="-slowdown-$slowdown-stop-$stop$suffix" "$@" \
+		--level0_slowdown_writes_trigger=$slowdown \
+		--level0_stop_writes_trigger=$stop
+)
+no_stall() {
+	suffix="-no-stall$suffix" "$@" \
+		--level0_slowdown_writes_trigger=100000 \
+		--level0_stop_writes_trigger=100000
+}
 
 with_num_writers() (
 	num_writers=$1

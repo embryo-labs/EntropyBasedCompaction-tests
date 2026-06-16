@@ -36,8 +36,6 @@ cd "$output_dir"
 	--auto_readahead_size=true \
 	--db="$workspace/testdb" \
 	--num=$num_unique_keys \
-	--level0_slowdown_writes_trigger=100000 \
-	--level0_stop_writes_trigger=100000 \
 	--soft_pending_compaction_bytes_limit=1000000000000000 \
 	--hard_pending_compaction_bytes_limit=1000000000000000 \
 	--ops_between_duration_checks=1 \
