@@ -94,7 +94,6 @@ class BarPlotter:
         ax.bar(x, value, width=self.bar_width, facecolor=version['facecolor'], edgecolor='black', linewidth=0.5, hatch=version['hatch'])
 
 bar_plotter = BarPlotter(versions)
-bar_plotter_typical = BarPlotter(versions_typical)
 
 linewidth = 1
 markevery = len(versions_typical)
@@ -233,16 +232,15 @@ for day_type in ['normal', 'peak']:
     for version_idx, version in enumerate(versions):
         data_dir = find_data_dir(day_type, version['path'])
         read_latency_us = json.load(open(os.path.join(data_dir, 'read-latency-us.json')))
-        if day_type == 'peak' and version['name'] in version_names_typical:
-            version_idx_typical = version_names_typical.index(version['name'])
+        if day_type == 'peak':
             scan_latency_us = json.load(open(os.path.join(data_dir, 'seek-latency-us.json')))
             get_latency_us = json.load(open(os.path.join(data_dir, 'get-latency-us.json')))
-            bar_plotter_typical.add_bar(panels_read[0]['ax'], version_idx_typical, read_latency_us['Average'] / 1000)
-            bar_plotter_typical.add_bar(panels_read[1]['ax'], version_idx_typical, scan_latency_us['Average'] / 1000)
-            bar_plotter_typical.add_bar(panels_read[2]['ax'], version_idx_typical, get_latency_us['Average'] / 1000)
+            bar_plotter.add_bar(panels_read[0]['ax'], version_idx, read_latency_us['Average'] / 1000)
+            bar_plotter.add_bar(panels_read[1]['ax'], version_idx, scan_latency_us['Average'] / 1000)
+            bar_plotter.add_bar(panels_read[2]['ax'], version_idx, get_latency_us['Average'] / 1000)
         bar_plotter.add_bar(panel_p99['ax'], version_idx, read_latency_us['99%'] / 1000)
 
-fig_read.legend(version_names_typical, ncol=3, loc='center', bbox_to_anchor=(0.5, 1.15), handlelength=1, handletextpad=0.5, columnspacing=1.5, frameon=False)
+fig_read.legend(version_names, ncol=3, loc='center', bbox_to_anchor=(0.5, 1.15), handlelength=1, handletextpad=0.5, columnspacing=1.5, frameon=False)
 pdf_path = os.path.join(dir, f'meituan-peak-day-read-latency-num_shards-{num_shards}-unique_size-{unique_size}-period_secs-{period_secs}{read_workload}-mean_step_secs-{mean_step_secs}.pdf')
 fig_read.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01, metadata={'CreationDate': None})
 print('Plot saved to ' + pdf_path)
