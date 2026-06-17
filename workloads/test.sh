@@ -118,3 +118,19 @@ for write_MB_s in 10 30; do
 	read_workload with_write_MB_s $write_MB_s with_max_running_background_jobs 1 with_policy_tiering 4 load_all_warmup_run tiering4 readwhilewriting $key_size $value_size $unique_size $warmup_secs $run_secs
 	read_workload with_write_MB_s $write_MB_s with_max_running_background_jobs 1 with_compaction_trigger 2 with_policy_entropy_based load_all_warmup_run entropy-based readwhilewriting $key_size $value_size $unique_size $warmup_secs $run_secs
 done
+
+delete_heavy() {
+	# One put before one delete
+	suffix="-delete-heavy$suffix" with_nexts 48 with_meituan_ratio with_compaction_limit_MB_s $compaction_MB_s with_memtable_size 8MiB no_stall "$@" \
+		--expand_range_tombstones=true \
+		--writes_per_range_tombstone=1 \
+		--range_tombstone_width=1
+}
+unique_size=10GB
+warmup_secs=1200
+run_secs=1200
+for write_MB_s in 10 30; do
+	delete_heavy with_write_MB_s $write_MB_s with_policy_rocksdb_tuned load_all_warmup_run rocksdb-tuned readwhilewriting $key_size $value_size $unique_size $warmup_secs $run_secs
+	delete_heavy with_write_MB_s $write_MB_s with_max_running_background_jobs 1 with_policy_tiering 4 load_all_warmup_run tiering4 readwhilewriting $key_size $value_size $unique_size $warmup_secs $run_secs
+	delete_heavy with_write_MB_s $write_MB_s with_max_running_background_jobs 1 with_compaction_trigger 2 with_policy_entropy_based load_all_warmup_run entropy-based readwhilewriting $key_size $value_size $unique_size $warmup_secs $run_secs
+done
