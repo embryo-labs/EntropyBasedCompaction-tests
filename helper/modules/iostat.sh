@@ -10,4 +10,3 @@ process() {
 		}
 	" | xargs -I {} sh -c 'echo $(date +%s%N) {}'
 }
-

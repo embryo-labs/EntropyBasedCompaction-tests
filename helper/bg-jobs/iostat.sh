@@ -15,12 +15,5 @@ fi
 
 echo Timestamp\(ns\) r/s rkB/s w/s wkB/s %util > "$output_dir"/iostat.txt
 
-setsid sh -c "
-	. $(dirname $0)/../modules/iostat.sh
-	iostat 1 -x | process "$db_dev" >> "$output_dir"/iostat.txt
-" &
-exit_command="kill -TERM -$!;"
-# https://newbe.dev/exit-trap-in-dash-vs-ksh-and-bash
-trap 'exit 1' INT TERM
-trap "$exit_command" EXIT
-wait
+. $(dirname $0)/../modules/iostat.sh
+iostat 1 -x | process "$db_dev" >> "$output_dir"/iostat.txt

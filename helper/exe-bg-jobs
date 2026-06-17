@@ -16,27 +16,32 @@ def mark_should_exit(sig=None, frame=None):
 signal.signal(signal.SIGINT, mark_should_exit)
 signal.signal(signal.SIGTERM, mark_should_exit)
 
+from dataclasses import dataclass
 import subprocess
 
-pid_signal = {}
-pid = subprocess.Popen([os.path.join(mydir, 'bg-jobs', 'du.sh'), output_dir]).pid
-pid_signal[pid] = signal.SIGTERM
-pid = subprocess.Popen([os.path.join(mydir, 'bg-jobs', 'iostat.sh'), output_dir]).pid
-pid_signal[pid] = signal.SIGTERM
+@dataclass
+class ProcessInfo:
+    setsid: bool
+    signal: signal.Signals
+pids_to_kill = {}
+pid = subprocess.Popen([os.path.join(mydir, 'bg-jobs', 'du.sh'), output_dir], preexec_fn=os.setsid).pid
+pids_to_kill[pid] = ProcessInfo(setsid=True, signal=signal.SIGTERM)
+pid = subprocess.Popen([os.path.join(mydir, 'bg-jobs', 'iostat.sh'), output_dir], preexec_fn=os.setsid).pid
+pids_to_kill[pid] = ProcessInfo(setsid=True, signal=signal.SIGTERM)
 
 if int(os.getenv('with_perf', '0')) != 0:
     pid = subprocess.Popen(['perf', 'record', '--pid', str(main_pid), '--call-graph=fp', '--aio', '-z', '-o', os.path.join(output_dir, 'perf.data')]).pid
-    pid_signal[pid] = signal.SIGTERM
+    pids_to_kill[pid] = ProcessInfo(setsid=False, signal=signal.SIGTERM)
 
 if int(os.getenv('with_offcputime', '0')) != 0:
     with open(os.path.join(output_dir, 'offcputime.stacks'), 'w') as f:
         os.chdir('/') # Avoid getcwd error in offcputime
         pid = subprocess.Popen(['sudo', 'offcputime-bpfcc', '-df', '-p', main_pid], stdout=f).pid
-        pid_signal[pid] = signal.SIGINT
+        pids_to_kill[pid] = ProcessInfo(setsid=False, signal=signal.SIGINT)
 
 def on_chld(sig=None, frame=None):
     global should_exit
-    global pids
+    global pids_to_kill
     if should_exit:
         return
     while True:
@@ -46,8 +51,8 @@ def on_chld(sig=None, frame=None):
             break
         if reaped_pid == 0:
             break
-        if reaped_pid in pid_signal.keys():
-            del pid_signal[reaped_pid]
+        if reaped_pid in pids_to_kill.keys():
+            del pids_to_kill[reaped_pid]
             should_exit = True
             break
 signal.signal(signal.SIGCHLD, on_chld)
@@ -58,8 +63,14 @@ while not should_exit:
 	signal.pause()
 
 print('exe-bg-jobs: exiting...', file=sys.stderr)
-for (pid, sig) in pid_signal.items():
-    os.kill(pid, sig)
+for (pid, info) in pids_to_kill.items():
+    try:
+        if info.setsid:
+            os.killpg(pid, info.signal)
+        else:
+            os.kill(pid, info.signal)
+    except ProcessLookupError:
+        pass
 while True:
     try:
         os.wait()
