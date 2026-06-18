@@ -59,10 +59,6 @@ for v in versions:
     path_version[v['path']] = v
 version_names = [v.get('name', v['path']) for v in versions]
 
-map_path_to_version_idx = {}
-for version_idx, v in enumerate(versions):
-    map_path_to_version_idx[v['path']] = version_idx
-
 bar_width = 1 / (len(versions) + 1)
 cluster_width = 1 / (len(versions) + 1) * len(versions)
 
@@ -95,10 +91,10 @@ plt.xticks([])
 
 handles = []
 version_names = []
-for v_intro in versions:
-    v = path_version[v_intro['path']]
+for version in versions:
+    v = path_version[version['path']]
     handles.append(mpl.patches.Patch(facecolor=v['facecolor'], hatch=v['hatch'], edgecolor='black', linewidth=0.5))
-    version_names.append(v_intro['name'])
+    version_names.append(version['name'])
 fig.legend(handles=handles, labels=version_names, ncol=len(versions), 
         loc='upper center', bbox_to_anchor=(0.56, 1.2), frameon=False, 
         handlelength=1.3, handletextpad=0.5, columnspacing=1.0)
@@ -121,7 +117,6 @@ for i, write_MB_s in enumerate(vec_write_MB_s):
 
         num_srs_avg = report['num-sorted-runs'].mean()
 
-        version_idx = map_path_to_version_idx[version['path']]
         ax_srs_avg[i].bar(x, num_srs_avg, width=bar_width, edgecolor='black', linewidth=0.5, facecolor=version['facecolor'], hatch=version['hatch'])
         ax_read_avg[i].bar(x, read_latency_us['Average'] / 1000, width=bar_width, edgecolor='black', linewidth=0.5, facecolor=version['facecolor'], hatch=version['hatch'])
 
