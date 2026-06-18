@@ -15,6 +15,6 @@ if [ -d "$1/warmup" ]; then
 fi
 $(dirname $0)/../plot/dbbench-report.py "$1"
 $(dirname $0)/../plot/op-count-time.py "$1"
-if [ -f log.json ]; then
+if [ -f "$1"/log.json ]; then
 	$(dirname $0)/../plot/parse-json-log.py "$1"
 fi
