@@ -37,7 +37,7 @@ for line in open(os.path.join(data_dir, 'log.json')):
     entry = json.loads(line)
     if entry['event'] == 'new-benchmark':
         if ts_begin_ns is None:
-            if entry['name'] in ['readwhilewriting', 'customperiodic']:
+            if entry['name'] in ['customperiodic', 'readrandomwriterandom', 'readwhilewriting']:
                 ts_begin_ns = entry['timestamp(ns)']
         continue
     if ts_begin_ns is None:
