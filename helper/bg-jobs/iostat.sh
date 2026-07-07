@@ -13,7 +13,7 @@ if [ "$(iostat | grep "$db_dev")" = "" ]; then
 	exit 1
 fi
 
-echo Timestamp\(ns\) r/s rkB/s w/s wkB/s %util > "$output_dir"/iostat.txt
+echo Timestamp\(ns\) r/s rkB/s w/s wkB/s r_await w_await aqu-sz %util > "$output_dir"/iostat.txt
 
 . $(dirname $0)/../modules/iostat.sh
 iostat 1 -x | process "$db_dev" >> "$output_dir"/iostat.txt
