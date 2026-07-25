@@ -60,7 +60,7 @@ cluster_width = 1 / (len(versions) + 1) * len(versions)
 ax_srs_avg = []
 ax_read_avg = []
 
-fig = plt.figure(dpi=300, figsize=(3.1, 1.2), constrained_layout=True)
+fig = plt.figure(dpi=300, figsize=(common.single_col_inch, 1.2), constrained_layout=True)
 gs = gridspec.GridSpec(1, 4, figure=fig)
 plt.subplot(gs[0, 0])
 ax_srs_avg.append(plt.gca())
