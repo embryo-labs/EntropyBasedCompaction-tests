@@ -89,6 +89,9 @@ ax_read_avg.append(plt.gca())
 plt.xlabel('30MB/s')
 plt.xticks([])
 
+fig.text(0.29, 0, '(a) Avg number of runs', ha='center', va='top')
+fig.text(0.77, 0, '(b) Avg read latency', ha='center', va='top')
+
 handles = []
 version_names = []
 for version in versions:
