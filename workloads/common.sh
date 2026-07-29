@@ -28,6 +28,7 @@ with_policy_entropy_based() {
 		--compaction_style=3 \
 		--num_levels=1 \
 		--max_background_jobs=16 \
+		--level0_file_num_compaction_trigger=2 \
 		--json_log_file="$workspace/testdb/log.json"
 }
 with_policy_entropy_based_universal() {
