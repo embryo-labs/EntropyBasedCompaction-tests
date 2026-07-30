@@ -84,6 +84,15 @@ for zipfian_theta in 0.5 0.8 0.9 0.99; do
 	read_workload with_write_MB_s $write_MB_s with_write_zipfian_theta $zipfian_theta with_max_running_background_jobs 1 with_policy_entropy_based load_all_warmup_run entropy-based readwhilewriting $key_size $value_size $unique_size $warmup_secs $run_secs
 done
 
+for write_MB_s in 10 30; do
+	value_size_KB=16
+	read_workload with_write_MB_s $write_MB_s with_policy_rocksdb_tuned load_all_warmup_run rocksdb-tuned readwhilewriting $key_size $((value_size_KB * 1000)) $unique_size $warmup_secs $run_secs
+	read_workload with_write_MB_s $write_MB_s with_max_running_background_jobs 1 with_policy_tiering 4 load_all_warmup_run tiering4 readwhilewriting $key_size $((value_size_KB * 1000)) $unique_size $warmup_secs $run_secs
+	for value_size_KB in 1 2 4 8 16; do
+		read_workload with_write_MB_s $write_MB_s with_max_running_background_jobs 1 with_policy_entropy_based load_all_warmup_run entropy-based readwhilewriting $key_size $((value_size_KB * 1000)) $unique_size $warmup_secs $run_secs
+	done
+done
+
 phase_secs=3600
 phases_write_MB_s="10 30 50 30 10"
 read_workload autotune_entropy_threshold with_policy_entropy_based no_preemption_conditions load_all_run_phases no_preemption_conditions readwhilewriting $key_size $value_size $unique_size $phase_secs "$phases_write_MB_s"
