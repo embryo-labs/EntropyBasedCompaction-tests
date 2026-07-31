@@ -105,11 +105,7 @@ for col, write_MB_s in enumerate(vec_write_MB_s):
             max_running_bg_jobs = '-max-running-bg-jobs-1'
         else:
             max_running_bg_jobs = ''
-        if version['path'] == 'benefit-cost':
-            compaction_trigger = ''
-        else:
-            compaction_trigger = '-compaction-trigger-2'
-        workload = f'readwhilewriting-key-16{value}-unique-size-10GB-warmup-secs-{warmup_secs}-run-secs-{run_secs}{compaction_trigger}-memtable-8MiB{max_running_bg_jobs}{compaction}-write-{write_MB_s}MB-s{read_workload}'
+        workload = f'readwhilewriting-key-16{value}-unique-size-10GB-warmup-secs-{warmup_secs}-run-secs-{run_secs}{max_running_bg_jobs}-write-{write_MB_s}MB-s-no-stall-memtable-8MiB{compaction}{read_workload}'
         data_dir = os.path.join(dir, workload, version['path'])
         report = pd.read_csv(os.path.join(data_dir, 'report.csv'))
         row_configs[0]['ax'][col].bar(x, report['num-sorted-runs'].mean(), width=bar_width, edgecolor='black', linewidth=0.5, facecolor=version['color'], hatch=version['hatch'])
