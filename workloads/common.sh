@@ -27,7 +27,7 @@ with_policy_entropy_based() {
 	db_bench_path="$workspace"/rocksdb/build/db_bench "$@" \
 		--compaction_style=3 \
 		--num_levels=1 \
-		--max_background_jobs=16 \
+		--max_background_jobs=100 \
 		--level0_file_num_compaction_trigger=2 \
 		--json_log_file="$workspace/testdb/log.json"
 }
