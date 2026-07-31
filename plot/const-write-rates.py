@@ -261,19 +261,11 @@ fig_intro.legend(handles=handles, labels=version_names, ncol=len(versions_intro)
 for i, write_MB_s in enumerate(vec_write_MB_s):
     for version_idx, version in enumerate(versions):
         x = -cluster_width / 2 + bar_width / 2 + version_idx * bar_width
-        if version['name'] == 'By-theory':
-            entropy_threshold = '-autotune_entropy_threshold'
-        else:
-            entropy_threshold = ''
-        if version['path'] in ['no_preemption_conditions', 'entropy-based']:
-            compaction_trigger = '-compaction-trigger-2'
-        else:
-            compaction_trigger = ''
         if version['max-running-bg-jobs'] is None:
             max_running_bg_jobs = ''
         else:
             max_running_bg_jobs = '-max-running-bg-jobs-1'
-        workload = f'readwhilewriting-key-16{value}-unique-size-{unique_size}-warmup-secs-{warmup_secs}-run-secs-{run_secs}{entropy_threshold}{compaction_trigger}-memtable-8MiB{max_running_bg_jobs}{compaction}-write-{write_MB_s}MB-s{read_workload}'
+        workload = f'readwhilewriting-key-16{value}-unique-size-{unique_size}-warmup-secs-{warmup_secs}-run-secs-{run_secs}{max_running_bg_jobs}-write-{write_MB_s}MB-s-no-stall-memtable-8MiB{compaction}{read_workload}'
         data_dir = os.path.join(dir, workload, version['path'])
         report = pd.read_csv(os.path.join(data_dir, 'report.csv'))
         read_latency_us = json.load(open(os.path.join(data_dir, 'read-latency-us.json')))
