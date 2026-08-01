@@ -265,6 +265,11 @@ bar_width_intro = 1 / (len(versions_intro) + 1)
 cluster_width_intro = 1 / (len(versions_intro) + 1) * len(versions_intro)
 
 fig_intro = plt.figure(dpi=300, figsize=(3.1, 1.2), constrained_layout=True)
+fig_intro.get_layout_engine().set(
+    h_pad=0.01,
+    w_pad=0.01,
+    rect=(0, 0, 1, 0.85),
+)
 gs = gridspec.GridSpec(1, 2, figure=fig_intro)
 plt.subplot(gs[0, 0])
 ax_10 = plt.gca()
@@ -283,9 +288,18 @@ for v_intro in versions_intro:
     v = path_version[v_intro['path']]
     handles.append(mpl.patches.Patch(facecolor=v['facecolor'], hatch=v['hatch'], edgecolor='black', linewidth=0.5))
     version_names.append(v_intro['name'])
-fig_intro.legend(handles=handles, labels=version_names, ncol=len(versions_intro), 
-        loc='upper center', bbox_to_anchor=(0.56, 1.2), frameon=False, 
-        handlelength=1.3, handletextpad=0.5, columnspacing=1.0)
+fig_intro.legend(
+    handles=handles,
+    labels=version_names,
+    ncol=len(versions_intro),
+    loc='upper center',
+    bbox_to_anchor=(0.56, 1.04),
+    frameon=False,
+    borderpad=0,
+    handlelength=1.3,
+    handletextpad=0.5,
+    columnspacing=1.0,
+)
 
 
 for i, write_MB_s in enumerate(vec_write_MB_s):
@@ -352,5 +366,5 @@ print(f'Plot saved to {pdf_path}')
 
 
 pdf_path = os.path.join(dir, f'const-write-rates-intro{value}{compaction}-warmup-{warmup_secs}-run-{run_secs}{read_workload}.pdf')
-fig_intro.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01, metadata={'CreationDate': None})
+fig_intro.savefig(pdf_path, metadata={'CreationDate': None})
 print(f'Plot saved to {pdf_path}')
