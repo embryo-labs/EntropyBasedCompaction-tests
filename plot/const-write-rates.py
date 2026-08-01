@@ -80,7 +80,7 @@ def draw_panel(panel):
         ax.set_xlabel(f"{write_MB_s}MB/s")
         ax.set_xticks([])
         if i == 0:
-            ax.set_ylabel(panel['ylabel'])
+            ax.set_ylabel(panel['ylabel'], loc=panel.get('ylabel_loc', 'center'))
         if panel['log_scale'][i]:
             ax.set_yscale('log')
             ax.tick_params(axis='y', pad=1)
@@ -89,15 +89,6 @@ def draw_panel(panel):
         ax.tick_params(axis='y', which='minor', labelleft=False)
         ax.set_axisbelow(True)
         ax.grid(axis='y')
-def draw_panels(fig, outer_grid, panels):
-    for row in range(0, len(panels)):
-        for col in range(0, len(panels[row])):
-            panel = panels[row][col]
-            inner_grid = gridspec.GridSpecFromSubplotSpec(1, 3, subplot_spec=outer_grid[row, col], wspace=0.4)
-            for i in range(len(vec_write_MB_s)):
-                ax = fig.add_subplot(inner_grid[i])
-                panel['ax'].append(ax)
-            draw_panel(panel)
 
 def draw_panel_ylims(panel):
     for i in range(len(vec_write_MB_s)):
@@ -117,6 +108,7 @@ panels_main = [
         {
             "title": "(b) Number of sorted runs (99th percentile)",
             "ylabel": "P99 # of sorted runs",
+            'ylabel_loc': 'top',
             'ylims': [None, (1, None), (1, None)],
             "log_scale": [False, True, True],
             'ax': [],
@@ -139,19 +131,32 @@ panels_main = [
         },
     ],
 ]
-fig_main = plt.figure(dpi=300, figsize=(common.double_col_inch, 4))
-outer_grid = gridspec.GridSpec(3, 2, figure=fig_main, hspace=0.4, wspace=0.2, left=0, right=0.93, bottom=0, top=0.92)
-draw_panels(fig_main, outer_grid, panels_main)
+fig_main = plt.figure(dpi=300, figsize=(common.double_col_inch, 2.8))
+outer_grid = gridspec.GridSpec(2, 2, figure=fig_main, left=0.06, bottom=0.12, right=0.998, top=0.93, wspace=0.2, hspace=0.4)
 for row in range(0, len(panels_main)):
     for col in range(0, len(panels_main[row])):
         panel = panels_main[row][col]
+        inner_grid = gridspec.GridSpecFromSubplotSpec(1, 3, subplot_spec=outer_grid[row, col], wspace=0.4)
+        for i in range(len(vec_write_MB_s)):
+            ax = fig_main.add_subplot(inner_grid[i])
+            panel['ax'].append(ax)
+        draw_panel(panel)
         bbox = outer_grid[row, col].get_position(fig_main)
-        fig_main.text(bbox.x0 + bbox.width/2, bbox.y0 - 0.045, panel['title'], ha='center', va='top')
+        fig_main.text(bbox.x0 + bbox.width/2, bbox.y0 - 0.07, panel['title'], ha='center', va='top')
 handles = [mpl.patches.Patch(facecolor=v['facecolor'], hatch=v['hatch'], 
                             edgecolor='black', linewidth=0.5) for v in versions]
-fig_main.legend(handles=handles, labels=version_names, ncol=len(versions), 
-        loc='upper center', bbox_to_anchor=(0.44, 0.99), frameon=False, 
-        handlelength=1.5, handletextpad=0.5, columnspacing=1.0)
+fig_main.legend(
+    handles=handles,
+    labels=version_names,
+    ncol=len(versions),
+    loc='upper center',
+    bbox_to_anchor=(0.5, 1.02),
+    frameon=False,
+    borderpad=0,
+    handlelength=1.5,
+    handletextpad=0.5,
+    columnspacing=1.0,
+)
 
 panel_sa_max = {
     "ylabel": "Max space amp",
@@ -316,7 +321,7 @@ for row in range(0, len(panels_main)):
     for col in range(0, len(panels_main[row])):
         draw_panel_ylims(panels_main[row][col])
 pdf_path = os.path.join(dir, f'const-write-rates{value}{compaction}-warmup-{warmup_secs}-run-{run_secs}{read_workload}.pdf')
-fig_main.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01, metadata={'CreationDate': None})
+fig_main.savefig(pdf_path, metadata={'CreationDate': None})
 print(f'Plot saved to {pdf_path}')
 
 draw_panel_ylims(panel_sa_max)
