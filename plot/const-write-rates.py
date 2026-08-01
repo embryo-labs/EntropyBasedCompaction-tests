@@ -212,7 +212,7 @@ fig_scan_get.legend(
     labels=version_names,
     ncol=3,
     loc='upper center',
-    bbox_to_anchor=(0.54, 1.0),
+    bbox_to_anchor=(0.55, 1.0),
     borderaxespad=0.01,
     frameon=False,
     borderpad=0,
