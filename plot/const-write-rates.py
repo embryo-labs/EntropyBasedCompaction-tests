@@ -165,17 +165,32 @@ panel_sa_max = {
     "log_scale": [False, False, False],
     'ax': [],
 }
-fig_sa_max = plt.figure(dpi=300, figsize=(3.1, 1), constrained_layout=True)
+fig_sa_max = plt.figure(dpi=300, figsize=(common.single_col_inch, 1.2), constrained_layout=True)
+fig_sa_max.get_layout_engine().set(
+    h_pad=0.01,
+    w_pad=0.01,
+    rect=(0, 0, 1, 0.74),
+)
 gs = gridspec.GridSpec(1, 3, figure=fig_sa_max)
 for i in range(len(vec_write_MB_s)):
-    plt.subplot(gs[0, i])
-    panel_sa_max['ax'].append(plt.gca())
+    ax = plt.subplot(gs[0, i])
+    panel_sa_max['ax'].append(ax)
 draw_panel(panel_sa_max)
 handles = [mpl.patches.Patch(facecolor=v['facecolor'], hatch=v['hatch'], 
                             edgecolor='black', linewidth=0.5) for v in versions]
-fig_sa_max.legend(handles=handles, labels=version_names, ncol=3, 
-        loc='upper center', bbox_to_anchor=(0.53, 1.42), frameon=False, 
-        handlelength=1.5, handletextpad=0.5, columnspacing=1.0)
+fig_sa_max.legend(
+    handles=handles,
+    labels=version_names,
+    ncol=3,
+    loc='upper center',
+    bbox_to_anchor=(0.53, 1.04),
+    frameon=False,
+    borderpad=0,
+    handlelength=1.5,
+    handletextpad=0.5,
+    columnspacing=1.0,
+    labelspacing=0.3,
+)
 
 panels_scan_get = [
     {
@@ -326,7 +341,7 @@ print(f'Plot saved to {pdf_path}')
 
 draw_panel_ylims(panel_sa_max)
 pdf_path = os.path.join(dir, f'const-write-rates-sa-max{value}{compaction}-warmup-{warmup_secs}-run-{run_secs}{read_workload}.pdf')
-fig_sa_max.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01, metadata={'CreationDate': None})
+fig_sa_max.savefig(pdf_path, metadata={'CreationDate': None})
 print(f'Plot saved to {pdf_path}')
 
 for panel in panels_scan_get:
