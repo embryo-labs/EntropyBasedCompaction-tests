@@ -1,5 +1,5 @@
 # Paper specific settings
-single_col_inch = 3.4
+single_col_inch = 3.3
 double_col_inch = 7
 
 import math

@@ -191,7 +191,7 @@ panels_scan_get = [
         'ax': [],
     },
 ]
-fig_scan_get = plt.figure(dpi=300, figsize=(3.1, 2.8), constrained_layout=True)
+fig_scan_get = plt.figure(dpi=300, figsize=(common.single_col_inch, 2.8), constrained_layout=True)
 gs = gridspec.GridSpec(2, 3, figure=fig_scan_get)
 fig_scan_get.get_layout_engine().set(
     w_pad=0.01,
@@ -324,9 +324,6 @@ pdf_path = os.path.join(dir, f'const-write-rates-sa-max{value}{compaction}-warmu
 fig_sa_max.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01, metadata={'CreationDate': None})
 print(f'Plot saved to {pdf_path}')
 
-renderer = fig_scan_get.canvas.get_renderer()
-tight_bbox = fig_scan_get.get_tightbbox(renderer)
-print(f'width: {tight_bbox.width}, height: {tight_bbox.height}')
 for panel in panels_scan_get:
     draw_panel_ylims(panel)
 pdf_path = os.path.join(dir, f'const-write-rates-read-latency{value}{compaction}-warmup-{warmup_secs}-run-{run_secs}{read_workload}.pdf')
