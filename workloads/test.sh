@@ -143,3 +143,22 @@ for write_MB_s in 10 30; do
 	delete_heavy with_write_MB_s $write_MB_s with_max_running_background_jobs 1 with_policy_tiering 4 load_all_warmup_run tiering4 readwhilewriting $key_size $value_size $unique_size $warmup_secs $run_secs
 	delete_heavy with_write_MB_s $write_MB_s with_max_running_background_jobs 1 with_policy_entropy_based load_all_warmup_run entropy-based readwhilewriting $key_size $value_size $unique_size $warmup_secs $run_secs
 done
+
+rw_workload() {
+	put_ratio=0.34
+	get_ratio=0.5742
+	seek_ratio=0.0858
+	suffix="-put-$put_ratio$suffix" with_nexts 48 with_compaction_limit_MB_s $compaction_MB_s with_memtable_size 8MiB with_stall_trigger 32 50 "$@" \
+		--mix_put_ratio=$put_ratio \
+		--mix_get_ratio=$get_ratio \
+		--mix_seek_ratio=$seek_ratio
+}
+unique_size=10GB
+warmup_secs=1200
+run_secs=1200
+for threads in 8 64; do
+	with_threads $threads rw_workload with_policy_rocksdb_tuned load_all_warmup_run rocksdb-tuned readrandomwriterandom $key_size $value_size $unique_size $warmup_secs $run_secs
+	with_threads $threads rw_workload with_max_running_background_jobs 1 with_policy_tiering 4 load_all_warmup_run tiering4 readrandomwriterandom $key_size $value_size $unique_size $warmup_secs $run_secs
+	with_threads $threads rw_workload with_policy_entropy_based load_all_warmup_run entropy-based readrandomwriterandom $key_size $value_size $unique_size $warmup_secs $run_secs
+	with_threads $threads rw_workload with_max_running_background_jobs 1 with_policy_entropy_based load_all_warmup_run entropy-based readrandomwriterandom $key_size $value_size $unique_size $warmup_secs $run_secs
+done
