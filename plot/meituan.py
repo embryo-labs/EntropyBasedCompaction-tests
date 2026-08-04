@@ -100,13 +100,11 @@ markevery = len(versions_typical)
 offset = 1
 
 def find_data_dir(day_type, version_path):
-    workload = 'meituan-writer-' + day_type + '-day-period-secs-' + str(period_secs) + '-num_shards-' + str(num_shards) + '-key-16-value-603-unique-size-' + unique_size
-    if version_path == 'entropy-based':
-        workload += '-compaction-trigger-2'
-    workload += '-memtable-8MiB'
     if version_path in ['tiering2', 'tiering4', 'tiering8', 'lazy-leveling-2-3', 'bush', 'vertiorizon-5-4', 'entropy-based']:
-        workload += '-max-running-bg-jobs-1'
-    workload += '-compaction-200MB-s' + read_workload
+        max_running_bg_jobs = '-max-running-bg-jobs-1'
+    else:
+        max_running_bg_jobs = ''
+    workload = f'meituan-writer-{day_type}-day-period-secs-{period_secs}-num_shards-{num_shards}-key-16-value-603-unique-size-{unique_size}{max_running_bg_jobs}-no-stall-memtable-8MiB-compaction-200MB-s{read_workload}'
     return os.path.join(dir, workload, version_path)
 
 title_y = -0.45
