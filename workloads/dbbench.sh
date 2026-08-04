@@ -33,7 +33,6 @@ cd "$output_dir" || exit 1
 	--value_size="$value_size" \
 	--enable_pipelined_write=false \
 	--unordered_write=true \
-	--auto_readahead_size=true \
 	--db="$workspace/testdb" \
 	--num="$num_unique_keys" \
 	--soft_pending_compaction_bytes_limit=1000000000000000 \

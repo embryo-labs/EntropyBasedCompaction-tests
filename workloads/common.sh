@@ -209,7 +209,8 @@ with_nexts() (
 	suffix="-nexts-$nexts$suffix" "$@" \
 		--seek_nexts="$nexts" \
 		--max_scan_distance="$nexts" \
-		--readahead_size=$((1024 * 1024))
+		--readahead_size=$((1024 * 1024)) \
+		--auto_readahead_size=true
 )
 with_merge_operator() (
 	op=$1
