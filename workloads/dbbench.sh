@@ -1,6 +1,6 @@
 #!/usr/bin/env sh
 if [ ! "$5" ]; then
-	echo Usage: $0 db_bench_path output-dir num-unique-keys key-size value-size args...
+	echo Usage: "$0" db_bench_path output-dir num-unique-keys key-size value-size args...
 	exit 1
 fi
 db_bench_path=$1
@@ -13,14 +13,14 @@ key_size=$1
 shift
 value_size=$1
 shift
-workspace=$(realpath "$(dirname $0)"/../..)
+workspace=$(realpath "$(dirname "$0")"/../..)
 echo Output dir: "$output_dir"
 
 ulimit -n 524288
 # Dump core when crash
 ulimit -c unlimited
 export ASAN_OPTIONS="abort_on_error=1:disable_coredump=0"
-cd "$output_dir"
+cd "$output_dir" || exit 1
 "$workspace"/tests/helper/exe-while . $db_bench_path \
 	--ttl_seconds=0 \
 	--use_direct_io_for_flush_and_compaction=true \
@@ -35,7 +35,7 @@ cd "$output_dir"
 	--unordered_write=true \
 	--auto_readahead_size=true \
 	--db="$workspace/testdb" \
-	--num=$num_unique_keys \
+	--num="$num_unique_keys" \
 	--soft_pending_compaction_bytes_limit=1000000000000000 \
 	--hard_pending_compaction_bytes_limit=1000000000000000 \
 	--ops_between_duration_checks=1 \
@@ -48,7 +48,7 @@ cd "$output_dir"
 exit_code=$?
 if [ "$exit_code" -ne 0 ]; then
 	echo "exe-while failed with exit code $exit_code" >&2
-	echo $exit_code > "$output_dir"/exe-while-exit-code
+	echo "$exit_code" > "$output_dir"/exe-while-exit-code
 	exit "$exit_code"
 fi
 if [ "$with_perf" ] && [ "$with_perf" -gt 0 ]; then
