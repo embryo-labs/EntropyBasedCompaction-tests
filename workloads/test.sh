@@ -112,6 +112,10 @@ for type in peak normal; do
 	read_workload with_max_running_background_jobs 1 with_policy_bush meituan_writer bush $type $period_secs $num_shards $unique_size
 	read_workload with_max_running_background_jobs 1 with_policy_vertiorizon 5 4 meituan_writer vertiorizon-5-4 $type $period_secs $num_shards $unique_size
 
+	suffix="-nexts-48$suffix" with_meituan_ratio with_compaction_limit_MB_s $compaction_MB_s with_memtable_size 26MiB no_stall with_policy_endure 5 5 1 meituan_writer endure-5-5-1 $type $period_secs $num_shards $unique_size \
+		--seek_nexts=48 \
+		--max_scan_distance=48
+
 	read_workload with_max_running_background_jobs 1 with_policy_entropy_based meituan_writer entropy-based $type $period_secs $num_shards $unique_size
 done
 

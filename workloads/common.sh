@@ -75,6 +75,24 @@ with_policy_vertiorizon() (
 		--k=$k \
 		--max_background_jobs=100
 )
+with_policy_endure() (
+	num_levels=$1
+	shift
+	T=$1
+	shift
+	bloom_bits=$1
+	shift
+	# endure_lower_level_run_max is Fluid LSM's K; K=1 keeps at most one sorted run in each non-deepest level.
+	# endure_largest_level_run_max is Fluid LSM's Z; Z=1 does the same for the deepest occupied level. K=Z=1 is pure leveling.
+	db_bench_path="$workspace"/endure/build/extern/rocksdb/db_bench "$@" \
+		--use_endure_compactor=true \
+		--max_background_jobs=16 \
+		--num_levels="$num_levels" \
+		--max_bytes_for_level_multiplier="$T" \
+		--bloom_bits="$bloom_bits" \
+		--endure_lower_level_run_max=1 \
+		--endure_largest_level_run_max=1
+)
 
 with_entropy_threshold() (
 	entropy_threshold=$1

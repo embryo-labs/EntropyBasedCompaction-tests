@@ -95,6 +95,10 @@ colors = [
         'dark': 'C8',
         'light': 'C8',
     },
+    {
+        'dark': 'C9',
+        'light': 'C9',
+    }
 ]
 
 versions = {
@@ -144,6 +148,12 @@ versions = {
         'name': 'Vertiorizon',
         'color': colors[8]['dark'],
         'facecolor': colors[8]['light'],
+        'hatch': '//////'
+    },
+    'endure-5-5-1': {
+        'name': 'Endure',
+        'color': colors[9]['dark'],
+        'facecolor': colors[9]['light'],
         'hatch': '\\\\\\\\\\\\',
     },
     'entropy-based': {
