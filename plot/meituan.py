@@ -125,11 +125,17 @@ def find_data_dir(day_type, version):
     workload = f'meituan-writer-{day_type}-day-period-secs-{period_secs}-num_shards-{num_shards}-key-16-value-603-unique-size-{unique_size}{max_running_bg_jobs}-no-stall-memtable-{memtable}-compaction-200MB-s{read_workload}'
     return os.path.join(dir, workload, version['path'])
 
-title_y = -0.45
+title_y = -0.52
 xlabelpad = 1
 sa_yticks = [1, 10]
 
 fig = plt.figure(dpi=300, figsize=(common.single_col_inch, 4.5), constrained_layout=True)
+fig.get_layout_engine().set(
+    h_pad=0.01,
+    w_pad=0.01,
+    hspace=0.1,
+    rect=(0, 0.025, 1, 0.9),
+)
 gs = gridspec.GridSpec(3, 1, figure=fig)
 
 plt.subplot(gs[0, 0])
@@ -180,9 +186,19 @@ for version_idx, version in enumerate(versions_typical):
     read_latency = micros.groupby(micros.index // mean_step_secs).sum() / count.groupby(count.index // mean_step_secs).sum()
     ax_read.plot(time / 3600, read_latency / 1000, linewidth=linewidth, color=version['color'], marker=version['marker'], markersize=version['markersize'], markeredgewidth=0.8, markevery=(version_idx * offset, markevery))
 
-fig.legend(version_names_typical, ncol=3, loc='center', bbox_to_anchor=(0.5, 1.04), handlelength=1, handletextpad=0.5, columnspacing=1.5, frameon=False)
+fig.legend(
+    version_names_typical,
+    ncol=3,
+    loc='upper center',
+    bbox_to_anchor=(0.5, 1.01),
+    borderaxespad=0.01,
+    frameon=False,
+    handlelength=1,
+    handletextpad=0.5,
+    columnspacing=1.5,
+)
 pdf_path = os.path.join(dir, f'meituan-peak-day-num_shards-{num_shards}-unique_size-{unique_size}-period_secs-{period_secs}{read_workload}-mean_step_secs-{mean_step_secs}.pdf')
-fig.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01, metadata={'CreationDate': None})
+fig.savefig(pdf_path, metadata={'CreationDate': None})
 print('Plot saved to ' + pdf_path)
 
 
@@ -217,7 +233,12 @@ panels_read = [
         'ax': None,
     }
 ]
-fig_read = plt.figure(dpi=300, figsize=(common.single_col_inch, 1.3), constrained_layout=True)
+fig_read = plt.figure(dpi=300, figsize=(common.single_col_inch, 1.72), constrained_layout=True)
+fig_read.get_layout_engine().set(
+    h_pad=0.01,
+    w_pad=0.01,
+    rect=(0, 0, 1, 0.67),
+)
 gs = gridspec.GridSpec(1, 3, figure=fig_read)
 draw_panels(panels_read, xlabelpad=5, xlabel_loc='right')
 
@@ -233,7 +254,12 @@ panels_p99 = [
         'ax': None,
     },
 ]
-fig_p99 = plt.figure(dpi = 300, figsize = (common.single_col_inch, 1.3), constrained_layout=True)
+fig_p99 = plt.figure(dpi = 300, figsize = (common.single_col_inch, 1.72), constrained_layout=True)
+fig_p99.get_layout_engine().set(
+    h_pad=0.01,
+    w_pad=0.01,
+    rect=(0, 0, 1, 0.67),
+)
 gs = gridspec.GridSpec(1, 2, figure=fig_p99)
 draw_panels(panels_p99)
 
@@ -256,12 +282,34 @@ for day_type in ['normal', 'peak']:
             bar_plotter.add_bar(panels_read[2]['ax'], version_idx, get_latency_us['Average'] / 1000)
         bar_plotter.add_bar(panel_p99['ax'], version_idx, read_latency_us['99%'] / 1000)
 
-fig_read.legend(version_names, ncol=3, loc='center', bbox_to_anchor=(0.5, 1.25), handlelength=1, handletextpad=0.5, columnspacing=1.5, frameon=False)
+fig_read.legend(
+    version_names,
+    ncol=3,
+    loc='upper center',
+    bbox_to_anchor=(0.5, 1.03),
+    borderaxespad=0.01,
+    frameon=False,
+    handlelength=1,
+    handletextpad=0.5,
+    columnspacing=1.5,
+    labelspacing=0.2,
+)
 pdf_path = os.path.join(dir, f'meituan-peak-day-read-latency-num_shards-{num_shards}-unique_size-{unique_size}-period_secs-{period_secs}{read_workload}-mean_step_secs-{mean_step_secs}.pdf')
-fig_read.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01, metadata={'CreationDate': None})
+fig_read.savefig(pdf_path, metadata={'CreationDate': None})
 print('Plot saved to ' + pdf_path)
 
-fig_p99.legend(version_names, ncol=3, loc='center', bbox_to_anchor=(0.5, 1.25), handlelength=1, handletextpad=0.5, columnspacing=1.5, frameon=False)
+fig_p99.legend(
+    version_names,
+    ncol=3,
+    loc='upper center',
+    bbox_to_anchor=(0.5, 1.03),
+    borderaxespad=0.01,
+    frameon=False,
+    handlelength=1,
+    handletextpad=0.5,
+    columnspacing=1.5,
+    labelspacing=0.2,
+)
 pdf_path = os.path.join(dir, 'meituan-p99-read-num_shards-' + str(num_shards) + '-unique_size-' + unique_size + '-period_secs-' + str(period_secs) + read_workload + '.pdf')
-plt.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01, metadata={'CreationDate': None})
+plt.savefig(pdf_path, metadata={'CreationDate': None})
 print('Plot saved to ' + pdf_path)
