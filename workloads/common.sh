@@ -103,6 +103,7 @@ with_policy_silk() (
 	T=$1
 	shift
 	db_bench_path="$workspace"/SILK/build/db_bench "$@" \
+		--compaction_pri=3 \
 		--level_compaction_dynamic_level_bytes=true \
 		--num_levels=10 \
 		--max_background_jobs=16 \
