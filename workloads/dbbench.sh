@@ -22,7 +22,6 @@ ulimit -c unlimited
 export ASAN_OPTIONS="abort_on_error=1:disable_coredump=0"
 cd "$output_dir" || exit 1
 "$workspace"/tests/helper/exe-while . $db_bench_path \
-	--ttl_seconds=0 \
 	--use_direct_io_for_flush_and_compaction=true \
 	--use_direct_reads=true \
 	--compression_type=none \
@@ -32,7 +31,6 @@ cd "$output_dir" || exit 1
 	--block_size=4096 \
 	--value_size="$value_size" \
 	--enable_pipelined_write=false \
-	--unordered_write=true \
 	--db="$workspace/testdb" \
 	--num="$num_unique_keys" \
 	--soft_pending_compaction_bytes_limit=1000000000000000 \

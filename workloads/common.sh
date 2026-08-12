@@ -1,5 +1,11 @@
+with_common_args() {
+	"$@" \
+		--ttl_seconds=0 \
+		--unordered_write=true
+}
+
 with_policy_rocksdb_tuned() (
-	db_bench_path="$workspace"/rocksdb/build/db_bench "$@" \
+	db_bench_path="$workspace"/rocksdb/build/db_bench with_common_args "$@" \
 		--level_compaction_dynamic_level_bytes=true \
 		--num_levels=10 \
 		--max_background_jobs=16 \
@@ -9,7 +15,7 @@ with_policy_rocksdb_tuned() (
 with_policy_leveling() (
 	T=$1
 	shift
-	db_bench_path="$workspace"/rocksdb/build/db_bench "$@" \
+	db_bench_path="$workspace"/rocksdb/build/db_bench with_common_args "$@" \
 		--level_compaction_dynamic_level_bytes=true \
 		--num_levels=10 \
 		--max_background_jobs=16 \
@@ -18,13 +24,13 @@ with_policy_leveling() (
 		--allow_intra_l0_compactions=false
 )
 with_policy_universal_hard_trigger() {
-	db_bench_path="$workspace"/rocksdb/build/db_bench "$@" \
+	db_bench_path="$workspace"/rocksdb/build/db_bench with_common_args "$@" \
 		--compaction_style=1 \
 		--num_levels=1 \
 		--max_background_jobs=16
 }
 with_policy_entropy_based() {
-	db_bench_path="$workspace"/rocksdb/build/db_bench "$@" \
+	db_bench_path="$workspace"/rocksdb/build/db_bench with_common_args "$@" \
 		--compaction_style=3 \
 		--num_levels=1 \
 		--max_background_jobs=100 \
@@ -38,7 +44,7 @@ with_policy_entropy_based_universal() {
 with_policy_tiering() (
 	T=$1
 	shift
-	db_bench_path="$workspace"/rocksdb/build/db_bench "$@" \
+	db_bench_path="$workspace"/rocksdb/build/db_bench with_common_args "$@" \
 		--compaction_style=4 \
 		--max_bytes_for_level_multiplier=$T \
 		--num_levels=1 \
@@ -49,7 +55,7 @@ with_policy_lazy_leveling() (
 	shift
 	C=$1
 	shift
-	db_bench_path="$workspace"/rocksdb/build/db_bench "$@" \
+	db_bench_path="$workspace"/rocksdb/build/db_bench with_common_args "$@" \
 		--compaction_style=5 \
 		--num_levels=1 \
 		--max_bytes_for_level_multiplier=$T \
@@ -57,7 +63,7 @@ with_policy_lazy_leveling() (
 		--max_background_jobs=100
 )
 with_policy_bush() (
-	db_bench_path="$workspace"/rocksdb/build/db_bench "$@" \
+	db_bench_path="$workspace"/rocksdb/build/db_bench with_common_args "$@" \
 		--compaction_style=6 \
 		--num_levels=1 \
 		--num_logical_levels=4 \
@@ -68,7 +74,7 @@ with_policy_vertiorizon() (
 	shift
 	k=$1
 	shift
-	db_bench_path="$workspace"/rocksdb/build/db_bench "$@" \
+	db_bench_path="$workspace"/rocksdb/build/db_bench with_common_args "$@" \
 		--compaction_style=7 \
 		--num_levels=3 \
 		--num_horizontal_levels=$num_horizontal_levels \
@@ -84,7 +90,7 @@ with_policy_endure() (
 	shift
 	# endure_lower_level_run_max is Fluid LSM's K; K=1 keeps at most one sorted run in each non-deepest level.
 	# endure_largest_level_run_max is Fluid LSM's Z; Z=1 does the same for the deepest occupied level. K=Z=1 is pure leveling.
-	db_bench_path="$workspace"/endure/build/extern/rocksdb/db_bench "$@" \
+	db_bench_path="$workspace"/endure/build/extern/rocksdb/db_bench with_common_args "$@" \
 		--use_endure_compactor=true \
 		--max_background_jobs=16 \
 		--num_levels="$num_levels" \
@@ -92,6 +98,16 @@ with_policy_endure() (
 		--bloom_bits="$bloom_bits" \
 		--endure_lower_level_run_max=1 \
 		--endure_largest_level_run_max=1
+)
+with_policy_silk() (
+	T=$1
+	shift
+	db_bench_path="$workspace"/SILK/build/db_bench "$@" \
+		--level_compaction_dynamic_level_bytes=true \
+		--num_levels=10 \
+		--max_background_jobs=16 \
+		--max_bytes_for_level_multiplier="$T" \
+		--level0_file_num_compaction_trigger=1
 )
 
 with_entropy_threshold() (
@@ -172,7 +188,11 @@ with_stall_trigger() (
 		--level0_stop_writes_trigger=$stop
 )
 no_stall() {
+	# With 16 background threads, SILK has four high-priority threads, so
+	# we allow four immutable memtables plus one mutable memtable,
+	# i.e., --max_write_buffer_number=5.
 	suffix="-no-stall$suffix" "$@" \
+		--max_write_buffer_number=5 \
 		--level0_slowdown_writes_trigger=100000 \
 		--level0_stop_writes_trigger=100000
 }
@@ -450,14 +470,14 @@ meituan_writer() (
 		\"name\": \"resetstats\"
 	},
 	{
-		\"name\": \"customperiodic\"
+		\"name\": \"customperiodic\",
+		\"writes_per_second_file\": \"$writes_per_second_file\"
 	},
 	{
 		\"name\": \"stats\"
 	}
 ]" \
 		--period_secs="$period_secs" \
-		--writes_per_second_file="$writes_per_second_file" \
 		--duration=$period_secs \
 		"$@"
 	exit_code=$?

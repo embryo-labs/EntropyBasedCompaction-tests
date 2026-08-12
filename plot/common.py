@@ -98,7 +98,7 @@ colors = [
     {
         'dark': 'C9',
         'light': 'C9',
-    }
+    },
 ]
 
 versions = {
@@ -149,6 +149,11 @@ versions = {
         'color': colors[8]['dark'],
         'facecolor': colors[8]['light'],
         'hatch': '//////'
+    },
+    'silk5': {
+        'name': 'SILK',
+        'facecolor': 'white',
+        'hatch': '------',
     },
     'endure-5-5-1': {
         'name': 'Endure',

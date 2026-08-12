@@ -116,6 +116,10 @@ for type in peak normal; do
 		--seek_nexts=48 \
 		--max_scan_distance=48
 
+	suffix="-nexts-48$suffix" with_meituan_ratio with_compaction_limit_MB_s $compaction_MB_s with_memtable_size 8MiB no_stall with_policy_silk 5 meituan_writer silk5 $type $period_secs $num_shards $unique_size \
+		--seek_nexts=48 \
+		--max_scan_distance=48
+
 	read_workload with_max_running_background_jobs 1 with_policy_entropy_based meituan_writer entropy-based $type $period_secs $num_shards $unique_size
 done
 

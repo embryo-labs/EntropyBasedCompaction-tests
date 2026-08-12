@@ -75,6 +75,10 @@ versions = [
         'max-running-bg-jobs': 1,
     },
     {
+        'path': 'silk5',
+        'max-running-bg-jobs': None,
+    },
+    {
         'path': 'endure-5-5-1',
         'max-running-bg-jobs': None,
         'memtable': '26MiB',
@@ -91,7 +95,10 @@ for v in versions:
     v.update(common.versions[v['path']])
 version_names = [v['name'] for v in versions]
 
-versions_typical = versions[0:5] + [versions[9]]
+versions_typical = []
+for version in versions:
+    if 'marker' in version:
+        versions_typical.append(version)
 version_names_typical = [v['name'] for v in versions_typical]
 
 class BarPlotter:
