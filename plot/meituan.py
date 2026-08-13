@@ -16,6 +16,7 @@ import subprocess
 unique_size_bytes = subprocess.run(['humanfriendly', '--parse-size', unique_size], stdout=subprocess.PIPE, text=True).stdout
 unique_size_bytes = int(unique_size_bytes)
 
+import io
 import os
 import json
 import pandas as pd
@@ -176,9 +177,12 @@ plt.yticks(sa_yticks)
 ax_sa.tick_params(axis='y', which='minor', labelleft=False)
 ax_sa.grid(axis='y')
 
+peak_max_sizes = {}
 for version_idx, version in enumerate(versions_typical):
     data_dir = find_data_dir('peak', version)
     report = pd.read_csv(os.path.join(data_dir, 'report.csv'))
+    if version['path'] in ['rocksdb-tuned', 'entropy-based']:
+        peak_max_sizes[version['path']] = report['size'].max()
     report = report[['secs_elapsed', 'num-sorted-runs', 'size']]
     report = report.groupby(report.index // mean_step_secs).mean()
     ax_num_srs.plot(report['secs_elapsed'] / 3600, report['num-sorted-runs'], linewidth=linewidth, color=version['color'], marker=version['marker'], markersize=version['markersize'], markeredgewidth=0.8, markevery=(version_idx * offset, markevery))
@@ -320,3 +324,10 @@ fig_p99.legend(
 pdf_path = os.path.join(dir, 'meituan-p99-read-num_shards-' + str(num_shards) + '-unique_size-' + unique_size + '-period_secs-' + str(period_secs) + read_workload + '.pdf')
 plt.savefig(pdf_path, metadata={'CreationDate': None})
 print('Plot saved to ' + pdf_path)
+
+tex = io.StringIO()
+print('\\defmacro{MeituanPeakRocksDBTunedMaxSize}{' + f'{peak_max_sizes["rocksdb-tuned"] / 1e9:.1f}' + '\\,GB}', file=tex)
+print('\\defmacro{MeituanPeakEBCMaxSize}{' + f'{peak_max_sizes["entropy-based"] / 1e9:.1f}' + '\\,GB}', file=tex)
+tex = tex.getvalue()
+print(tex)
+open('meituan.tex', mode='w').write(tex)

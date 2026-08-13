@@ -18,6 +18,7 @@ import subprocess
 unique_size_bytes = subprocess.run(['humanfriendly', '--parse-size', unique_size], stdout=subprocess.PIPE, text=True).stdout
 unique_size_bytes = int(unique_size_bytes)
 
+import io
 import os
 import numpy as np
 import pandas as pd
@@ -302,6 +303,7 @@ fig_intro.legend(
 )
 
 
+max_sizes_at_30_MB_s = {}
 for i, write_MB_s in enumerate(vec_write_MB_s):
     for version_idx, version in enumerate(versions):
         x = -cluster_width / 2 + bar_width / 2 + version_idx * bar_width
@@ -312,6 +314,8 @@ for i, write_MB_s in enumerate(vec_write_MB_s):
         workload = f'readwhilewriting-key-16{value}-unique-size-{unique_size}-warmup-secs-{warmup_secs}-run-secs-{run_secs}{max_running_bg_jobs}-write-{write_MB_s}MB-s-no-stall-memtable-8MiB{compaction}{read_workload}'
         data_dir = os.path.join(dir, workload, version['path'])
         report = pd.read_csv(os.path.join(data_dir, 'report.csv'))
+        if write_MB_s == 30 and version['path'] in ['rocksdb-tuned', 'entropy-based']:
+            max_sizes_at_30_MB_s[version['path']] = report['size'].max()
         read_latency_us = json.load(open(os.path.join(data_dir, 'read-latency-us.json')))
         scan_latency_us = json.load(open(os.path.join(data_dir, 'seek-latency-us.json')))
         get_latency_us = json.load(open(os.path.join(data_dir, 'get-latency-us.json')))
@@ -368,3 +372,10 @@ print(f'Plot saved to {pdf_path}')
 pdf_path = os.path.join(dir, f'const-write-rates-intro{value}{compaction}-warmup-{warmup_secs}-run-{run_secs}{read_workload}.pdf')
 fig_intro.savefig(pdf_path, metadata={'CreationDate': None})
 print(f'Plot saved to {pdf_path}')
+
+tex = io.StringIO()
+print('\\defmacro{SteadyThirtyRocksDBTunedMaxSize}{' + f'{max_sizes_at_30_MB_s["rocksdb-tuned"] / 1e9:.1f}' + '\\,GB}', file=tex)
+print('\\defmacro{SteadyThirtyEBCMaxSize}{' + f'{max_sizes_at_30_MB_s["entropy-based"] / 1e9:.1f}' + '\\,GB}', file=tex)
+tex = tex.getvalue()
+print(tex)
+open('const-write-rates.tex', mode='w').write(tex)
