@@ -155,7 +155,7 @@ versions = {
         'facecolor': 'white',
         'hatch': '------',
     },
-    'endure-5-5-1': {
+    'endure-4-8-1': {
         'name': 'Endure',
         'color': colors[9]['dark'],
         'facecolor': colors[9]['light'],

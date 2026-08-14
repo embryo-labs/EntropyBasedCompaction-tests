@@ -80,7 +80,7 @@ versions = [
         'max-running-bg-jobs': None,
     },
     {
-        'path': 'endure-5-5-1',
+        'path': 'endure-4-8-1',
         'max-running-bg-jobs': None,
         'memtable': '26MiB',
     },
