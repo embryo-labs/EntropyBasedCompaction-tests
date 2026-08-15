@@ -27,7 +27,8 @@ with_policy_universal_hard_trigger() {
 	db_bench_path="$workspace"/rocksdb/build/db_bench with_common_args "$@" \
 		--compaction_style=1 \
 		--num_levels=1 \
-		--max_background_jobs=16
+		--max_background_jobs=16 \
+		--json_log_file="$workspace/testdb/log.json"
 }
 with_policy_entropy_based() {
 	db_bench_path="$workspace"/rocksdb/build/db_bench with_common_args "$@" \
