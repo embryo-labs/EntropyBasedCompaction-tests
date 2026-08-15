@@ -26,7 +26,11 @@ mpl.rcParams.update({
     'axes.unicode_minus': False,
     'font.size': 9,
     'text.usetex': True,
-    'text.latex.preamble': r'\usepackage{amsmath} \usepackage{libertine}',
+    'text.latex.preamble': r'''
+        \usepackage{amsmath}
+        \usepackage{libertine}
+        \usepackage[libertine]{newtxmath}
+    ''',
 })
 
 write_MB_s_string = ''
