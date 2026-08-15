@@ -213,6 +213,71 @@ fig.savefig(pdf_path, metadata={'CreationDate': None})
 print('Plot saved to ' + pdf_path)
 
 
+motivating_versions = [
+    version for version in versions_typical
+    if version['path'] in ['rocksdb-tuned', 'tiering4', 'entropy-based']
+]
+panels_motivation = [
+    {
+        'title': '(a) Normal day',
+        'day-type': 'normal',
+    },
+    {
+        'title': '(b) Peak day',
+        'day-type': 'peak',
+    },
+]
+fig_motivation = plt.figure(
+    dpi=300,
+    figsize=(common.single_col_inch, 1.2),
+    constrained_layout=True,
+)
+fig_motivation.get_layout_engine().set(
+    h_pad=0.01,
+    w_pad=0.01,
+    rect=(0, 0, 1, 0.85),
+)
+gs = gridspec.GridSpec(1, 2, figure=fig_motivation)
+for col, panel in enumerate(panels_motivation):
+    ax = plt.subplot(gs[0, col])
+    ax.set_xlabel(f'Time (hours)\n{panel['title']}', labelpad=xlabelpad)
+    ax.set_xticks([0, 1, 2, 3])
+    if col == 0:
+        ax.set_ylabel('# of sorted runs')
+    ax.set_yscale('log')
+    ax.tick_params(axis='y', which='minor', labelleft=False)
+    ax.grid(axis='y')
+    for version_idx, version in enumerate(motivating_versions):
+        data_dir = find_data_dir(panel['day-type'], version)
+        report = pd.read_csv(os.path.join(data_dir, 'report.csv'))
+        report = report[['secs_elapsed', 'num-sorted-runs']]
+        report = report.groupby(report.index // mean_step_secs).mean()
+        ax.plot(
+            report['secs_elapsed'] / 3600,
+            report['num-sorted-runs'],
+            linewidth=linewidth,
+            color=version['color'],
+            marker=version['marker'],
+            markersize=version['markersize'],
+            markeredgewidth=0.8,
+            markevery=(version_idx * 2, len(motivating_versions) * 2),
+        )
+fig_motivation.legend(
+    [version['name'] for version in motivating_versions],
+    ncol=3,
+    loc='upper center',
+    bbox_to_anchor=(0.5, 1.01),
+    borderaxespad=0.01,
+    frameon=False,
+    handlelength=1,
+    handletextpad=0.5,
+    columnspacing=1,
+)
+pdf_path = os.path.join(dir, f'meituan-motivation-num_shards-{num_shards}-unique_size-{unique_size}-period_secs-{period_secs}{read_workload}-mean_step_secs-{mean_step_secs}.pdf')
+fig_motivation.savefig(pdf_path, metadata={'CreationDate': None})
+print('Plot saved to ' + pdf_path)
+
+
 def draw_panels(panels, xlabelpad=None, xlabel_loc=None):
     for col, panel in enumerate(panels):
         plt.subplot(gs[0, col])
