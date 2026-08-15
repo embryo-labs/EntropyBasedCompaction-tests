@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 workspace=$(realpath "$(dirname $0)"/../..)
 . $(dirname $0)/common.sh
-nice $(dirname $0)/../helper/build.sh
+nice $(dirname $0)/../helper/build.sh || exit 1
 
 compaction_MB_s=200
 read_workload() {
