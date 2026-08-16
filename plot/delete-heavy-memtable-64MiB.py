@@ -67,7 +67,7 @@ fig.get_layout_engine().set(
     h_pad=0.01,
     w_pad=0.01,
     wspace=0.15,
-    rect=(0, 0.13, 1, 0.74),
+    rect=(0, 0.13, 1, 0.72),
 )
 gs = gridspec.GridSpec(1, 4, figure=fig)
 for panel_idx, panel in enumerate(panels):
