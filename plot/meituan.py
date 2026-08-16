@@ -280,10 +280,10 @@ print('Plot saved to ' + pdf_path)
 
 def draw_panels(panels, xlabelpad=None, xlabel_loc=None):
     for col, panel in enumerate(panels):
-        plt.subplot(gs[0, col])
-        ax = plt.gca()
+        ax = plt.subplot(gs[0, col])
         plt.xlabel(panel['title'], labelpad=xlabelpad, loc=xlabel_loc)
-        plt.ylabel(panel['ylabel'], loc='top')
+        ax.tick_params(axis='y', pad=2)
+        plt.ylabel(panel['ylabel'], loc='top', labelpad=2)
         if 'yticks' in panel:
             plt.yticks(panel['yticks'])
         plt.xticks([])
@@ -313,6 +313,7 @@ fig_read = plt.figure(dpi=300, figsize=(common.single_col_inch, 1.72), constrain
 fig_read.get_layout_engine().set(
     h_pad=0.01,
     w_pad=0.01,
+    wspace=0.07,
     rect=(0, 0, 1, 0.67),
 )
 gs = gridspec.GridSpec(1, 3, figure=fig_read)
@@ -334,6 +335,7 @@ fig_p99 = plt.figure(dpi = 300, figsize = (common.single_col_inch, 1.72), constr
 fig_p99.get_layout_engine().set(
     h_pad=0.01,
     w_pad=0.01,
+    wspace=0.07,
     rect=(0, 0, 1, 0.67),
 )
 gs = gridspec.GridSpec(1, 2, figure=fig_p99)
