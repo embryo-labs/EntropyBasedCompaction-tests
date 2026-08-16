@@ -51,23 +51,28 @@ version_names = [version['name'] for version in versions]
 bar_width = 1 / (len(versions) + 1)
 cluster_width = bar_width * len(versions)
 
-fig = plt.figure(dpi=300, figsize=(common.single_col_inch, 1.5), constrained_layout=True)
+fig = plt.figure(dpi=300, figsize=(common.single_col_inch, 1), constrained_layout=True)
+fig.get_layout_engine().set(
+    h_pad=0.01,
+    w_pad=0.01,
+    wspace=0.1,
+    rect=(0, 0.12, 1, 0.75),
+)
 gs = gridspec.GridSpec(1, 2, figure=fig)
 
-title_x = 0.43
 x_labelpad = 1
 
-plt.subplot(gs[0, 0])
-ax_reff = plt.gca()
-plt.text(title_x, -0.45, r'(a) $R_\text{eff}$ of new compactions', fontsize=9, transform=ax_reff.transAxes, ha="center", va="center")
-plt.ylabel(r'Avg $R_\text{eff}$ of new Comp')
+ax_reff = plt.subplot(gs[0, 0])
+fig.text(0.25, 0, r'(a) Avg $R_\text{eff}$ of new compactions', ha='center', va='bottom')
+plt.ylabel(r'Average $R_\text{eff}$', loc='top')
+ax_reff.tick_params(axis='x', pad=0)
 plt.xlabel(r'Zipfian $\theta$', labelpad=x_labelpad)
 plt.xticks(list(range(0, len(vec_zipfian_theta))), vec_zipfian_theta)
 
-plt.subplot(gs[0, 1])
-ax_num_srs = plt.gca()
-plt.text(title_x, -0.45, '(b) Number of sorted runs', fontsize=9, transform=ax_num_srs.transAxes, ha="center", va="center")
-plt.ylabel('Avg \\# of sorted runs')
+ax_num_srs = plt.subplot(gs[0, 1])
+fig.text(0.76, 0, r'(b) Avg number of sorted runs', ha='center', va='bottom')
+plt.ylabel('Avg \\# of runs', loc='top')
+ax_num_srs.tick_params(axis='x', pad=0)
 plt.xlabel(r'Zipfian $\theta$', labelpad=x_labelpad)
 plt.xticks(list(range(0, len(vec_zipfian_theta))), vec_zipfian_theta)
 
@@ -116,9 +121,16 @@ ax_reff.set_ylim(bottom=0)
 ax_num_srs.set_ylim(bottom=0)
 handles = [mpl.patches.Patch(facecolor=v['facecolor'], hatch=v['hatch'], 
                             edgecolor='black', linewidth=0.5) for v in versions]
-fig.legend(handles=handles, labels=version_names, ncol=len(versions), loc='center', bbox_to_anchor=(0.5, 1.05), frameon=False)
+fig.legend(
+    handles=handles,
+    labels=version_names,
+    ncol=len(versions),
+    loc='upper center',
+    bbox_to_anchor=(0.5, 1.1),
+    frameon=False,
+)
 pdf_path = os.path.join(dir, f'skew-zipfian.pdf')
-fig.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01, metadata={'CreationDate': None})
+fig.savefig(pdf_path, metadata={'CreationDate': None})
 print('Plot saved to ' + pdf_path)
 
 tex = io.StringIO()
