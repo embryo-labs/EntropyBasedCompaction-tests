@@ -58,7 +58,13 @@ def get_data_dir(version, value_size, write_MB_s):
     )
     return os.path.join(dir, workload, version['path'])
 
-fig = plt.figure(dpi=300, figsize=(common.single_col_inch, 1.55), constrained_layout=True)
+fig = plt.figure(dpi=300, figsize=(common.single_col_inch, 1.4), constrained_layout=True)
+fig.get_layout_engine().set(
+    h_pad=0.01,
+    w_pad=0.01,
+    wspace=0.13,
+    rect=(0, 0.21, 1, 0.71),
+)
 gs = gridspec.GridSpec(1, 4, figure=fig)
 
 ax_srs = fig.add_subplot(gs[0, :2])
@@ -75,16 +81,17 @@ lines = [
         'marker': 's',
     },
 ]
-ax_srs.set_xlabel('Value size (KB)')
+ax_srs.set_xlabel('Value size (KB)', labelpad=0)
 ax_srs.set_xscale('log', base=2)
+ax_srs.tick_params(axis='x', pad=0)
 ax_srs.set_xticks([600, 1000, 2000, 4000, 8000, 16000], labels=['0.6', '1', '2', '4', '8', '16'])
-ax_srs.set_ylabel('Avg # of sorted runs')
+ax_srs.set_ylabel('Avg # of runs')
 
 ax_read_lat = []
 ax = fig.add_subplot(gs[0, 2])
 ax.set_xlabel(f"10MB/s")
 ax.set_xticks([])
-ax.set_ylabel('Avg read latency (ms)', loc='top')
+ax.set_ylabel('Latency (ms)', loc='top')
 ax_read_lat.append(ax)
 
 ax = fig.add_subplot(gs[0, 3])
@@ -95,7 +102,17 @@ ax_read_lat.append(ax)
 handles = []
 for v in versions:
     handles.append(mpl.patches.Patch(facecolor=v['facecolor'], hatch=v['hatch'], edgecolor='black', linewidth=0.5))
-fig.legend(handles=handles, labels=version_names, ncol=len(versions), loc='upper center', bbox_to_anchor=(0.62, 1.12), frameon=False, handlelength=1.3, handletextpad=0.5, columnspacing=1.0)
+fig.legend(
+    handles=handles,
+    labels=version_names,
+    ncol=len(versions),
+    loc='upper center',
+    bbox_to_anchor=(0.62, 1.07),
+    frameon=False,
+    handlelength=1.3,
+    handletextpad=0.5,
+    columnspacing=1.0,
+)
 
 for line in lines:
     average_runs = []
@@ -112,7 +129,14 @@ for line in lines:
         label=f'EBC, {line['write_MB_s']}MB/s',
     )
 ax_srs.set_ylim(bottom=0, top=20)
-ax_srs.legend(loc='center', bbox_to_anchor=(0.5, 0.5), frameon=False, handlelength=1.5, handletextpad=0.5)
+ax_srs.legend(
+    loc='center',
+    bbox_to_anchor=(0.5, 0.5),
+    frameon=False,
+    handlelength=1.5,
+    handletextpad=0.5,
+    labelspacing=0.1,
+)
 
 bar_width = 1 / (len(versions) + 1)
 cluster_width = bar_width * len(versions)
@@ -123,9 +147,9 @@ for i, write_MB_s in enumerate([10, 30]):
         read_latency_us = json.load(open(os.path.join(data_dir, 'read-latency-us.json')))
         ax_read_lat[i].bar(x, read_latency_us['Average'] / 1000, width=bar_width, edgecolor='black', linewidth=0.5, facecolor=version['facecolor'], hatch=version['hatch'])
 
-fig.text(0.29, 0, '(a) EBC sorted run count\nacross value sizes', ha='center', va='top')
-fig.text(0.77, 0.1, '(b) Read latency across\ncompaction policies\nwith 16KB values', ha='center', va='top')
+fig.text(0.29, 0, '(a) EBC sorted run count\nacross value sizes', ha='center', va='bottom')
+fig.text(0.77, 0, '(b) Read latency across\ncompaction policies\nwith 16KB values', ha='center', va='bottom')
 
 pdf_path = os.path.join(dir, f'value-sizes{compaction}-warmup-{warmup_secs}-run-{run_secs}{read_workload}.pdf')
-fig.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01, metadata={'CreationDate': None})
+fig.savefig(pdf_path, metadata={'CreationDate': None})
 print(f'Plot saved to {pdf_path}')
