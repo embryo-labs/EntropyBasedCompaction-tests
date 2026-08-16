@@ -12,9 +12,7 @@ run_secs = 1200
 read_workload = '-get-0.87-seek-0.13-nexts-48'
 
 import os
-import numpy as np
 import pandas as pd
-import json
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 from matplotlib import gridspec
@@ -75,15 +73,21 @@ cluster_width = bar_width * len(versions)
 
 row_configs = [
     {
-        'ylabel': 'Avg # of sorted runs',
+        'ylabel': 'Avg # of runs',
         'ylims': [(1, None), (10, None), (10, None)],
         'log-scale': [True, True, True],
         'ax': [],
     },
 ]
 
-fig = plt.figure(dpi=300, figsize=(common.single_col_inch, 2.1), constrained_layout=True)
-gs = gridspec.GridSpec(2, 3, figure=fig)
+fig = plt.figure(dpi=300, figsize=(common.single_col_inch, 1.1), constrained_layout=True)
+fig.get_layout_engine().set(
+    h_pad=0.01,
+    w_pad=0.01,
+    wspace=0.1,
+    rect=(0, 0, 1, 0.75),
+)
+gs = gridspec.GridSpec(1, 3, figure=fig)
 for row, row_config in enumerate(row_configs):
     for col, write_MB_s in enumerate(vec_write_MB_s):
         plt.subplot(gs[row, col])
@@ -91,7 +95,7 @@ for row, row_config in enumerate(row_configs):
         plt.xlabel(f'{write_MB_s}MB/s')
         plt.xticks([])
         if col == 0:
-            plt.ylabel(row_config['ylabel'])
+            plt.ylabel(row_config['ylabel'], loc='top')
         if row_config['log-scale'][col]:
             plt.yscale('log')
         ax.set_axisbelow(True)
@@ -115,7 +119,18 @@ for row, row_config in enumerate(row_configs):
         if row_config['ylims'][col] is not None:
             row_config['ax'][col].set_ylim(row_config['ylims'][col])
 
-fig.legend(version_names, fontsize=9, ncol=3, loc='center', bbox_to_anchor=(0.5, 1.08), frameon=False, handlelength=1.5, handletextpad=0.5, columnspacing=1.0)
+fig.legend(
+    version_names,
+    fontsize=9,
+    ncol=3,
+    loc='upper center',
+    bbox_to_anchor=(0.5, 1.09),
+    frameon=False,
+    handlelength=1.5,
+    handletextpad=0.5,
+    columnspacing=1.0,
+    labelspacing=0.1,
+)
 pdf_path = os.path.join(dir, f'ablation-study{value}{compaction}-warmup-{warmup_secs}-run-{run_secs}{read_workload}.pdf')
-fig.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01, metadata={'CreationDate': None})
+fig.savefig(pdf_path, metadata={'CreationDate': None})
 print('Plot saved to ' + pdf_path)
