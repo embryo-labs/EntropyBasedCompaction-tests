@@ -79,6 +79,7 @@ fig = plt.figure(dpi=300, figsize=(common.single_col_inch, 1.3), constrained_lay
 fig.get_layout_engine().set(
     h_pad=0.01,
     w_pad=0.01,
+    wspace=0.07,
     rect=(0, 0, 1, 0.8),
 )
 gs = GridSpec(1, len(vec_write_MB_s), figure=fig)
