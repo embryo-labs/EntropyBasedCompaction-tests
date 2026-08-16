@@ -1,6 +1,6 @@
 # Paper specific settings
 single_col_inch = 3.3
-double_col_inch = 7
+double_col_inch = 6.9
 
 import math
 from scipy.optimize import root_scalar
