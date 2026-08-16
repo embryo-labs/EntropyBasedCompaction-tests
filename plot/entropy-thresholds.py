@@ -33,13 +33,18 @@ mpl.rcParams.update({
 
 vec_write_MB_s = [10, 20, 30, 40, 50, 60]
 
-fig_num_srs = plt.figure(dpi=300, figsize=(common.single_col_inch, 2.3), constrained_layout=True)
-gs = GridSpec(2, 2, figure=fig_num_srs)
-plt.subplot(gs[0, 0])
-ax_srs_avg = plt.gca()
-plt.xlabel('User write speed (MB/s)', loc='right')
+fig_num_srs = plt.figure(dpi=300, figsize=(common.single_col_inch, 1.4), constrained_layout=True)
+fig_num_srs.get_layout_engine().set(
+    h_pad=0.01,
+    w_pad=0.01,
+    wspace=0.1,
+    rect=(0, 0, 1, 0.82),
+)
+gs = GridSpec(1, 2, figure=fig_num_srs)
+ax_srs_avg = plt.subplot(gs[0, 0])
+plt.xlabel('User write speed (MB/s)', loc='right', labelpad=0)
 plt.xticks(vec_write_MB_s)
-plt.ylabel('Average # of sorted runs')
+plt.ylabel('Avg # of sorted runs', loc='top')
 plt.yscale('log')
 plt.ylim((4, 100))
 yticks = [4, 10, 100]
@@ -47,11 +52,10 @@ plt.yticks(yticks, labels=yticks)
 ax_srs_avg.set_axisbelow(True)
 ax_srs_avg.grid(axis='y')
 
-plt.subplot(gs[0, 1])
-ax_srs_p99 = plt.gca()
-plt.xlabel('User write speed (MB/s)', loc='right')
+ax_srs_p99 = plt.subplot(gs[0, 1])
+plt.xlabel('User write speed (MB/s)', loc='right', labelpad=0)
 plt.xticks(vec_write_MB_s)
-plt.ylabel('P99 # of sorted runs')
+plt.ylabel('P99 # of sorted runs', loc='top')
 plt.yscale('log')
 plt.ylim((4, 120))
 yticks = [4, 10, 100]
@@ -121,21 +125,25 @@ lines = [
         'markersize': 3,
     },
 ]
-xlabelpad = 0.7
-fig_wa = plt.figure(dpi=300, figsize=(common.single_col_inch, 1.5), constrained_layout=True)
+fig_wa = plt.figure(dpi=300, figsize=(common.single_col_inch, 1.2), constrained_layout=True)
+fig_wa.get_layout_engine().set(
+    h_pad=0.01,
+    w_pad=0.01,
+    wspace=0.1,
+    rect=(0, 0, 1, 0.87),
+)
 gs = GridSpec(1, 2, figure=fig_wa)
-plt.subplot(gs[0, 0])
-ax_10 = plt.gca()
-plt.text(0.5, -0.45, '(a) User write 10MB/s', transform=ax_10.transAxes, ha='center', va='center')
-plt.ylabel('Write amplification')
-plt.xlabel('Entropy threshold', labelpad=xlabelpad)
+ax_10 = plt.subplot(gs[0, 0])
+plt.ylabel('Write amplification', y=0.36)
+plt.xlabel('Entropy threshold\n(a) User write 10MB/s', labelpad=0)
 plt.xticks([0, 1, 2, 3])
+ax_10.tick_params(axis='x', pad=0)
 
 plt.subplot(gs[0, 1])
 ax_50 = plt.gca()
-plt.text(0.5, -0.45, '(b) User write 50MB/s', transform=ax_50.transAxes, ha='center', va='center')
-plt.xlabel('Entropy threshold', labelpad=xlabelpad)
+plt.xlabel('Entropy threshold\n(b) User write 50MB/s', labelpad=0)
 plt.xticks([0, 1, 2, 3])
+ax_50.tick_params(axis='x', pad=0)
 
 vec_entropy_threshold = [version['t_e'] for version in versions]
 vec_wa_theory = []
@@ -169,12 +177,12 @@ for version in versions:
         workload = f'readwhilewriting-key-16{value}-unique-size-10GB-warmup-secs-{warmup_secs}-run-secs-{run_secs}{entropy_threshold_str}-compaction-trigger-2-memtable-8MiB-max-running-bg-jobs-1{compaction}-write-{write_MB_s}MB-s{read_workload}'
         data_dir = os.path.join(dir, workload, 'entropy-based')
 
-        report = pd.read_csv(os.path.join(data_dir, 'report.csv'))
+        report = pd.read_csv(os.path.join(data_dir, 'report.csv')).iloc[1:]
         srs_avg.append(report['num-sorted-runs'].mean())
         srs_p99.append(np.percentile(report['num-sorted-runs'], 99))
 
         if write_MB_s in [10, 50]:
-            compact_write_bytes = report['rocksdb.compact.write.bytes'].iloc[1:]
+            compact_write_bytes = report['rocksdb.compact.write.bytes']
             secs = len(compact_write_bytes)
             wa = compact_write_bytes.sum() / (write_MB_s * 1e6 * secs)
             if write_MB_s == 10:
@@ -200,9 +208,16 @@ for version in versions:
         names.append(f'{t_e} ({common.versions['entropy-based']['name']})')
     else:
         names.append(str(t_e))
-fig_num_srs.legend(names, ncol=3, loc='center', bbox_to_anchor=(0.5, 1.07), frameon=False)
+fig_num_srs.legend(
+    names,
+    ncol=3,
+    loc='upper center',
+    bbox_to_anchor=(0.5, 1.07),
+    frameon=False,
+    labelspacing=0.2,
+)
 pdf_path = os.path.join(dir, f'entropy-thresholds{value}{compaction}-warmup-{warmup_secs}-run-{run_secs}{read_workload}.pdf')
-fig_num_srs.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01, metadata={'CreationDate': None})
+fig_num_srs.savefig(pdf_path, metadata={'CreationDate': None})
 print('Plot saved to ' + pdf_path)
 
 handles = []
@@ -210,7 +225,15 @@ names = []
 for line in lines:
     handles.append(mpl.lines.Line2D([0], [0], linewidth=1, color=line['color'], linestyle=line['linestyle'], marker=line['marker'], markersize=line['markersize']))
     names.append(line['name'])
-fig_wa.legend(handles=handles, labels=names, ncol=len(lines), loc='center', bbox_to_anchor=(0.5, 1.07), handlelength=1.5, frameon=False)
+fig_wa.legend(
+    handles=handles,
+    labels=names,
+    ncol=len(lines),
+    loc='upper center',
+    bbox_to_anchor=(0.5, 1.09),
+    handlelength=1.5,
+    frameon=False,
+)
 pdf_path = os.path.join(dir, f'entropy-thresholds{value}{compaction}-warmup-{warmup_secs}-run-{run_secs}-wa.pdf')
-fig_wa.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01, metadata={'CreationDate': None})
+fig_wa.savefig(pdf_path, metadata={'CreationDate': None})
 print('Plot saved to ' + pdf_path)
