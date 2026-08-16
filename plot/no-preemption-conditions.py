@@ -85,10 +85,15 @@ lines_config = [
 ]
 
 fig = plt.figure(dpi=300, figsize=(common.single_col_inch, 1.5), constrained_layout=True)
+fig.get_layout_engine().set(
+    h_pad=0.01,
+    w_pad=0.01,
+    rect=(0, 0, 1, 0.81),
+)
 gs = GridSpec(1, 2, figure=fig, hspace=0.2)
 plt.subplot(gs[0, 0])
 ax_srs_avg = plt.gca()
-plt.ylabel('Avg # of sorted runs')
+plt.ylabel('Avg # of sorted runs', loc='top')
 plt.xlabel('Entropy threshold', labelpad=1)
 plt.xticks([0, 1, 2, 3, 4, 5, 6])
 ax_srs_avg.set_axisbelow(True)
@@ -96,7 +101,7 @@ ax_srs_avg.grid()
 
 plt.subplot(gs[0, 1])
 ax_srs_p99 = plt.gca()
-plt.ylabel('P99 # of sorted runs')
+plt.ylabel('P99 # of sorted runs', loc='top')
 plt.xlabel('Entropy threshold', labelpad=1)
 plt.xticks([0, 1, 2, 3, 4, 5, 6])
 ax_srs_p99.set_axisbelow(True)
@@ -156,7 +161,15 @@ ax_srs_p99.set_ylim(bottom=0, top=150)
 handles = []
 for line_config in lines_config:
     handles.append(mpl.lines.Line2D([0], [0], linewidth=1, color=line_config['color'], marker=line_config['marker'], markersize=3))
-fig.legend(handles, version_names, ncol=3, loc='center', bbox_to_anchor=(0.5, 1.11), frameon=False)
+fig.legend(
+    handles,
+    version_names,
+    ncol=3,
+    loc='upper center',
+    bbox_to_anchor=(0.5, 1.07),
+    frameon=False,
+    labelspacing=0.2,
+)
 pdf_path = os.path.join(dir, f'{version_path}{value}{compaction}-warmup-{warmup_secs}-run-{run_secs}{read_workload}.pdf')
-fig.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01, metadata={'CreationDate': None})
+fig.savefig(pdf_path, metadata={'CreationDate': None})
 print('Plot saved to ' + pdf_path)
