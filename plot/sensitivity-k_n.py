@@ -14,7 +14,6 @@ read_workload = '-get-0.87-seek-0.13-nexts-48'
 import os
 import numpy as np
 import pandas as pd
-import json
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 from matplotlib.gridspec import GridSpec
@@ -77,14 +76,20 @@ bar_width = 1 / (len(versions) + 1)
 cluster_width = bar_width * len(versions)
 
 fig = plt.figure(dpi=300, figsize=(common.single_col_inch, 1.3), constrained_layout=True)
+fig.get_layout_engine().set(
+    h_pad=0.01,
+    w_pad=0.01,
+    rect=(0, 0, 1, 0.8),
+)
 gs = GridSpec(1, len(vec_write_MB_s), figure=fig)
 for i, write_MB_s in enumerate(vec_write_MB_s):
-    plt.subplot(gs[0, i])
-    ax = plt.gca()
+    ax = plt.subplot(gs[0, i])
     plt.xlabel(f'{write_MB_s}MB/s')
     plt.xticks([])
     if i == 0:
         plt.ylabel('P99 # of sorted runs')
+    ax.set_axisbelow(True)
+    ax.grid(axis='y')
 
     for version_idx, version in enumerate(versions):
         x = -cluster_width / 2 + bar_width / 2 + version_idx * bar_width
@@ -105,7 +110,16 @@ for version in versions:
         names.append(common.versions['entropy-based']['name'] + ' (' + str(k_n) + ')')
     else:
         names.append(str(k_n))
-fig.legend(names, fontsize=9, ncol=4, loc='center', bbox_to_anchor=(0.5, 1.1), frameon=False, handlelength=1.5, handletextpad=0.5)
+fig.legend(
+    names,
+    ncol=4,
+    loc='upper center',
+    bbox_to_anchor=(0.5, 1.08),
+    frameon=False,
+    handlelength=1.5,
+    handletextpad=0.5,
+    labelspacing=0.1,
+)
 pdf_path = os.path.join(dir, f'sensitivity-k_n{value}{compaction}-warmup-{warmup_secs}-run-{run_secs}{read_workload}.pdf')
-fig.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01, metadata={'CreationDate': None})
+fig.savefig(pdf_path, metadata={'CreationDate': None})
 print('Plot saved to ' + pdf_path)
