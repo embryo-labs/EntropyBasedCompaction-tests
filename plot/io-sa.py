@@ -93,37 +93,38 @@ vec_write_MB_s = [30, 50]
 
 panels = [
     {
-        'title': '(a) Number of sorted runs (99th percentile)',
-        'title-xy': (0.5, 0.44),
+        'title': '(a) P99 # of sorted runs',
+        'title-xy': (0.25, 0),
         'ylabel': 'P99 # of runs',
         'ax': [],
     },
     {
-        'title': '(b) Space amplification (max)',
-        'title-xy': (0.5, 0),
+        'title': '(b) Max space amplification',
+        'title-xy': (0.75, 0),
         'ylabel': 'Max space amp',
         'ax':[],
     }
 ]
 
-fig = plt.figure(dpi=300, figsize=(common.single_col_inch, 2.2), constrained_layout=True)
+fig = plt.figure(dpi=300, figsize=(common.single_col_inch, 1.3), constrained_layout=True)
 fig.get_layout_engine().set(
     h_pad=0.01,
     w_pad=0.01,
-    hspace=0.15,
-    rect=(0, 0.05, 1, 0.8),
+    wspace=0.07,
+    rect=(0, 0.1, 1, 0.7),
 )
-gs = GridSpec(2, 2, figure=fig)
+gs = GridSpec(1, 4, figure=fig)
 
-for row, panel in enumerate(panels):
+for panel_idx, panel in enumerate(panels):
     (x, y) = panel['title-xy']
     fig.text(x, y, panel['title'], ha='center', va='bottom')
-    for col, write_MB_s in enumerate(vec_write_MB_s):
-        ax = plt.subplot(gs[row, col])
-        plt.xlabel(f'User write {write_MB_s}MB/s')
+    for i, write_MB_s in enumerate(vec_write_MB_s):
+        ax = plt.subplot(gs[0, panel_idx * len(vec_write_MB_s) + i])
+        plt.xlabel(f'{write_MB_s}MB/s')
         plt.xticks([])
-        if col == 0:
-            plt.ylabel(panel['ylabel'], loc='top')
+        ax.tick_params(axis='y', pad=1)
+        if i == 0:
+            plt.ylabel(panel['ylabel'], loc='top', labelpad=1)
         panel['ax'].append(ax)
 handles = [mpl.patches.Patch(facecolor=v['facecolor'], hatch=v['hatch'], 
                             edgecolor='black', linewidth=0.5) for v in versions]
@@ -132,7 +133,7 @@ fig.legend(
     labels=version_names,
     ncol=4, 
     loc='upper center',
-    bbox_to_anchor=(0.5, 1.01),
+    bbox_to_anchor=(0.5, 1.03),
     frameon=False,
     borderaxespad=0,
     handlelength=1.2,
