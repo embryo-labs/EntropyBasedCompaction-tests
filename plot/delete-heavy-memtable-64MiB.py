@@ -72,7 +72,7 @@ fig.get_layout_engine().set(
 gs = gridspec.GridSpec(1, 4, figure=fig)
 for panel_idx, panel in enumerate(panels):
     for i, write_MB_s in enumerate(vec_write_MB_s):
-        ax = plt.subplot(gs[0, panel_idx * len(panels) + i])
+        ax = plt.subplot(gs[0, panel_idx * len(vec_write_MB_s) + i])
         panel['ax'].append(ax)
         ax.set_xlabel(f'{write_MB_s}MB/s')
         ax.set_xticks([])
