@@ -174,7 +174,7 @@ for version in versions:
             entropy_threshold_str = f'-entropy-threshold-{entropy_threshold}'
         else:
             entropy_threshold_str = ''
-        workload = f'readwhilewriting-key-16{value}-unique-size-10GB-warmup-secs-{warmup_secs}-run-secs-{run_secs}{entropy_threshold_str}-compaction-trigger-2-memtable-8MiB-max-running-bg-jobs-1{compaction}-write-{write_MB_s}MB-s{read_workload}'
+        workload = f'readwhilewriting-key-16{value}-unique-size-10GB-warmup-secs-{warmup_secs}-run-secs-{run_secs}{entropy_threshold_str}-max-running-bg-jobs-1-write-{write_MB_s}MB-s-no-stall-memtable-8MiB{compaction}{read_workload}'
         data_dir = os.path.join(dir, workload, 'entropy-based')
 
         report = pd.read_csv(os.path.join(data_dir, 'report.csv')).iloc[1:]
