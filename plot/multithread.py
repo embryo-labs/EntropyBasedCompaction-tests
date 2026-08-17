@@ -14,7 +14,6 @@ rw_workload = '-nexts-48-put-0.34'
 unique_size = '10GB'
 
 import os
-import numpy as np
 import pandas as pd
 import json
 import matplotlib as mpl
@@ -72,7 +71,7 @@ cluster_width = bar_width * len(versions)
 panels = [
     {
         'title': '(a) Avg number of runs',
-        'ylabel': 'Avg # of sorted runs',
+        'ylabel': 'Avg # of runs',
         'yscale': 'linear',
         'ax': None,
     },
@@ -90,29 +89,32 @@ panels = [
     },
     {
         'title': '(d) Avg Put latency',
-        'ylabel': 'Put latency (us)',
+        'ylabel': 'Latency (us)',
         'yscale': 'log',
         'ylim': (1, None),
         'ax': None,
     },
     {
         'title': '(e) User write throughput',
-        'ylabel': 'Throughput (MB/s)',
-        'ylabel_y': 0.44,
+        'ylabel': 'Tput. (MB/s)',
         'yscale': 'linear',
         'ax': None,
     },
 ]
 
-fig = plt.figure(dpi=300, figsize=(common.double_col_inch, 1.4), constrained_layout=True)
-fig.get_layout_engine().set(h_pad=0.01)
-gs = gridspec.GridSpec(1, len(panels), figure=fig, wspace=0.02)
+fig = plt.figure(dpi=300, figsize=(common.double_col_inch, 1.1), constrained_layout=True)
+fig.get_layout_engine().set(
+    h_pad=0.01,
+    w_pad=0.01,
+    wspace=0.1,
+)
+gs = gridspec.GridSpec(1, len(panels), figure=fig)
 for col in range(0, len(panels)):
     panel = panels[col]
     ax = plt.subplot(gs[0, col])
     ax.set_xticks(list(range(0, len(vec_num_threads))), [str(num_threads) for num_threads in vec_num_threads])
     ax.set_xlabel(panel['title'], labelpad=1, loc='right')
-    ax.set_ylabel(panel['ylabel'], y=panel.get('ylabel_y', 0.5))
+    ax.set_ylabel(panel['ylabel'])
     ax.tick_params(axis='x', length=0, pad=2)
     ax.set_yscale(panel['yscale'])
     ax.tick_params(axis='y', which='minor', labelleft=False)
@@ -161,5 +163,5 @@ for panel in panels:
         panel['ax'].set_ylim(panel['ylim'])
 
 pdf_path = os.path.join(dir, f'multithread{value}{compaction}-warmup-{warmup_secs}-run-{run_secs}{rw_workload}.pdf')
-fig.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01, metadata={'CreationDate': None})
+fig.savefig(pdf_path, metadata={'CreationDate': None})
 print(f'Plot saved to {pdf_path}')
