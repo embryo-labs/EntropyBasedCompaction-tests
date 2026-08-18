@@ -115,7 +115,7 @@ for line_config in lines_config:
     version_names.append(f'{write_MB_s}MB/s')
 
     entropy_threshold_by_theory = None
-    for line in open(os.path.join(dir, f'readwhilewriting-key-16{value}-unique-size-10GB-warmup-secs-{warmup_secs}-run-secs-{run_secs}-autotune_entropy_threshold-compaction-trigger-2-memtable-8MiB{compaction}-write-{write_MB_s}MB-s{read_workload}', version_path, 'log.json')):
+    for line in open(os.path.join(dir, f'readwhilewriting-key-16{value}-unique-size-10GB-warmup-secs-{warmup_secs}-run-secs-{run_secs}-autotune_entropy_threshold-write-{write_MB_s}MB-s-no-stall-memtable-8MiB{compaction}{read_workload}', version_path, 'log.json')):
         entry = json.loads(line)
         if entry['event'] == 'adjust-entropy-threshold':
             entropy_threshold_by_theory = entry['value']
@@ -130,7 +130,7 @@ for line_config in lines_config:
             entropy_threshold = '-autotune_entropy_threshold'
         else:
             entropy_threshold = f'-entropy-threshold-{entropy_threshold}'
-        workload = f'readwhilewriting-key-16{value}-unique-size-10GB-warmup-secs-{warmup_secs}-run-secs-{run_secs}{entropy_threshold}-compaction-trigger-2-memtable-8MiB{compaction}-write-{write_MB_s}MB-s{read_workload}'
+        workload = f'readwhilewriting-key-16{value}-unique-size-10GB-warmup-secs-{warmup_secs}-run-secs-{run_secs}{entropy_threshold}-write-{write_MB_s}MB-s-no-stall-memtable-8MiB{compaction}{read_workload}'
         data_dir = os.path.join(dir, workload, version_path)
 
         report = pd.read_csv(os.path.join(data_dir, 'report.csv'))
