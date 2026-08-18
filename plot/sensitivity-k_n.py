@@ -96,9 +96,10 @@ for i, write_MB_s in enumerate(vec_write_MB_s):
         x = -cluster_width / 2 + bar_width / 2 + version_idx * bar_width
         k_n = version['k_n']
         if k_n == 1.7:
-            workload = 'readwhilewriting-key-16' + value + '-unique-size-10GB-warmup-secs-' + str(warmup_secs) + '-run-secs-' + str(run_secs) + '-compaction-trigger-2-memtable-8MiB-max-running-bg-jobs-1' + compaction + '-write-' + str(write_MB_s) + 'MB-s' + read_workload
+            k_n_str = ''
         else:
-            workload = 'readwhilewriting-key-16' + value + '-unique-size-10GB-warmup-secs-' + str(warmup_secs) + '-run-secs-' + str(run_secs) + '-k_n-' + str(k_n) + '-compaction-trigger-2-memtable-8MiB-max-running-bg-jobs-1' + compaction + '-write-' + str(write_MB_s) + 'MB-s' + read_workload
+            k_n_str = f'-k_n-{k_n}'
+        workload = f'readwhilewriting-key-16{value}-unique-size-10GB-warmup-secs-{warmup_secs}-run-secs-{run_secs}{k_n_str}-max-running-bg-jobs-1-write-{write_MB_s}MB-s-no-stall-memtable-8MiB{compaction}{read_workload}'
         data_dir = os.path.join(dir, workload, 'entropy-based')
 
         report = pd.read_csv(os.path.join(data_dir, 'report.csv'))
