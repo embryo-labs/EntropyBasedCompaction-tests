@@ -36,10 +36,12 @@ versions = [
     {
         'path': 'universal-hard-trigger',
         'max-running-bg-jobs': None,
+        'linestyle': '-',
     },
     {
         'path': 'entropy-based',
         'max-running-bg-jobs': 1,
+        'linestyle': '--',
     },
 ]
 for v in versions:
@@ -93,9 +95,10 @@ for version in versions:
         reff,
         cdf,
         where="post",
+        linewidth=1,
         label=version['name'],
         color=version['color'],
-        linewidth=1,
+        linestyle=version['linestyle'],
     )
 ax.set_xlim(left=0)
 ax.legend(frameon=False)
