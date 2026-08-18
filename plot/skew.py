@@ -90,7 +90,7 @@ for cluster_idx, zipfian_theta in enumerate(vec_zipfian_theta):
         else:
             entropy_threshold = '-autotune_entropy_threshold'
             max_running_bg_jobs = ''
-        workload = f'readwhilewriting-key-16-value-603-unique-size-10GB-warmup-secs-1200-run-secs-1200{entropy_threshold}-compaction-trigger-2-memtable-8MiB{max_running_bg_jobs}-compaction-200MB-s{skew}-write-50MB-s-get-0.87-seek-0.13-nexts-48'
+        workload = f'readwhilewriting-key-16-value-603-unique-size-10GB-warmup-secs-1200-run-secs-1200{max_running_bg_jobs}{entropy_threshold}{skew}-write-50MB-s-no-stall-memtable-8MiB-compaction-200MB-s-get-0.87-seek-0.13-nexts-48'
         data_dir = os.path.join(dir, workload, version['path'])
         log_json = open(os.path.join(data_dir, 'log.json'))
         for i in range(0, 2):
