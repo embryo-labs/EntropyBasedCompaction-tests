@@ -161,24 +161,11 @@ with_memtable_size() (
 		--target_file_size_base=$memtable_size \
 		--max_bytes_for_level_base=$((memtable_size * 4))
 )
-with_compaction_trigger() {
-	compaction_trigger=$1
-	shift
-	suffix="-compaction-trigger-$compaction_trigger$suffix" "$@" \
-		--level0_file_num_compaction_trigger=$compaction_trigger
-}
 with_threads() (
 	threads=$1
 	shift
 	suffix="-threads-$threads$suffix" "$@" \
 		--threads="$threads"
-)
-with_cache() (
-	cache=$1
-	shift
-	cache_size=$(humanfriendly --parse-size="$cache")
-	suffix="-cache-$cache$suffix" "$@" \
-		--cache_size="$cache_size"
 )
 with_stall_trigger() (
 	slowdown=$1
