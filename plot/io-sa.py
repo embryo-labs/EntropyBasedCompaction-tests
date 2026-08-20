@@ -150,12 +150,10 @@ for col, write_MB_s in enumerate(vec_write_MB_s):
         else:
             io_sa = ''
         if version['path'] == our_path:
-            compaction_trigger = '-compaction-trigger-2'
             max_running_bg_jobs = '-max-running-bg-jobs-1'
         else:
-            compaction_trigger = ''
             max_running_bg_jobs = ''
-        workload = f'readwhilewriting-key-16{value}-unique-size-10GB-warmup-secs-{warmup_secs}-run-secs-{run_secs}{compaction_trigger}-memtable-8MiB{max_running_bg_jobs}{io_sa}{compaction}-write-{write_MB_s}MB-s{read_workload}'
+        workload = f'readwhilewriting-key-16{value}-unique-size-10GB-warmup-secs-{warmup_secs}-run-secs-{run_secs}{max_running_bg_jobs}{io_sa}-write-{write_MB_s}MB-s-no-stall-memtable-8MiB{compaction}{read_workload}'
         data_dir = os.path.join(dir, workload, version['path'])
 
         report = pd.read_csv(os.path.join(data_dir, 'report.csv'))
