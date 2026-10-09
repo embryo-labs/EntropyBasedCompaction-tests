@@ -38,13 +38,13 @@ for write_MB_s in vec_write_MB_s:
     write_MB_s_string += '-' + str(write_MB_s)
 versions = [
     {
-        'path': os.path.join(f'readwhilewriting-key-16-value-603-unique-size-10GB-phase-secs-{phase_secs}-write-MB-s{write_MB_s_string}-autotune_entropy_threshold-compaction-trigger-2-memtable-8MiB-compaction-200MB-s-get-0.87-seek-0.13-nexts-48', 'no_preemption_conditions'),
+        'path': os.path.join(f'readwhilewriting-key-16-value-603-unique-size-10GB-phase-secs-{phase_secs}-write-MB-s{write_MB_s_string}-autotune_entropy_threshold-no-stall-memtable-8MiB-compaction-200MB-s-get-0.87-seek-0.13-nexts-48', 'no_preemption_conditions'),
         'name': 'By-theory',
         'color': common.colors[0]['dark'],
         'linestyle': 'dashed',
     },
     {
-        'path': os.path.join(f'readwhilewriting-key-16-value-603-unique-size-10GB-phase-secs-{phase_secs}-write-MB-s{write_MB_s_string}-entropy-threshold-0-compaction-trigger-2-memtable-8MiB-max-running-bg-jobs-1-compaction-200MB-s-get-0.87-seek-0.13-nexts-48', 'entropy-based'),
+        'path': os.path.join(f'readwhilewriting-key-16-value-603-unique-size-10GB-phase-secs-{phase_secs}-write-MB-s{write_MB_s_string}-entropy-threshold-0-max-running-bg-jobs-1-no-stall-memtable-8MiB-compaction-200MB-s-get-0.87-seek-0.13-nexts-48', 'entropy-based'),
         'name': common.versions['entropy-based']['name'],
         'color': common.versions['entropy-based']['color'],
         'linestyle': 'solid',
