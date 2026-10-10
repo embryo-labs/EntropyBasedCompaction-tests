@@ -53,12 +53,12 @@ cluster_width = 1 / (len(versions) + 1) * len(versions)
 panels = [
     {
         'title': '(a) Delete-heavy',
-        'workload': 'readwhilewriting-key-16{value}-unique-size-10GB-warmup-secs-1200-run-secs-1200{compaction_trigger}{max_running_bg_jobs}-write-{write_MB_s}MB-s-no-stall-memtable-8MiB{compaction}{read_workload}-delete-heavy',
+        'workload': 'readwhilewriting-key-16{value}-unique-size-10GB-warmup-secs-1200-run-secs-1200{max_running_bg_jobs}-write-{write_MB_s}MB-s-no-stall-memtable-8MiB{compaction}{read_workload}-delete-heavy',
         'ax': [],
     },
     {
         'title': '(b) 64MiB MemTable',
-        'workload': 'readwhilewriting-key-16{value}-unique-size-100GB-warmup-secs-10800-run-secs-10800{compaction_trigger}{max_running_bg_jobs}{compaction}-write-{write_MB_s}MB-s{read_workload}',
+        'workload': 'readwhilewriting-key-16{value}-unique-size-100GB-warmup-secs-10800-run-secs-10800{max_running_bg_jobs}-write-{write_MB_s}MB-s-no-stall{compaction}{read_workload}',
         'ax': [],
     },
 ]
@@ -103,10 +103,6 @@ for panel_idx, panel in enumerate(panels):
     for i, write_MB_s in enumerate(vec_write_MB_s):
         for version_idx, version in enumerate(versions):
             x = -cluster_width / 2 + bar_width / 2 + version_idx * bar_width
-            if version['path'] in ['entropy-based']:
-                compaction_trigger = '-compaction-trigger-2'
-            else:
-                compaction_trigger = ''
             if version['max-running-bg-jobs'] is None:
                 max_running_bg_jobs = ''
             else:
@@ -115,7 +111,6 @@ for panel_idx, panel in enumerate(panels):
                 value=value,
                 compaction=compaction,
                 read_workload=read_workload,
-                compaction_trigger=compaction_trigger,
                 max_running_bg_jobs=max_running_bg_jobs,
                 write_MB_s = write_MB_s,
             )
