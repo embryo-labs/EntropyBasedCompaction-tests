@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 import sys
-if len(sys.argv) != 1:
-    print('No argument expected')
+if len(sys.argv) != 2:
+    print('Usage: ' + sys.argv[0] + ' output-dir')
     exit(1)
+output_dir=sys.argv[1]
 import os
 data_dir = os.path.join(os.path.dirname(sys.argv[0]), '..', 'meituan')
 
@@ -20,13 +21,14 @@ mpl.rcParams.update({
     'font.family': 'serif',
     'font.serif': ['Linux Libertine O'],
     'axes.unicode_minus': False,
-    'font.size': 9,
+    'font.size': 10,
 })
 
-fig = plt.figure(dpi = 300, figsize = (common.single_col_inch, 1.5), constrained_layout=True)
+fig = plt.figure(dpi = 300, figsize = (common.acmsmall_inch, 1.7), constrained_layout=True)
 fig.get_layout_engine().set(
     h_pad=0.01,
     w_pad=0.01,
+    wspace=0.08,
     rect=(0, 0, 1, 1),
 )
 gs = gridspec.GridSpec(1, 2, figure=fig)
@@ -79,14 +81,15 @@ plt.yticks([0, 1e5, 2e5, 3e5, 4e5])
 ax.grid(axis='y')
 plt.legend(
     ['Peak day', 'Normal day'],
-    fontsize=8,
-    frameon=False,
     loc='upper right',
-    bbox_to_anchor=(1.04, 1.06),
+    bbox_to_anchor=(1.02, 1.05),
+    handlelength=1.3,
+    handletextpad=0.5,
     labelspacing=0,
-    borderpad=0,
+    borderpad=0.1,
 )
 
-pdf_path = 'meituan-num-writes.pdf'
-plt.savefig(pdf_path, metadata={'CreationDate': None})
+pdf_path = os.path.join(output_dir, 'meituan-num-writes.pdf')
+common.check_visible_labels(fig)
+fig.savefig(pdf_path, metadata={'CreationDate': None})
 print('Plot saved to ' + pdf_path)
