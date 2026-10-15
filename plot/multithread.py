@@ -27,8 +27,7 @@ mpl.rcParams.update({
     'font.family': 'serif',
     'font.serif': ['Linux Libertine O'],
     'axes.unicode_minus': False,
-    'font.size': 9,
-    'figure.labelsize': 9,
+    'font.size': 10,
 })
 
 vec_num_threads = [8, 64]
@@ -102,18 +101,21 @@ panels = [
     },
 ]
 
-fig = plt.figure(dpi=300, figsize=(common.double_col_inch, 1.1), constrained_layout=True)
-fig.get_layout_engine().set(
-    h_pad=0.01,
-    w_pad=0.01,
-    wspace=0.1,
+fig = plt.figure(dpi=300, figsize=(common.acmsmall_inch, 2.3))
+gs = gridspec.GridSpec(
+    2, 6, figure=fig,
+    left=0.08,
+    bottom=0.145,
+    right=0.998,
+    top=0.9,
+    wspace=1.05,
+    hspace=0.6,
 )
-gs = gridspec.GridSpec(1, len(panels), figure=fig)
-for col in range(0, len(panels)):
-    panel = panels[col]
-    ax = plt.subplot(gs[0, col])
+panel_positions = [(0, 0), (0, 2), (0, 4), (1, 1), (1, 3)]
+for panel, (row, col) in zip(panels, panel_positions):
+    ax = fig.add_subplot(gs[row, col:col + 2])
     ax.set_xticks(list(range(0, len(vec_num_threads))), [str(num_threads) for num_threads in vec_num_threads])
-    ax.set_xlabel(panel['title'], labelpad=1, loc='right')
+    ax.set_xlabel(panel['title'], labelpad=1)
     ax.set_ylabel(panel['ylabel'])
     ax.tick_params(axis='x', length=0, pad=2)
     ax.set_yscale(panel['yscale'])
@@ -127,9 +129,10 @@ fig.legend(
     handles=handles,
     labels=version_names,
     ncol=len(versions),
-    loc='outside upper center',
+    loc='upper center',
+    bbox_to_anchor=(0.5, 1.0),
     frameon=False,
-    handlelength=1.5,
+    handlelength=1.2,
     handletextpad=0.5,
     columnspacing=1.0,
     borderpad=0,
@@ -163,5 +166,6 @@ for panel in panels:
         panel['ax'].set_ylim(panel['ylim'])
 
 pdf_path = os.path.join(dir, f'multithread{value}{compaction}-warmup-{warmup_secs}-run-{run_secs}{rw_workload}.pdf')
+common.check_visible_labels(fig)
 fig.savefig(pdf_path, metadata={'CreationDate': None})
 print(f'Plot saved to {pdf_path}')

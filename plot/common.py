@@ -2,6 +2,8 @@
 single_col_inch = 3.3
 double_col_inch = 6.9
 
+acmsmall_inch = 5.44
+
 import math
 from scipy.optimize import root_scalar
 
@@ -168,3 +170,75 @@ versions = {
         'hatch': '///',
     },
 }
+
+
+import warnings
+from matplotlib.legend import Legend
+from matplotlib.text import Text
+
+# Not reviewed. Just for reference.
+def check_visible_labels(figure):
+    """Warn about visible text and legends outside the canvas; return warning messages.
+
+    Checks PDF rendering, ignoring hidden elements and tick labels outside the
+    axis view limits. Bounds do not account for savefig cropping or occlusion
+    by other elements.
+    """
+    from io import BytesIO
+
+    issues = []
+
+    def check_rendered_labels(event):
+        renderer = event.renderer
+        canvas = figure.bbox
+        excluded = set()
+        for ax in figure.axes:
+            if not ax.get_visible():
+                excluded.update(ax.findobj())
+                continue
+            for axis in (ax.xaxis, ax.yaxis):
+                if not axis.get_visible():
+                    excluded.update(axis.findobj())
+                    continue
+                lower, upper = sorted(axis.get_view_interval())
+                view_tolerance = (upper - lower) * 1e-10
+                for tick in axis.get_major_ticks() + axis.get_minor_ticks():
+                    if (not tick.get_visible()
+                            or not lower - view_tolerance <= tick.get_loc() <= upper + view_tolerance):
+                        excluded.update((tick.label1, tick.label2))
+        for legend in figure.findobj(match=Legend):
+            if not legend.get_visible():
+                excluded.update(legend.findobj())
+
+        for artist in figure.findobj(match=lambda item: isinstance(item, (Text, Legend))):
+            if artist in excluded or not artist.get_visible() or artist.get_alpha() == 0:
+                continue
+            if isinstance(artist, Text) and not artist.get_text().strip():
+                continue
+            bounds = artist.get_window_extent(renderer)
+            overflow_pt = {
+                'left': canvas.x0 - bounds.x0,
+                'right': bounds.x1 - canvas.x1,
+                'bottom': canvas.y0 - bounds.y0,
+                'top': bounds.y1 - canvas.y1,
+            }
+            overflow_mm = {
+                side: round(float(pixels) / figure.dpi * 25.4, 3)
+                for side, pixels in overflow_pt.items() if pixels > 0
+            }
+            if overflow_mm:
+                label = repr(artist.get_text()) if isinstance(artist, Text) else 'Legend'
+                message = f'{label} exceeds canvas (mm): {overflow_mm}'
+                issues.append(message)
+                warnings.warn(message, stacklevel=1)
+
+    canvas = figure.canvas
+    # During PDF drawing, the event provides the PDF renderer and the figure
+    # uses PDF coordinates. Screen rendering can give different text bounds.
+    callback_id = canvas.mpl_connect('draw_event', check_rendered_labels)
+    try:
+        with BytesIO() as output:
+            figure.savefig(output, format='pdf')
+    finally:
+        canvas.mpl_disconnect(callback_id)
+    return issues
