@@ -29,7 +29,7 @@ mpl.rcParams.update({
     'font.family': 'serif',
     'font.serif': ['Linux Libertine O'],
     'axes.unicode_minus': False,
-    'font.size': 9,
+    'font.size': 10,
 })
 
 versions = [
@@ -133,23 +133,21 @@ def find_data_dir(day_type, version):
     workload = f'meituan-writer-{day_type}-day-period-secs-{period_secs}-num_shards-{num_shards}-key-16-value-603-unique-size-{unique_size}{max_running_bg_jobs}-no-stall-memtable-{memtable}-compaction-200MB-s{read_workload}'
     return os.path.join(dir, workload, version['path'])
 
-title_y = -0.52
 xlabelpad = 1
 sa_yticks = [1, 10]
 
-fig = plt.figure(dpi=300, figsize=(common.single_col_inch, 4.5), constrained_layout=True)
+fig = plt.figure(dpi=300, figsize=(common.acmsmall_inch, 5), constrained_layout=True)
 fig.get_layout_engine().set(
     h_pad=0.01,
     w_pad=0.01,
-    hspace=0.1,
-    rect=(0, 0.025, 1, 0.9),
+    hspace=0.07,
+    rect=(0, 0, 1, 0.96),
 )
 gs = gridspec.GridSpec(3, 1, figure=fig)
 
 plt.subplot(gs[0, 0])
 ax_num_srs = plt.gca()
-plt.text(0.5, title_y, '(a) Number of sorted runs (log scale)', transform=ax_num_srs.transAxes, ha='center', va='center')
-plt.xlabel('Time (hours)', labelpad=xlabelpad)
+plt.xlabel('Time (hours)\n(a) Number of sorted runs (log scale)', labelpad=xlabelpad)
 plt.ylabel('# of sorted runs')
 plt.yscale('log')
 plt.ylim((3, 100))
@@ -158,8 +156,7 @@ ax_num_srs.grid(axis='y')
 
 plt.subplot(gs[1, 0])
 ax_read = plt.gca()
-plt.text(0.5, title_y, '(b) Read latency (log scale)', transform=ax_read.transAxes, ha='center', va='center')
-plt.xlabel('Time (hours)', labelpad=xlabelpad)
+plt.xlabel('Time (hours)\n(b) Read latency (log scale)', labelpad=xlabelpad)
 plt.ylabel('Read latency (ms)')
 plt.yscale('log')
 plt.ylim((0.1, 2))
@@ -168,8 +165,7 @@ ax_read.grid(axis='y')
 
 plt.subplot(gs[2, 0])
 ax_sa = plt.gca()
-plt.text(0.5, title_y, '(c) Space amplification (log scale)', transform=ax_sa.transAxes, ha='center', va='center')
-plt.xlabel('Time (hours)', labelpad=xlabelpad)
+plt.xlabel('Time (hours)\n(c) Space amplification (log scale)', labelpad=xlabelpad)
 plt.ylabel('Space amplification')
 plt.yscale('log')
 plt.ylim((min(sa_yticks), max(sa_yticks)))
@@ -199,16 +195,17 @@ for version_idx, version in enumerate(versions_typical):
 
 fig.legend(
     version_names_typical,
-    ncol=3,
+    ncol=6,
     loc='upper center',
     bbox_to_anchor=(0.5, 1.01),
-    borderaxespad=0.01,
+    borderaxespad=0,
     frameon=False,
     handlelength=1,
     handletextpad=0.5,
-    columnspacing=1.5,
+    columnspacing=1.3,
 )
 pdf_path = os.path.join(dir, f'meituan-peak-day-num_shards-{num_shards}-unique_size-{unique_size}-period_secs-{period_secs}{read_workload}-mean_step_secs-{mean_step_secs}.pdf')
+common.check_visible_labels(fig)
 fig.savefig(pdf_path, metadata={'CreationDate': None})
 print('Plot saved to ' + pdf_path)
 
@@ -229,7 +226,7 @@ panels_motivation = [
 ]
 fig_motivation = plt.figure(
     dpi=300,
-    figsize=(common.single_col_inch, 1.2),
+    figsize=(common.acmsmall_inch, 1.5),
     constrained_layout=True,
 )
 fig_motivation.get_layout_engine().set(
@@ -267,23 +264,24 @@ fig_motivation.legend(
     ncol=3,
     loc='upper center',
     bbox_to_anchor=(0.5, 1.01),
-    borderaxespad=0.01,
+    borderaxespad=0,
     frameon=False,
     handlelength=1,
     handletextpad=0.5,
     columnspacing=1,
 )
 pdf_path = os.path.join(dir, f'meituan-motivation-num_shards-{num_shards}-unique_size-{unique_size}-period_secs-{period_secs}{read_workload}-mean_step_secs-{mean_step_secs}.pdf')
+common.check_visible_labels(fig_motivation)
 fig_motivation.savefig(pdf_path, metadata={'CreationDate': None})
 print('Plot saved to ' + pdf_path)
 
 
-def draw_panels(panels, xlabelpad=None, xlabel_loc=None):
+def draw_panels(panels, xlabelpad=None):
     for col, panel in enumerate(panels):
         ax = plt.subplot(gs[0, col])
-        plt.xlabel(panel['title'], labelpad=xlabelpad, loc=xlabel_loc)
+        plt.xlabel(panel['title'], labelpad=xlabelpad)
         ax.tick_params(axis='y', pad=2)
-        plt.ylabel(panel['ylabel'], loc='top', labelpad=2)
+        ax.set_ylabel(panel['ylabel'], loc=panel.get('ylabel_loc', 'center'))
         if 'yticks' in panel:
             plt.yticks(panel['yticks'])
         plt.xticks([])
@@ -294,49 +292,54 @@ def draw_panels(panels, xlabelpad=None, xlabel_loc=None):
 panels_read = [
     {
         'title': '(a) Read latency',
-        'ylabel': 'Avg read latency (ms)',
+        'ylabel': 'Avg latency (ms)',
+        'ylabel_loc': 'top',
         'ax': None,
     },
     {
         'title': '(b) Scan latency',
-        'ylabel': 'Avg scan latency (ms)',
+        'ylabel': 'Avg latency (ms)',
+        'ylabel_loc': 'top',
         'ax': None,
     },
     {
         'title': '(c) Get latency',
-        'ylabel': 'Avg get latency (ms)',
+        'ylabel': 'Avg latency (ms)',
+        'ylabel_loc': 'top',
         'yticks': [0, 0.1],
         'ax': None,
     }
 ]
-fig_read = plt.figure(dpi=300, figsize=(common.single_col_inch, 1.72), constrained_layout=True)
+fig_read = plt.figure(dpi=300, figsize=(common.acmsmall_inch, 1.4), constrained_layout=True)
 fig_read.get_layout_engine().set(
     h_pad=0.01,
     w_pad=0.01,
     wspace=0.07,
-    rect=(0, 0, 1, 0.67),
+    rect=(0, 0, 1, 0.75),
 )
 gs = gridspec.GridSpec(1, 3, figure=fig_read)
-draw_panels(panels_read, xlabelpad=5, xlabel_loc='right')
+draw_panels(panels_read, xlabelpad=5)
 
 panels_p99 = [
     {
         'title': '(a) Normal day',
-        'ylabel': 'P99 read latency (ms)',
+        'ylabel': 'P99 latency (ms)',
+        'ylabel_loc': 'top',
         'ax': None,
     },
     {
         'title': '(b) Peak day',
-        'ylabel': 'P99 read latency (ms)',
+        'ylabel': 'P99 latency (ms)',
+        'ylabel_loc': 'top',
         'ax': None,
     },
 ]
-fig_p99 = plt.figure(dpi = 300, figsize = (common.single_col_inch, 1.72), constrained_layout=True)
+fig_p99 = plt.figure(dpi = 300, figsize = (common.acmsmall_inch, 1.4), constrained_layout=True)
 fig_p99.get_layout_engine().set(
     h_pad=0.01,
     w_pad=0.01,
     wspace=0.07,
-    rect=(0, 0, 1, 0.67),
+    rect=(0, 0, 1, 0.75),
 )
 gs = gridspec.GridSpec(1, 2, figure=fig_p99)
 draw_panels(panels_p99)
@@ -362,34 +365,36 @@ for day_type in ['normal', 'peak']:
 
 fig_read.legend(
     version_names,
-    ncol=3,
+    ncol=6,
     loc='upper center',
     bbox_to_anchor=(0.5, 1.03),
-    borderaxespad=0.01,
+    borderaxespad=0,
     frameon=False,
     handlelength=1,
-    handletextpad=0.5,
-    columnspacing=1.5,
+    handletextpad=0.35,
+    columnspacing=1.0,
     labelspacing=0.2,
 )
 pdf_path = os.path.join(dir, f'meituan-peak-day-read-latency-num_shards-{num_shards}-unique_size-{unique_size}-period_secs-{period_secs}{read_workload}-mean_step_secs-{mean_step_secs}.pdf')
+common.check_visible_labels(fig_read)
 fig_read.savefig(pdf_path, metadata={'CreationDate': None})
 print('Plot saved to ' + pdf_path)
 
 fig_p99.legend(
     version_names,
-    ncol=3,
+    ncol=6,
     loc='upper center',
     bbox_to_anchor=(0.5, 1.03),
-    borderaxespad=0.01,
+    borderaxespad=0,
     frameon=False,
     handlelength=1,
-    handletextpad=0.5,
-    columnspacing=1.5,
+    handletextpad=0.35,
+    columnspacing=1.0,
     labelspacing=0.2,
 )
 pdf_path = os.path.join(dir, 'meituan-p99-read-num_shards-' + str(num_shards) + '-unique_size-' + unique_size + '-period_secs-' + str(period_secs) + read_workload + '.pdf')
-plt.savefig(pdf_path, metadata={'CreationDate': None})
+common.check_visible_labels(fig_p99)
+fig_p99.savefig(pdf_path, metadata={'CreationDate': None})
 print('Plot saved to ' + pdf_path)
 
 tex = io.StringIO()
@@ -397,4 +402,6 @@ print('\\defmacro{MeituanPeakRocksDBTunedMaxSize}{' + f'{peak_max_sizes["rocksdb
 print('\\defmacro{MeituanPeakEBCMaxSize}{' + f'{peak_max_sizes["entropy-based"] / 1e9:.1f}' + '\\,GB}', file=tex)
 tex = tex.getvalue()
 print(tex)
-open('meituan.tex', mode='w').write(tex)
+tex_path = 'meituan.tex'
+open(tex_path, mode='w').write(tex)
+print(f'TeX saved to {tex_path}')

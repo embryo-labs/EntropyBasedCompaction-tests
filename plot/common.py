@@ -172,10 +172,6 @@ versions = {
 }
 
 
-import warnings
-from matplotlib.legend import Legend
-from matplotlib.text import Text
-
 # Not reviewed. Just for reference.
 def check_visible_labels(figure):
     """Warn about visible text and legends outside the canvas; return warning messages.
@@ -184,7 +180,15 @@ def check_visible_labels(figure):
     axis view limits. Bounds do not account for savefig cropping or occlusion
     by other elements.
     """
+    import warnings
     from io import BytesIO
+    from matplotlib.legend import Legend
+    from matplotlib.text import Text
+    from math import isfinite
+    from matplotlib.collections import Collection
+    from matplotlib.lines import Line2D
+    from matplotlib.patches import Patch
+    from matplotlib.transforms import Bbox
 
     issues = []
 
@@ -215,7 +219,25 @@ def check_visible_labels(figure):
                 continue
             if isinstance(artist, Text) and not artist.get_text().strip():
                 continue
-            bounds = artist.get_window_extent(renderer)
+            if isinstance(artist, Legend) and not artist.get_frame_on():
+                # A frameless legend's layout bounds include invisible border padding.
+                content = artist.findobj(
+                    match=lambda item: isinstance(item, (Text, Line2D, Patch, Collection))
+                )
+                content_bounds = [
+                    item.get_window_extent(renderer)
+                    for item in content
+                    if item is not artist.get_frame()
+                    and item.get_visible() and item.get_alpha() != 0
+                    and (not isinstance(item, Text) or item.get_text().strip())
+                ]
+                content_bounds = [bounds for bounds in content_bounds
+                                  if all(isfinite(value) for value in bounds.extents)]
+                if not content_bounds:
+                    continue
+                bounds = Bbox.union(content_bounds)
+            else:
+                bounds = artist.get_window_extent(renderer)
             overflow_pt = {
                 'left': canvas.x0 - bounds.x0,
                 'right': bounds.x1 - canvas.x1,
