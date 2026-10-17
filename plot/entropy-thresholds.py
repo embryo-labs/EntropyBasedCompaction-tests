@@ -28,12 +28,12 @@ mpl.rcParams.update({
     'font.family': 'serif',
     'font.serif': ['Linux Libertine O'],
     'axes.unicode_minus': False,
-    'font.size': 9,
+    'font.size': 10,
 })
 
 vec_write_MB_s = [10, 20, 30, 40, 50, 60]
 
-fig_num_srs = plt.figure(dpi=300, figsize=(common.single_col_inch, 1.4), constrained_layout=True)
+fig_num_srs = plt.figure(dpi=300, figsize=(4, 1.4), constrained_layout=True)
 fig_num_srs.get_layout_engine().set(
     h_pad=0.01,
     w_pad=0.01,
@@ -44,7 +44,7 @@ gs = GridSpec(1, 2, figure=fig_num_srs)
 ax_srs_avg = plt.subplot(gs[0, 0])
 plt.xlabel('User write speed (MB/s)', loc='right', labelpad=0)
 plt.xticks(vec_write_MB_s)
-plt.ylabel('Avg # of sorted runs', loc='top')
+plt.ylabel('Avg # of runs', loc='top')
 plt.yscale('log')
 plt.ylim((4, 100))
 yticks = [4, 10, 100]
@@ -55,7 +55,7 @@ ax_srs_avg.grid(axis='y')
 ax_srs_p99 = plt.subplot(gs[0, 1])
 plt.xlabel('User write speed (MB/s)', loc='right', labelpad=0)
 plt.xticks(vec_write_MB_s)
-plt.ylabel('P99 # of sorted runs', loc='top')
+plt.ylabel('P99 # of runs', loc='top')
 plt.yscale('log')
 plt.ylim((4, 120))
 yticks = [4, 10, 100]
@@ -125,7 +125,7 @@ lines = [
         'markersize': 3,
     },
 ]
-fig_wa = plt.figure(dpi=300, figsize=(common.single_col_inch, 1.2), constrained_layout=True)
+fig_wa = plt.figure(dpi=300, figsize=(common.single_col_inch, 1.4), constrained_layout=True)
 fig_wa.get_layout_engine().set(
     h_pad=0.01,
     w_pad=0.01,
@@ -212,11 +212,13 @@ fig_num_srs.legend(
     names,
     ncol=3,
     loc='upper center',
-    bbox_to_anchor=(0.5, 1.07),
+    bbox_to_anchor=(0.5, 1.03),
+    borderaxespad=0,
     frameon=False,
-    labelspacing=0.2,
+    labelspacing=0.1,
 )
 pdf_path = os.path.join(dir, f'entropy-thresholds{value}{compaction}-warmup-{warmup_secs}-run-{run_secs}{read_workload}.pdf')
+common.check_visible_labels(fig_num_srs)
 fig_num_srs.savefig(pdf_path, metadata={'CreationDate': None})
 print('Plot saved to ' + pdf_path)
 
@@ -230,10 +232,14 @@ fig_wa.legend(
     labels=names,
     ncol=len(lines),
     loc='upper center',
-    bbox_to_anchor=(0.5, 1.09),
-    handlelength=1.5,
+    bbox_to_anchor=(0.54, 1.03),
+    borderaxespad=0,
     frameon=False,
+    handlelength=1.5,
+    handletextpad=0.4,
+    columnspacing=1,
 )
 pdf_path = os.path.join(dir, f'entropy-thresholds{value}{compaction}-warmup-{warmup_secs}-run-{run_secs}-wa.pdf')
+common.check_visible_labels(fig_wa)
 fig_wa.savefig(pdf_path, metadata={'CreationDate': None})
 print('Plot saved to ' + pdf_path)
