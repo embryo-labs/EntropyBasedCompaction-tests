@@ -23,7 +23,7 @@ mpl.rcParams.update({
     'font.family': 'serif',
     'font.serif': ['Linux Libertine O'],
     'axes.unicode_minus': False,
-    'font.size': 9,
+    'font.size': 10,
     'text.usetex': True,
     'text.latex.preamble': r'''
         \usepackage{amsmath}
@@ -51,7 +51,7 @@ version_names = [version['name'] for version in versions]
 bar_width = 1 / (len(versions) + 1)
 cluster_width = bar_width * len(versions)
 
-fig = plt.figure(dpi=300, figsize=(common.single_col_inch, 1), constrained_layout=True)
+fig = plt.figure(dpi=300, figsize=(common.acmsmall_inch, 1.3), constrained_layout=True)
 fig.get_layout_engine().set(
     h_pad=0.01,
     w_pad=0.01,
@@ -63,14 +63,14 @@ gs = gridspec.GridSpec(1, 2, figure=fig)
 x_labelpad = 1
 
 ax_reff = plt.subplot(gs[0, 0])
-fig.text(0.25, 0, r'(a) Avg $R_\text{eff}$ of new compactions', ha='center', va='bottom')
+fig.text(0.25, 0.01, r'(a) Avg $R_\text{eff}$ of new compactions', ha='center', va='bottom')
 plt.ylabel(r'Average $R_\text{eff}$', loc='top')
 ax_reff.tick_params(axis='x', pad=0)
 plt.xlabel(r'Zipfian $\theta$', labelpad=x_labelpad)
 plt.xticks(list(range(0, len(vec_zipfian_theta))), vec_zipfian_theta)
 
 ax_num_srs = plt.subplot(gs[0, 1])
-fig.text(0.76, 0, r'(b) Avg number of sorted runs', ha='center', va='bottom')
+fig.text(0.76, 0.01, r'(b) Avg number of sorted runs', ha='center', va='bottom')
 plt.ylabel('Avg \\# of runs', loc='top')
 ax_num_srs.tick_params(axis='x', pad=0)
 plt.xlabel(r'Zipfian $\theta$', labelpad=x_labelpad)
@@ -126,10 +126,12 @@ fig.legend(
     labels=version_names,
     ncol=len(versions),
     loc='upper center',
-    bbox_to_anchor=(0.5, 1.1),
+    bbox_to_anchor=(0.5, 1.03),
     frameon=False,
+    borderaxespad=0,
 )
 pdf_path = os.path.join(dir, f'skew-zipfian.pdf')
+common.check_visible_labels(fig)
 fig.savefig(pdf_path, metadata={'CreationDate': None})
 print('Plot saved to ' + pdf_path)
 
@@ -140,4 +142,6 @@ num_srs_reduction = (num_srs_by_theory - num_srs_our) / num_srs_by_theory
 print('\\defmacro{ZipfianNumSrsReduction}{%.0f\\%%}' %(num_srs_reduction * 100), file=tex)
 tex = tex.getvalue()
 print(tex)
-open('skew-zipfian.tex', mode='w').write(tex)
+tex_path = 'skew-zipfian.tex'
+open(tex_path, mode='w').write(tex)
+print(f'TeX saved to {tex_path}')
