@@ -167,12 +167,12 @@ panel_sa_max = {
     "log_scale": [False, False, False],
     'ax': [],
 }
-fig_sa_max = plt.figure(dpi=300, figsize=(common.acmsmall_inch, 1.3), constrained_layout=True)
+fig_sa_max = plt.figure(dpi=300, figsize=(3.8, 1.5), constrained_layout=True)
 fig_sa_max.get_layout_engine().set(
     h_pad=0.01,
     w_pad=0.01,
     wspace=0.1,
-    rect=(0, 0, 1, 0.85),
+    rect=(0, 0, 1, 0.72),
 )
 gs = gridspec.GridSpec(1, 3, figure=fig_sa_max)
 for i in range(len(vec_write_MB_s)):
@@ -184,9 +184,9 @@ handles = [mpl.patches.Patch(facecolor=v['facecolor'], hatch=v['hatch'],
 fig_sa_max.legend(
     handles=handles,
     labels=version_names,
-    ncol=len(versions),
+    ncol=3,
     loc='upper center',
-    bbox_to_anchor=(0.5, 1.04),
+    bbox_to_anchor=(0.5, 1.02),
     frameon=False,
     borderpad=0,
     handlelength=1.0,
