@@ -25,7 +25,7 @@ mpl.rcParams.update({
     'font.family': 'serif',
     'font.serif': ['Linux Libertine O'],
     'axes.unicode_minus': False,
-    'font.size': 9,
+    'font.size': 10,
 })
 
 vec_write_MB_s = [10, 50]
@@ -75,12 +75,12 @@ versions = [
 bar_width = 1 / (len(versions) + 1)
 cluster_width = bar_width * len(versions)
 
-fig = plt.figure(dpi=300, figsize=(common.single_col_inch, 1.3), constrained_layout=True)
+fig = plt.figure(dpi=300, figsize=(4, 1.3), constrained_layout=True)
 fig.get_layout_engine().set(
     h_pad=0.01,
     w_pad=0.01,
     wspace=0.07,
-    rect=(0, 0, 1, 0.8),
+    rect=(0, 0, 1, 0.75),
 )
 gs = GridSpec(1, len(vec_write_MB_s), figure=fig)
 for i, write_MB_s in enumerate(vec_write_MB_s):
@@ -116,12 +116,14 @@ fig.legend(
     names,
     ncol=4,
     loc='upper center',
-    bbox_to_anchor=(0.5, 1.08),
+    bbox_to_anchor=(0.5, 1.03),
+    borderaxespad=0,
     frameon=False,
     handlelength=1.5,
     handletextpad=0.5,
     labelspacing=0.1,
 )
 pdf_path = os.path.join(dir, f'sensitivity-k_n{value}{compaction}-warmup-{warmup_secs}-run-{run_secs}{read_workload}.pdf')
+common.check_visible_labels(fig)
 fig.savefig(pdf_path, metadata={'CreationDate': None})
 print('Plot saved to ' + pdf_path)
