@@ -23,7 +23,7 @@ mpl.rcParams.update({
     'font.family': 'serif',
     'font.serif': ['Linux Libertine O'],
     'axes.unicode_minus': False,
-    'font.size': 9,
+    'font.size': 10,
 })
 
 vec_write_MB_s = [10, 30]
@@ -62,17 +62,17 @@ panels = [
         'ax': [],
     },
 ]
-fig = plt.figure(dpi=300, figsize=(common.single_col_inch, 1), constrained_layout=True)
+fig = plt.figure(dpi=300, figsize=(common.acmsmall_inch, 1.1), constrained_layout=True)
 fig.get_layout_engine().set(
     h_pad=0.01,
     w_pad=0.01,
     wspace=0.15,
     rect=(0, 0.13, 1, 0.72),
 )
-gs = gridspec.GridSpec(1, 4, figure=fig)
+gs = gridspec.GridSpec(1, 5, figure=fig, width_ratios=[1, 1, 0.2, 1, 1])
 for panel_idx, panel in enumerate(panels):
     for i, write_MB_s in enumerate(vec_write_MB_s):
-        ax = plt.subplot(gs[0, panel_idx * len(vec_write_MB_s) + i])
+        ax = plt.subplot(gs[0, panel_idx * (len(vec_write_MB_s) + 1) + i])
         panel['ax'].append(ax)
         ax.set_xlabel(f'{write_MB_s}MB/s')
         ax.set_xticks([])
@@ -89,15 +89,16 @@ fig.legend(
     labels=version_names,
     ncol=len(versions), 
     loc='upper center',
-    bbox_to_anchor=(0.53, 1.1),
-    frameon=False, 
+    bbox_to_anchor=(0.5, 1.04),
+    frameon=False,
+    borderaxespad=0,
     handlelength=1.3,
     handletextpad=0.5,
-    columnspacing=1.0,
+    columnspacing=2.5,
 )
 
-fig.text(0.29, 0, panels[0]['title'], ha='center', va='bottom')
-fig.text(0.77, 0, panels[1]['title'], ha='center', va='bottom')
+fig.text(0.27, 0, panels[0]['title'], ha='center', va='bottom')
+fig.text(0.8, 0, panels[1]['title'], ha='center', va='bottom')
 
 for panel_idx, panel in enumerate(panels):
     for i, write_MB_s in enumerate(vec_write_MB_s):
@@ -116,8 +117,9 @@ for panel_idx, panel in enumerate(panels):
             )
             data_dir = os.path.join(dir, workload, version['path'])
             read_latency_us = json.load(open(os.path.join(data_dir, 'read-latency-us.json')))
-            panel['ax'][i].bar(x, read_latency_us['Average'] / 1000, width=bar_width, edgecolor='black', linewidth=0.5, facecolor=version['facecolor'], hatch=version['hatch'])
+            panel['ax'][i].bar(x, read_latency_us['Average'] / 1000, width=bar_width * 0.65, edgecolor='black', linewidth=0.5, facecolor=version['facecolor'], hatch=version['hatch'])
 
 pdf_path = os.path.join(dir, f'delete-heavy-memtable-64MiB{value}{compaction}{read_workload}.pdf')
+common.check_visible_labels(fig)
 fig.savefig(pdf_path, metadata={'CreationDate': None})
 print(f'Plot saved to {pdf_path}')
