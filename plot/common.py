@@ -176,7 +176,7 @@ versions = {
 def check_visible_labels(figure):
     """Warn about visible text and legends outside the canvas; return warning messages.
 
-    Checks PDF rendering, ignoring hidden elements and tick labels outside the
+    Checks PDF glyph outlines, ignoring hidden elements and tick labels outside the
     axis view limits. Bounds do not account for savefig cropping or occlusion
     by other elements.
     """
@@ -188,9 +188,38 @@ def check_visible_labels(figure):
     from matplotlib.collections import Collection
     from matplotlib.lines import Line2D
     from matplotlib.patches import Patch
-    from matplotlib.transforms import Bbox
+    from matplotlib.path import Path
+    from matplotlib.textpath import TextToPath
+    from matplotlib.transforms import Affine2D, Bbox
 
     issues = []
+    text_to_path = TextToPath()
+
+    def visible_bounds(artist, renderer):
+        if not isinstance(artist, Text) or artist.get_usetex() or artist.get_path_effects():
+            return artist.get_window_extent(renderer)
+        position = artist.get_transform().transform(artist.get_unitless_position())
+        bounds = []
+        # Use Text.draw's line baselines and rotation: layout boxes include
+        # font whitespace that can extend outside the canvas without clipping ink.
+        with artist._cm_set(text=artist._get_wrapped_text()):
+            _, lines, _ = artist._get_layout(renderer)
+            for line, _, x, y in lines:
+                if not line.strip():
+                    continue
+                clean_line, ismath = artist._preprocess_math(line)
+                vertices, codes = text_to_path.get_text_path(
+                    artist.get_fontproperties(), clean_line, ismath=ismath)
+                path = Path(vertices, codes)
+                scale = artist.get_fontsize() / text_to_path.FONT_SCALE * figure.dpi / 72
+                transform = (Affine2D().scale(scale)
+                             .rotate_deg(artist.get_rotation())
+                             .translate(position[0] + x, position[1] + y))
+                bounds.append(path.get_extents(transform))
+        patch = artist.get_bbox_patch()
+        if patch is not None and patch.get_visible():
+            bounds.append(patch.get_window_extent(renderer))
+        return Bbox.union(bounds) if bounds else Bbox.null()
 
     def check_rendered_labels(event):
         renderer = event.renderer
@@ -225,7 +254,7 @@ def check_visible_labels(figure):
                     match=lambda item: isinstance(item, (Text, Line2D, Patch, Collection))
                 )
                 content_bounds = [
-                    item.get_window_extent(renderer)
+                    visible_bounds(item, renderer)
                     for item in content
                     if item is not artist.get_frame()
                     and item.get_visible() and item.get_alpha() != 0
@@ -237,7 +266,7 @@ def check_visible_labels(figure):
                     continue
                 bounds = Bbox.union(content_bounds)
             else:
-                bounds = artist.get_window_extent(renderer)
+                bounds = visible_bounds(artist, renderer)
             overflow_pt = {
                 'left': canvas.x0 - bounds.x0,
                 'right': bounds.x1 - canvas.x1,

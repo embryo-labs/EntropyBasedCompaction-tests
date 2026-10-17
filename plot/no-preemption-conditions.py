@@ -36,7 +36,7 @@ mpl.rcParams.update({
     'font.family': 'serif',
     'font.serif': ['Linux Libertine O'],
     'axes.unicode_minus': False,
-    'font.size': 9,
+    'font.size': 10,
 })
 
 lines_config = [
@@ -84,11 +84,12 @@ lines_config = [
     },
 ]
 
-fig = plt.figure(dpi=300, figsize=(common.single_col_inch, 1.5), constrained_layout=True)
+fig = plt.figure(dpi=300, figsize=(common.acmsmall_inch, 1.5), constrained_layout=True)
 fig.get_layout_engine().set(
     h_pad=0.01,
     w_pad=0.01,
-    rect=(0, 0, 1, 0.81),
+    wspace=0.1,
+    rect=(0, 0, 1, 0.9),
 )
 gs = GridSpec(1, 2, figure=fig, hspace=0.2)
 plt.subplot(gs[0, 0])
@@ -164,12 +165,16 @@ for line_config in lines_config:
 fig.legend(
     handles,
     version_names,
-    ncol=3,
+    ncol=6,
     loc='upper center',
-    bbox_to_anchor=(0.5, 1.07),
+    bbox_to_anchor=(0.5, 1.04),
     frameon=False,
-    labelspacing=0.2,
+    borderaxespad=0,
+    handlelength=1.5,
+    handletextpad=0.4,
+    columnspacing=1,
 )
 pdf_path = os.path.join(dir, f'{version_path}{value}{compaction}-warmup-{warmup_secs}-run-{run_secs}{read_workload}.pdf')
+common.check_visible_labels(fig)
 fig.savefig(pdf_path, metadata={'CreationDate': None})
 print('Plot saved to ' + pdf_path)
