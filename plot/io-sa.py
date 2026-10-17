@@ -31,7 +31,7 @@ mpl.rcParams.update({
     'font.family': 'serif',
     'font.serif': ['Linux Libertine O'],
     'axes.unicode_minus': False,
-    'font.size': 9,
+    'font.size': 10,
 })
 
 import common
@@ -94,32 +94,32 @@ vec_write_MB_s = [30, 50]
 panels = [
     {
         'title': '(a) P99 # of sorted runs',
-        'title-xy': (0.25, 0),
+        'title-xy': (0.28, 0),
         'ylabel': 'P99 # of runs',
         'ax': [],
     },
     {
         'title': '(b) Max space amplification',
-        'title-xy': (0.75, 0),
+        'title-xy': (0.79, 0),
         'ylabel': 'Max space amp',
         'ax':[],
     }
 ]
 
-fig = plt.figure(dpi=300, figsize=(common.single_col_inch, 1.3), constrained_layout=True)
+fig = plt.figure(dpi=300, figsize=(common.acmsmall_inch, 1.4), constrained_layout=True)
 fig.get_layout_engine().set(
     h_pad=0.01,
     w_pad=0.01,
     wspace=0.07,
     rect=(0, 0.1, 1, 0.7),
 )
-gs = GridSpec(1, 4, figure=fig)
+gs = GridSpec(1, 5, figure=fig, width_ratios=[1, 1, 0.2, 1, 1])
 
 for panel_idx, panel in enumerate(panels):
     (x, y) = panel['title-xy']
     fig.text(x, y, panel['title'], ha='center', va='bottom')
     for i, write_MB_s in enumerate(vec_write_MB_s):
-        ax = plt.subplot(gs[0, panel_idx * len(vec_write_MB_s) + i])
+        ax = plt.subplot(gs[0, panel_idx * (len(vec_write_MB_s) + 1) + i])
         plt.xlabel(f'{write_MB_s}MB/s')
         plt.xticks([])
         ax.tick_params(axis='y', pad=1)
@@ -138,7 +138,7 @@ fig.legend(
     borderaxespad=0,
     handlelength=1.2,
     handletextpad=0.5,
-    columnspacing=1.0,
+    columnspacing=2.5,
     labelspacing=0.2,
 )
 
@@ -165,5 +165,6 @@ tight_bbox = fig.get_tightbbox(renderer)
 print(f'width: {tight_bbox.width}, height: {tight_bbox.height}')
 
 pdf_path = os.path.join(dir, f'io-sa-p99-srs-max-sa{value}{compaction}-warmup-{warmup_secs}-run-{run_secs}{read_workload}.pdf')
+common.check_visible_labels(fig)
 fig.savefig(pdf_path, metadata={'CreationDate': None})
 print('Plot saved to ' + pdf_path)
