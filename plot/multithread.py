@@ -122,6 +122,12 @@ for panel, (row, col) in zip(panels, panel_positions):
     ax.tick_params(axis='y', which='minor', labelleft=False)
     ax.set_axisbelow(True)
     ax.grid(axis='y')
+    if row == 1:
+        if col == 1:
+            horizontal_offset = -0.02
+        else:
+            horizontal_offset = 0.02
+        ax.set_position(ax.get_position().translated(horizontal_offset, 0))
     panel['ax'] = ax
 handles = [mpl.patches.Patch(facecolor=v['facecolor'], hatch=v['hatch'], 
                             edgecolor='black', linewidth=0.5) for v in versions]
