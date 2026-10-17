@@ -23,7 +23,7 @@ mpl.rcParams.update({
     'font.family': 'serif',
     'font.serif': ['Linux Libertine O'],
     'axes.unicode_minus': False,
-    'font.size': 9,
+    'font.size': 10,
     'text.usetex': True,
     'text.latex.preamble': r'''
         \usepackage{amsmath}
@@ -48,7 +48,7 @@ for v in versions:
     v.update(common.versions[v['path']])
 version_names = [v['name'] for v in versions]
 
-fig = plt.figure(dpi=300, figsize=(common.single_col_inch, 1), constrained_layout=True)
+fig = plt.figure(dpi=300, figsize=(4, 1), constrained_layout=True)
 fig.get_layout_engine().set(
     h_pad=0.01,
     w_pad=0.01,
@@ -57,6 +57,7 @@ ax = plt.gca()
 ax.set_xlabel(r'Compaction efficiency $R_\text{eff}$')
 ax.set_ylabel('CDF')
 ax.set_ylim(0, 1)
+ax.set_yticks([0, 0.5, 1])
 ax.grid(axis="y")
 for version in versions:
     if version['max-running-bg-jobs'] is None:
@@ -101,8 +102,12 @@ for version in versions:
         linestyle=version['linestyle'],
     )
 ax.set_xlim(left=0)
-ax.legend(frameon=False)
+ax.legend(
+    frameon=False,
+    handlelength=1.5,
+)
 
 pdf_path = os.path.join(dir, f"universal-efficiency-{write_MB_s}MB-s.pdf")
+common.check_visible_labels(fig)
 fig.savefig(pdf_path, metadata={"CreationDate": None})
 print("Plot saved to " + pdf_path)
