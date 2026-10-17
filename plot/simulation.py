@@ -73,7 +73,7 @@ mpl.rcParams.update({
     'font.family': 'serif',
     'font.serif': ['Linux Libertine O'],
     'axes.unicode_minus': False,
-    'font.size': 7,
+    'font.size': 10,
 })
 
 linewidth = 1
@@ -84,7 +84,7 @@ ylabel_pad = 1
 borderpad = 0.2
 borderaxespad = 0.1
 
-fig = plt.figure(dpi = 300, figsize = (common.single_col_inch, 1), constrained_layout=True)
+fig = plt.figure(dpi = 300, figsize = (common.acmsmall_inch, 1.3), constrained_layout=True)
 fig.get_layout_engine().set(
     h_pad=0.01,
     w_pad=0.01,
@@ -150,6 +150,7 @@ ax.legend([
     ], ['Bound', 'Simulated'], loc='upper left', handlelength=1, handletextpad=0.5, columnspacing=1.5, labelspacing=0.2, borderpad=borderpad, borderaxespad=borderaxespad)
 
 pdf_path = f'simulation-S-{S}-N-{N}.pdf'
+common.check_visible_labels(fig)
 plt.savefig(pdf_path, metadata={'CreationDate': None})
 print('Plot saved to ' + pdf_path)
 if 'DISPLAY' in os.environ:
