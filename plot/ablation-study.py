@@ -24,7 +24,7 @@ mpl.rcParams.update({
     'font.family': 'serif',
     'font.serif': ['Linux Libertine O'],
     'axes.unicode_minus': False,
-    'font.size': 9,
+    'font.size': 10,
 })
 
 vec_write_MB_s = [10, 30, 50]
@@ -80,7 +80,7 @@ row_configs = [
     },
 ]
 
-fig = plt.figure(dpi=300, figsize=(common.single_col_inch, 1.1), constrained_layout=True)
+fig = plt.figure(dpi=300, figsize=(4.2, 1.3), constrained_layout=True)
 fig.get_layout_engine().set(
     h_pad=0.01,
     w_pad=0.01,
@@ -121,16 +121,17 @@ for row, row_config in enumerate(row_configs):
 
 fig.legend(
     version_names,
-    fontsize=9,
     ncol=3,
     loc='upper center',
-    bbox_to_anchor=(0.5, 1.09),
+    bbox_to_anchor=(0.52, 1.03),
     frameon=False,
+    borderaxespad=0,
     handlelength=1.5,
     handletextpad=0.5,
     columnspacing=1.0,
     labelspacing=0.1,
 )
 pdf_path = os.path.join(dir, f'ablation-study{value}{compaction}-warmup-{warmup_secs}-run-{run_secs}{read_workload}.pdf')
+common.check_visible_labels(fig)
 fig.savefig(pdf_path, metadata={'CreationDate': None})
 print('Plot saved to ' + pdf_path)
