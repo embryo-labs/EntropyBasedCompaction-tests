@@ -27,7 +27,7 @@ mpl.rcParams.update({
     'font.family': 'serif',
     'font.serif': ['Linux Libertine O'],
     'axes.unicode_minus': False,
-    'font.size': 9,
+    'font.size': 10,
 })
 
 versions = [
@@ -58,12 +58,12 @@ def get_data_dir(version, value_size, write_MB_s):
     )
     return os.path.join(dir, workload, version['path'])
 
-fig = plt.figure(dpi=300, figsize=(common.single_col_inch, 1.4), constrained_layout=True)
+fig = plt.figure(dpi=300, figsize=(common.acmsmall_inch, 1.4), constrained_layout=True)
 fig.get_layout_engine().set(
     h_pad=0.01,
     w_pad=0.01,
     wspace=0.13,
-    rect=(0, 0.21, 1, 0.71),
+    rect=(0, 0.13, 1, 0.79),
 )
 gs = gridspec.GridSpec(1, 4, figure=fig)
 
@@ -107,11 +107,12 @@ fig.legend(
     labels=version_names,
     ncol=len(versions),
     loc='upper center',
-    bbox_to_anchor=(0.62, 1.07),
+    bbox_to_anchor=(0.76, 1.03),
     frameon=False,
+    borderaxespad=0,
     handlelength=1.3,
     handletextpad=0.5,
-    columnspacing=1.0,
+    columnspacing=0.6,
 )
 
 for line in lines:
@@ -145,11 +146,12 @@ for i, write_MB_s in enumerate([10, 30]):
         x = -cluster_width / 2 + bar_width / 2 + version_idx * bar_width
         data_dir = get_data_dir(version, 16000, write_MB_s)
         read_latency_us = json.load(open(os.path.join(data_dir, 'read-latency-us.json')))
-        ax_read_lat[i].bar(x, read_latency_us['Average'] / 1000, width=bar_width, edgecolor='black', linewidth=0.5, facecolor=version['facecolor'], hatch=version['hatch'])
+        ax_read_lat[i].bar(x, read_latency_us['Average'] / 1000, width=bar_width * 0.65, edgecolor='black', linewidth=0.5, facecolor=version['facecolor'], hatch=version['hatch'])
 
-fig.text(0.29, 0, '(a) EBC sorted run count\nacross value sizes', ha='center', va='bottom')
-fig.text(0.77, 0, '(b) Read latency across\ncompaction policies\nwith 16KB values', ha='center', va='bottom')
+fig.text(0.23, 0.02, '(a) EBC sorted run count across value sizes', ha='center', va='bottom')
+fig.text(0.78, 0, '(b) Read latency across compaction\npolicies with 16KB values', ha='center', va='bottom')
 
 pdf_path = os.path.join(dir, f'value-sizes{compaction}-warmup-{warmup_secs}-run-{run_secs}{read_workload}.pdf')
+common.check_visible_labels(fig)
 fig.savefig(pdf_path, metadata={'CreationDate': None})
 print(f'Plot saved to {pdf_path}')
