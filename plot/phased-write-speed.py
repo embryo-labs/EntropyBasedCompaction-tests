@@ -24,7 +24,7 @@ mpl.rcParams.update({
     'font.family': 'serif',
     'font.serif': ['Linux Libertine O'],
     'axes.unicode_minus': False,
-    'font.size': 9,
+    'font.size': 10,
     'text.usetex': True,
     'text.latex.preamble': r'''
         \usepackage{amsmath}
@@ -54,10 +54,13 @@ version_names = [version['name'] for version in versions]
 
 def add_write_MB_s():
     for i, write_MB_s in enumerate(vec_write_MB_s):
-        plt.text((i + 0.17) / len(vec_write_MB_s), 1, f'{write_MB_s}MB/s', transform=ax.transAxes, ha="left", va="bottom")
+        plt.text((i + 0.5) / len(vec_write_MB_s), 1, f'{write_MB_s}MB/s', transform=ax.transAxes, ha="center", va="bottom")
 
 
-fig = plt.figure(dpi = 300, figsize = (common.single_col_inch, 1.7), constrained_layout=True)
+fig = plt.figure(dpi = 300, figsize = (common.acmsmall_inch, 1.7), constrained_layout=True)
+fig.get_layout_engine().set(
+    rect=(0, 0, 1, 0.9),
+)
 ax = plt.gca()
 plt.xlabel('Time (hours)')
 plt.xticks(ticks=[i * 3600 for i in range(0, 6)], labels=[i for i in range(0, 6)])
@@ -106,19 +109,34 @@ ylim = math.ceil(max(reff_new_compaction))
 plt.ylim((0, ylim))
 plt.vlines([phase_secs * i for i in range(1, len(vec_write_MB_s))], ymin=0, ymax=ylim, linewidth=1, colors='gray', linestyles='dashed')
 
-legend = plt.legend(handles=[
+legend = fig.legend(
+    handles=[
         mpl.lines.Line2D([0], [0], color='blue', linewidth=1),
         plt.scatter([], [], 3, color=versions[1]['color'])
-    ], labels=['Theoretical threshold', common.versions['entropy-based']['name']], ncol=len(versions), loc='center', bbox_to_anchor=(0.5, 1.23), frameon=False)
+    ],
+    labels=[
+        'Theoretical threshold',
+        common.versions['entropy-based']['name'],
+    ],
+    ncol=len(versions),
+    loc='upper center',
+    bbox_to_anchor=(0.5, 1.03),
+    frameon=False,
+    borderaxespad=0,
+)
 scatter_label = legend.get_texts()[1]
 scatter_label.set_position((scatter_label.get_position()[0] - 7, scatter_label.get_position()[1]))
 
 pdf_path = os.path.join(dir, f'phased-write-speed-phase_secs-{phase_secs}-write_MB_s{write_MB_s_string}-reff.pdf')
-plt.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01, metadata={'CreationDate': None})
+common.check_visible_labels(fig)
+fig.savefig(pdf_path, metadata={'CreationDate': None})
 print('Plot saved to ' + pdf_path)
 
 
-fig = plt.figure(dpi = 300, figsize = (common.single_col_inch, 1.5), constrained_layout=True)
+fig = plt.figure(dpi = 300, figsize = (common.acmsmall_inch, 1.5), constrained_layout=True)
+fig.get_layout_engine().set(
+    rect=(0, 0, 1, 0.9),
+)
 ax = plt.gca()
 plt.xlabel('Time (hours)')
 plt.xticks(ticks=[i * 3600 for i in range(0, 6)], labels=[i for i in range(0, 6)])
@@ -134,8 +152,16 @@ for version in versions:
 plt.xlim((0, len(vec_write_MB_s) * phase_secs))
 plt.ylim(bottom=0)
 plt.vlines([phase_secs * i for i in range(1, len(vec_write_MB_s))], ymin=0, ymax=100, linewidth=1, colors='gray', linestyles='dashed')
-plt.legend(version_names, ncol=len(versions), loc='center', bbox_to_anchor=(0.5, 1.27), frameon=False)
+fig.legend(
+    version_names,
+    ncol=len(versions),
+    loc='upper center',
+    bbox_to_anchor=(0.5, 1.03),
+    frameon=False,
+    borderaxespad=0,
+)
 
 pdf_path = os.path.join(dir, f'phased-write-speed-phase_secs-{phase_secs}-write_MB_s{write_MB_s_string}-num-srs.pdf')
-plt.savefig(pdf_path, bbox_inches='tight', pad_inches=0.01, metadata={'CreationDate': None})
+common.check_visible_labels(fig)
+fig.savefig(pdf_path, metadata={'CreationDate': None})
 print('Plot saved to ' + pdf_path)
